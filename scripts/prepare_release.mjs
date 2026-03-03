@@ -6,6 +6,7 @@ import { nuiSftpRepoDir, cloneLocation } from "./update_scripts/files_and_dirs.m
 import { workDependenciesAsMap } from "./update_scripts/work_dependencies.mjs";
 import { checkoutSpecificRef } from './update_scripts/git.mjs'
 import { updateReleasesInMetainfoXml, parseMetainfoXml } from "./update_scripts/metainfo.mjs";
+import { updateFlatpakYaml } from "./update_scripts/flatpak.mjs";
 
 const repoUrl = 'https://github.com/5cript/nui-sftp.git';
 
@@ -24,11 +25,15 @@ for (const [name, { url, rev, branch }] of Object.entries(workDeps)) {
     });
 }
 
-// await updatePkgBuild().catch((err) => {
-//     console.error('Error updating PKGBUILD:', err);
-//     process.exit(1);
-// });
+await updatePkgBuild().catch((err) => {
+    console.error('Error updating PKGBUILD:', err);
+    process.exit(1);
+});
 
 const metainfoXml = parseMetainfoXml();
 updateReleasesInMetainfoXml(metainfoXml);
 
+await updateFlatpakYaml().catch((err) => {
+    console.error('Error updating flatpak YAML:', err);
+    process.exit(1);
+});

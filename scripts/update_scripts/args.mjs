@@ -1,7 +1,8 @@
 import { parseArgs } from "node:util";
+import { getReleases } from "./github.mjs";
 
-const {
-  values: { version }
+let {
+    values: { version }
 } = parseArgs({
     args: Bun.argv,
     options: {
@@ -16,8 +17,14 @@ const {
 });
 
 if (!version) {
-  console.error('Error: New version not provided. Usage: node prepare_release.mjs -v <new_version>');
-  process.exit(1);
+    const releases = await getReleases('5cript/nui-sftp');
+    if (releases.length === 0) {
+        console.error('No releases found for 5cript/nui-sftp');
+        process.exit(1);
+    }
+    const latestRelease = releases[0];
+    console.log(`No version specified, using latest release: ${latestRelease.tag_name}`);
+    version = latestRelease.tag_name;
 }
 
 export { version };
