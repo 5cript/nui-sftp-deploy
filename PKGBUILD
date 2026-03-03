@@ -1,5 +1,7 @@
+# Maintainer: Tim Ebbeke <tim 06 tr (at) gmail dot com>
+
 pkgname=nui-sftp
-pkgver=a596b43a3c0b501bbf780d351537db5952892698
+pkgver=b6d503d6ff5ec31f5857f7f4bf43db4d9f1321e4
 pkgrel=1
 pkgdesc="NUI-based SFTP application"
 arch=('x86_64')
@@ -24,23 +26,22 @@ makedepends=(
     nodejs
 )
 source=(
-    "$pkgname::git+$url.git#tag=$pkgver"
-    "git+https://github.com/NuiCpp/Nui.git#commit=96e87184cd48fe0dfa1bf9c187a49842a36b96f7"
+    "$pkgname::git+$url.git#tag=${pkgver//_/-}"
+    "git+https://github.com/NuiCpp/Nui.git#commit=9be8ad840cee041bc3ce4b5e2a0e869de3e0efb3"
     "git+https://github.com/5cript/roar.git#commit=a787bce9c8132f4c860bc9e55bff742fd1a3276f"
     "git+https://github.com/DNKpp/gimo.git#commit=16377a6d496b31a9272f9a079c060fba15258bcc"
     "git+https://github.com/NuiCpp/traits.git#commit=6c9caa21c48c9e1f7f039a7bdf8805a0940fce0a"
     "git+https://github.com/NuiCpp/ui5.git#commit=a514318f9110f7e77574abd283ef0c5ecf634f40"
     "git+https://github.com/5cript/5cript-nui-components.git#commit=fb33b5f751eed174b930329fbecf52138e63c0cf"
 )
-# TODO:
 sha256sums=(
     'SKIP'
     'SKIP'
-    'SKIP'
-    'SKIP'
-    'SKIP'
-    'SKIP'
-    'SKIP'
+    '411be282af945718509ce24cc0c2ef837657398c23386a0cb7035d1ecc6367d5'
+    '8d5c5f36710425e8660470db14a5d6011e20b4e9be638f3ab34ad81f9fe286b7'
+    '77bed25f96135cdcf1b8274664c9564375f9823866e7d55e843f75a213af5359'
+    '64e6a4c24ef2e229721482448f8b139c50c41bbdecaea4cf79ce079a8d21e4a0'
+    'b48e921daff6efe9b9ce1520ae9ee431c0f8ed6428d8190cd33750df8049398a'
 )
 
 build() {
@@ -56,7 +57,7 @@ build() {
     cp -r "$srcdir/ui5" "$srcdir/$pkgname/dependencies/ui5"
     cp -r "$srcdir/5cript-nui-components" "$srcdir/$pkgname/dependencies/5cript-nui-components"
 
-    cmake -B build \
+    cmake -B "$srcdir/$pkgname/build" \
         -S "$srcdir/$pkgname" \
         -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
@@ -66,10 +67,28 @@ build() {
         -DCMAKE_CXX_STANDARD=23 \
         -DNUI_FETCH_TRAITS=OFF
 
-    cmake --build build
+    cmake --build "$srcdir/$pkgname/build"
 }
 
 package() {
-    cd "$pkgname"
-    BUILD_DIRECTORY="$srcdir/$pkgname/build" INSTALL_LOCATION="$pkgdir" ./scripts/deploy.sh
+    # Create directories
+    mkdir -p "$pkgdir"/usr/bin
+    mkdir -p "$pkgdir"/opt/"$pkgname"
+    mkdir -p "$pkgdir"/opt/"$pkgname"/bin
+    mkdir -p "$pkgdir"/opt/"$pkgname"/frontend
+    mkdir -p "$pkgdir"/opt/"$pkgname"/assets
+    mkdir -p "$pkgdir"/opt/"$pkgname"/themes
+    mkdir -p "$pkgdir"/opt/"$pkgname"/themes/dark
+
+    # Copy files
+    install -m755 "$srcdir/$pkgname/build/bin/$pkgname" "$pkgdir"/opt/"$pkgname"/bin/"$pkgname"
+    cp -r "$srcdir/$pkgname/build/frontend" "$pkgdir"/opt/"$pkgname"/
+    cp -r "$srcdir/$pkgname/build/assets" "$pkgdir"/opt/"$pkgname"/
+    install -m644 "$srcdir/$pkgname/LICENSE" "$pkgdir"/opt/"$pkgname"/LICENSE
+    install -m644 "$srcdir/$pkgname/build/themes/dark/css_variables.css" "$pkgdir"/opt/"$pkgname"/themes/dark/css_variables.css
+
+    # Desktop
+    install -Dm644 "$srcdir/$pkgname/org.nuicpp.nui_sftp.desktop" "$pkgdir"/usr/share/applications/"$pkgname".desktop
+
+    ln -s "/opt/$pkgname/bin/$pkgname" "$pkgdir"/usr/bin/"$pkgname"
 }
