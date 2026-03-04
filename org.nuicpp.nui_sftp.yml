@@ -29,16 +29,6 @@ modules:
         url: https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.gz
         sha256: 5e93d582aff26868d581a52ae78c7d8edf3f3064742c6e77901a1f18a437eea9
 
-  - name: pugixml
-    buildsystem: simple
-    build-commands:
-      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app
-      - cmake --build build --target install
-    sources:
-      - type: git
-        url: https://github.com/zeux/pugixml.git
-        tag: v1.15
-
   - name: libssh
     buildsystem: simple
     build-commands:
@@ -64,33 +54,16 @@ modules:
     build-commands:
       - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app
       - cmake --build build --target install
-      # Copy source for wasm build:
-      - mkdir -p /app/dependencies/nlohmann_json
-      - cp -r . /app/dependencies/nlohmann_json
     sources:
       - type: git
         url: https://github.com/nlohmann/json.git
         tag: v3.12.0
-
-  - name: binaryen
-    buildsystem: simple
-    build-commands:
-      - cp -r ./bin /app/bin
-      - cp -r ./lib /app/lib
-      - cp -r ./include /app/include
-    sources:
-      - type: archive
-        url: https://github.com/WebAssembly/binaryen/releases/download/version_124/binaryen-version_124-x86_64-linux.tar.gz
-        sha256: 0290c3779fedf592b8da0ded3032ff55c41a2b7bfa2d6bf7b7bac6f0e6e28963
 
   - name: fmt
     buildsystem: simple
     build-commands:
       - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app
       - cmake --build build --target install
-      # Copy source for wasm build:
-      - mkdir -p /app/dependencies/fmt
-      - cp -r . /app/dependencies/fmt
     sources:
       - type: git
         url: https://github.com/fmtlib/fmt.git
