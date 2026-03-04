@@ -69,6 +69,16 @@ modules:
         url: https://github.com/fmtlib/fmt.git
         tag: 12.1.0
 
+  - name: nui-sftp-frontend
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/frontend
+      - cp -r * /app/frontend
+    sources:
+      - type: archive
+        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-sftp-releases/linux-frontend/nui-sftp-linux-frontend_0.0.2-beta.tar.gz
+        sha256: ca2b6a832ce7fe842bb3318dcf91e83b5be816d4457ca5013af90b34f73c4c10
+
   - name: nui-sftp
     buildsystem: simple
     build-options:
@@ -82,8 +92,8 @@ modules:
         PKG_CONFIG_PATH: /app/usr/lib/pkgconfig
       append-path: "/usr/lib/sdk/llvm21/bin:/usr/lib/sdk/node24/bin"
       prepend-ld-library-path: "/usr/lib/sdk/llvm21/lib"
-      build-args:
-        - --share=network
+      # build-args:
+      #   - --share=network
     build-commands:
       - cmake
           -B build/flatpak
@@ -97,7 +107,7 @@ modules:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DNUI_ENABLE_TESTS=OFF
           -DNUI_BUILD_EXAMPLES=OFF
-          -DNUI_BUILD_XML_TOOL=ON
+          -DNUI_BUILD_XML_TOOL=OFF
           -DNUI_FETCH_TRAITS=OFF
           -DNUI_FETCH_BOOST_PREPROCESSOR=OFF
           -DNUI_FETCH_INTERVAL_TREE=OFF
@@ -107,17 +117,85 @@ modules:
           -DNUI_FIND_NLOHMANN_JSON=OFF
           -DNUI_FETCH_BINARYEN=OFF
           -DNUI_FETCH_FMT=OFF
+          -DNUI_FETCH_WEBVIEW=OFF
+          -DNUI_FETCH_PORTABLE_FILE_DIALOG=OFF
           -DNUI_FIND_FMT=OFF
+          -DNUI_FETCH_ROAR=OFF
+          -DROAR_EXTERNAL_NLOHMANN_JSON=ON
+          -DROAR_EXTERNAL_PROMISE=ON
+          -DFETCH_YAML_CPP=OFF
+          -DFETCH_RAPIDFUZZ=OFF
+          -DFETCH_SPDLOG=OFF
+          -DFETCH_EFSW=OFF
+          -DFETCH_ICONS=OFF
           -DFLATPAK_BUILD=ON
+          -DOMIT_FRONTEND_BUILD=ON
           -DJSON_Diagnostics=ON
-      # Copy previously downloaded sources into build subdir:
-      - mkdir -p build/flatpak/module_nui-sftp/flatpakdeps/nlohmann_json
-      - mkdir -p build/flatpak/module_nui-sftp/flatpakdeps/fmt
-      - cp -r /app/dependencies/nlohmann_json/* build/flatpak/module_nui-sftp/flatpakdeps/nlohmann_json
-      - cp -r /app/dependencies/fmt/* build/flatpak/module_nui-sftp/flatpakdeps/fmt
       - cmake --build build/flatpak
-      - ./scripts/deploy.sh
+      - OMIT_FRONTEND=true ./scripts/deploy.sh
+      # Patch desktop file to rename icon "nui-sftp.svg" to "org.nuicpp.nui_sftp.svg"
+      - sed -i 's/nui-sftp.svg/org.nuicpp.nui_sftp.svg/g' org.nuicpp.nui_sftp.desktop
+      # Install AppStream metadata
+      - install -Dm644 org.nuicpp.nui_sftp.metainfo.xml /app/share/metainfo/org.nuicpp.nui_sftp.metainfo.xml
+      # Install desktop file
+      - install -Dm644 org.nuicpp.nui_sftp.desktop /app/share/applications/org.nuicpp.nui_sftp.desktop
+      # Image
+      - install -Dm644 nui-sftp-placeholder.svg /app/share/icons/hicolor/scalable/apps/org.nuicpp.nui_sftp.svg
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v0.1.0
+        commit: 1151048c819e7cbd443fe7696e91410a1329f8fa
+      - type: git
+        url: https://github.com/NuiCpp/Nui.git
+        commit: 3983d25294c9c9affb4d6022b702b59616aa3b1d
+        dest: 'dependencies/Nui'
+      - type: git
+        url: https://github.com/5cript/roar.git
+        commit: a787bce9c8132f4c860bc9e55bff742fd1a3276f
+        dest: 'dependencies/roar'
+      - type: git
+        url: https://github.com/DNKpp/gimo.git
+        commit: 16377a6d496b31a9272f9a079c060fba15258bcc
+        dest: 'dependencies/gimo'
+      - type: git
+        url: https://github.com/NuiCpp/traits.git
+        commit: 6c9caa21c48c9e1f7f039a7bdf8805a0940fce0a
+        dest: 'dependencies/traits'
+      - type: git
+        url: https://github.com/5cript/portable-file-dialogs.git
+        commit: 13ac8d8655514486d0d700ea7063dcb05f8363da
+        dest: 'dependencies/portable-file-dialogs'
+      - type: git
+        url: https://github.com/5cript/webview.git
+        commit: 1dc3cbda951de8de0ff2ae5cc286b070d61f972d
+        dest: 'dependencies/webview'
+      - type: git
+        url: https://github.com/jbeder/yaml-cpp.git
+        commit: 89ff142b991af432b5d7a7cee55282f082a7e629
+        dest: 'dependencies/yaml-cpp'
+      - type: git
+        url: https://github.com/rapidfuzz/rapidfuzz-cpp.git
+        commit: b8ce411e91e01599d0697ad307933e05ddf3a723
+        dest: 'dependencies/rapidfuzz'
+      - type: git
+        url: https://github.com/gabime/spdlog.git
+        tag: v1.17.0
+        dest: 'dependencies/spdlog'
+      - type: git
+        url: https://github.com/SpartanJ/efsw.git
+        tag: 87abe599995d5646f5d83cf2e3a225bd73148b3a
+        dest: 'dependencies/efsw'
+      - type: archive
+        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz
+        sha256: 30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e
+        dest: 'dependencies/icons'
+        strip-components: 0
+      - type: git
+        url: https://github.com/5cript/promise-cpp.git
+        commit: bfad5bdd58f29465741858d826338e5b4ca65826
+        dest: 'dependencies/promise-cpp'
+      - type: file
+        path: org.nuicpp.nui_sftp.metainfo.xml
+      - type: file
+        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/nui-sftp-placeholder.svg
+        sha256: 47affa463f6c6ffa68cf86e05433e2c6cdccb06aab850eac6f5c87dceb331fdf
