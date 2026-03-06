@@ -23,11 +23,15 @@ modules:
     buildsystem: simple
     build-commands:
       - ./bootstrap.sh --prefix=/app
-      - ./b2 install
+      - ./b2 --with-program_options --with-filesystem --with-system --with-serialization --with-thread --with-mpi --with-iostreams --with-asio --with-process install
     sources:
       - type: archive
         url: https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.gz
         sha256: 5e93d582aff26868d581a52ae78c7d8edf3f3064742c6e77901a1f18a437eea9
+    cleanup:
+      - '/lib/cmake/boost*'
+      - '/include'
+
 
   - name: libssh
     buildsystem: simple
@@ -38,6 +42,10 @@ modules:
       - type: git
         url: https://git.libssh.org/projects/libssh.git/
         tag: libssh-0.11.4
+    cleanup:
+      - '/include'
+      - '/lib64/pkgconfig/libssh.pc'
+      - '/lib64/cmake/libssh'
 
   - name: interval-tree
     buildsystem: simple
@@ -48,6 +56,8 @@ modules:
       - type: git
         url: https://github.com/5cript/interval-tree.git
         tag: v3.1.1
+    cleanup:
+      - '/include'
 
   - name: nlohmann-json
     buildsystem: simple
@@ -58,6 +68,8 @@ modules:
       - type: git
         url: https://github.com/nlohmann/json.git
         tag: v3.12.0
+    cleanup:
+      - '/include'
 
   - name: fmt
     buildsystem: simple
@@ -68,6 +80,11 @@ modules:
       - type: git
         url: https://github.com/fmtlib/fmt.git
         tag: 12.1.0
+    cleanup:
+      - '/include'
+      - '/lib64/libfmt.a'
+      - '/lib64/pkgconfig/fmt.pc'
+      - '/lib64/cmake/fmt'
 
   - name: nui-sftp-frontend
     buildsystem: simple
@@ -105,46 +122,22 @@ modules:
           -DCMAKE_CXX_EXTENSIONS=ON
           -DCMAKE_CXX_STANDARD=23
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          -DNUI_ENABLE_TESTS=OFF
-          -DNUI_BUILD_EXAMPLES=OFF
-          -DNUI_BUILD_XML_TOOL=OFF
-          -DNUI_FETCH_TRAITS=OFF
-          -DNUI_FETCH_BOOST_PREPROCESSOR=OFF
-          -DNUI_FETCH_INTERVAL_TREE=OFF
-          -DNUI_FETCH_BOOST_DESCRIBE=OFF
-          -DNUI_FETCH_BOOST_MP11=OFF
-          -DNUI_FETCH_NLOHMANN_JSON=OFF
-          -DNUI_FIND_NLOHMANN_JSON=OFF
-          -DNUI_FETCH_BINARYEN=OFF
-          -DNUI_FETCH_FMT=OFF
-          -DNUI_FETCH_WEBVIEW=OFF
-          -DNUI_FETCH_PORTABLE_FILE_DIALOG=OFF
-          -DNUI_FIND_FMT=OFF
-          -DNUI_FETCH_ROAR=OFF
-          -DROAR_EXTERNAL_NLOHMANN_JSON=ON
-          -DROAR_EXTERNAL_PROMISE=ON
-          -DFETCH_YAML_CPP=OFF
-          -DFETCH_RAPIDFUZZ=OFF
-          -DFETCH_SPDLOG=OFF
-          -DFETCH_EFSW=OFF
-          -DFETCH_ICONS=OFF
-          -DFLATPAK_BUILD=ON
-          -DOMIT_FRONTEND_BUILD=ON
+          -DOFFLINE_BUILD=ON
           -DJSON_Diagnostics=ON
       - cmake --build build/flatpak
       - OMIT_FRONTEND=true ./scripts/deploy.sh
-      # Patch desktop file to rename icon "nui-sftp.svg" to "org.nuicpp.nui_sftp.svg"
-      - sed -i 's/nui-sftp.svg/org.nuicpp.nui_sftp.svg/g' org.nuicpp.nui_sftp.desktop
+      # Patch desktop file to rename icon "nui_sftp.svg" to "org.nuicpp.nui_sftp.svg"
+      - sed -i 's/Icon=nui_sftp/Icon=org.nuicpp.nui_sftp/g' org.nuicpp.nui_sftp.desktop
       # Install AppStream metadata
       - install -Dm644 org.nuicpp.nui_sftp.metainfo.xml /app/share/metainfo/org.nuicpp.nui_sftp.metainfo.xml
       # Install desktop file
       - install -Dm644 org.nuicpp.nui_sftp.desktop /app/share/applications/org.nuicpp.nui_sftp.desktop
       # Image
-      - install -Dm644 nui-sftp-placeholder.svg /app/share/icons/hicolor/scalable/apps/org.nuicpp.nui_sftp.svg
+      - install -Dm644 NUI-SFTP_Logo-01.svg /app/share/icons/hicolor/scalable/apps/org.nuicpp.nui_sftp.svg
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        commit: 1151048c819e7cbd443fe7696e91410a1329f8fa
+        commit: e72524033622eb20a815111ff4b8a022c2352b0d
       - type: git
         url: https://github.com/NuiCpp/Nui.git
         commit: 3983d25294c9c9affb4d6022b702b59616aa3b1d
@@ -197,5 +190,5 @@ modules:
       - type: file
         path: org.nuicpp.nui_sftp.metainfo.xml
       - type: file
-        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/nui-sftp-placeholder.svg
-        sha256: 47affa463f6c6ffa68cf86e05433e2c6cdccb06aab850eac6f5c87dceb331fdf
+        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01.svg
+        sha256: 6a8217c9f00ded6893324649394a9dbc9e5004a2644735fd3f18934bb29bcae6
