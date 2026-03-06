@@ -58,4 +58,6 @@ const checkoutSpecificRef = async (repoDir, ref) => {
     await execAsync(`git -C ${repoDir} checkout ${ref}`);
 }
 
-export { updateRepo, checkoutSpecificRef }
+const looksLikeGitHash = (str) => /^[0-9a-f]{40}$/.test(str);
+
+export { updateRepo, checkoutSpecificRef, looksLikeGitHash }

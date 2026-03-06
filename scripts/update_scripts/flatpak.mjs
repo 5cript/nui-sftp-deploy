@@ -1,40 +1,53 @@
 import { flatpakYamlPath } from './files_and_dirs.mjs';
 import { version } from './args.mjs';
-import { findLineIndexMatching, splitLines } from './text_editing.mjs';
+import { findLineIndexMatching, onLineMatchingModify, splitLines } from './text_editing.mjs';
+import { workDependenciesAsMap } from './work_dependencies.mjs';
+import { looksLikeGitHash } from './git.mjs';
 
 import fs from 'node:fs/promises';
 
-export async function updateFlatpakYaml() {
-    const yamlContent = await fs.readFile(flatpakYamlPath, 'utf-8');
+async function updateSources(yamlLines) {
+    const workDeps = await workDependenciesAsMap();
+    for (const [name, { url, rev }] of Object.entries(workDeps)) {
+        // find url in yaml lines
+        const urlLineIndex = findLineIndexMatching(yamlLines, new RegExp(`\\s*url:\\s*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)).lineIndex;
+        if (urlLineIndex === -1) {
+            console.warn(`Could not find url line for work dependency ${name} in flatpak YAML, skipping...`);
+            continue;
+        }
 
-    const lines = splitLines(yamlContent);
+        // Search two lines up and below for "tag" or "commit":
+        let refLineIndex = -1;
+        const checkFrom = Math.max(0, urlLineIndex - 2);
+        const checkTo = Math.min(yamlLines.length - 1, urlLineIndex + 2);
+        for (let i = checkFrom; i <= checkTo; ++i) {
+            if (/^\s*(tag|commit):\s*v?.*/.test(yamlLines[i])) {
+                refLineIndex = i;
+                break;
+            }
+        }
 
-    // Work on the file as text, yaml library spits the file out much differently then before
-    // and I want to keep it human.
-    const line = findLineIndexMatching(lines, /\s*url:\s*https:\/\/github\.com\/5cript\/nui-sftp/).lineIndex;
+        if (refLineIndex === -1) {
+            console.warn(`Could not find tag or commit line for work dependency ${name} in flatpak YAML, skipping...`);
+            continue;
+        }
 
-    if (line === -1) {
-        throw new Error('Could not find url line in flatpak YAML');
-    }
+        const refType = yamlLines[refLineIndex].match(/^\s*(tag|commit):\s*v?.*/)[1];
+        const newRefValue = rev;
 
-    // Search two lines up and below for "tag":
-    let tagLineIndex = -1;
-    const checkFrom = Math.max(0, line - 2);
-    const checkTo = Math.min(lines.length - 1, line + 2);
-    for (let i = checkFrom; i <= checkTo; ++i) {
-        if (/^\s*tag:\s*v?.*/.test(lines[i])) {
-            tagLineIndex = i;
-            break;
+        console.log(`Updating source for work dependency ${name} in flatpak YAML from ${refType} ${yamlLines[refLineIndex]} to ${refType} ${newRefValue}...`);
+
+        if (looksLikeGitHash(newRefValue)) {
+            yamlLines[refLineIndex] = yamlLines[refLineIndex].replace(/^\s*tag:\s*v?.*/, `commit: ${newRefValue}`);
+        } else {
+            yamlLines[refLineIndex] = yamlLines[refLineIndex].replace(/^\s*commit:\s*v?.*/, `tag: ${newRefValue}`);
         }
     }
+    return yamlLines;
+}
 
-    const spaceBeforeTag = lines[tagLineIndex].match(/^(\s*)tag:\s*v?.*/)[1];
-
-    if (tagLineIndex === -1) {
-        throw new Error('Could not find tag line in flatpak YAML');
-    }
-
-    lines[tagLineIndex] = `${spaceBeforeTag}tag: ${version}`;
-
+export async function updateFlatpakYaml() {
+    const yamlContent = await fs.readFile(flatpakYamlPath, 'utf-8');
+    const lines = await updateSources(splitLines(yamlContent));
     await fs.writeFile(flatpakYamlPath, lines.join('\n'), 'utf-8');
 }

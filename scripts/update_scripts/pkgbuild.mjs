@@ -3,6 +3,7 @@ import { parsedVersion } from './version.mjs';
 import { pkgbuildPath, cloneLocation } from './files_and_dirs.mjs';
 import { splitLines, onLineMatchingModify, findLineIndexMatching } from './text_editing.mjs';
 import { workDependenciesAsMap } from './work_dependencies.mjs';
+import { looksLikeGitHash } from './git.mjs';
 
 import fs from 'node:fs/promises';
 import fsOld from 'node:fs';
@@ -83,26 +84,15 @@ const extractSources = (lines) => {
     if (sha256sumsLineIndex === -1) {
         throw new Error('No sha256sums line found in PKGBUILD');
     }
-    /*
-    source=(
-        "$pkgname::git+$url.git#tag=$pkgver"
-        "git+https://github.com/NuiCpp/Nui.git#commit=96e87184cd48fe0dfa1bf9c187a49842a36b96f7"
-        "git+https://github.com/5cript/roar.git#commit=a787bce9c8132f4c860bc9e55bff742fd1a3276f"
-        "git+https://github.com/DNKpp/gimo.git#commit=16377a6d496b31a9272f9a079c060fba15258bcc"
-        "git+https://github.com/NuiCpp/traits.git#commit=6c9caa21c48c9e1f7f039a7bdf8805a0940fce0a"
-        "git+https://github.com/NuiCpp/ui5.git#commit=a514318f9110f7e77574abd283ef0c5ecf634f40"
-        "git+https://github.com/5cript/5cript-nui-components.git#commit=fb33b5f751eed174b930329fbecf52138e63c0cf"
-    )
-    sha256sum=(
-        'SKIP'
-        'SKIP'
-        ...
-    )
-    */
+
     for (let i = sourceLineIndex + 1; i < lines.length; i++) {
         if (lines[i].trim() === ')') {
             const sources = lines.slice(sourceLineIndex + 1, i).map(line => line.trim().replace(/"/g, '')).map((line, index) => {
                 let name = '';
+                let isGitLink = false;
+                if (line.startsWith('git+')) {
+                    isGitLink = true;
+                }
                 if (line.indexOf('::') !== -1) {
                     const parts = line.split('::');
                     name = parts[0];
@@ -130,7 +120,8 @@ const extractSources = (lines) => {
                     lineIndex: sourceLineIndex + 1 + index,
                     refType,
                     refValue,
-                    sha256sumLine: sha256sumsLineIndex + 1 + index
+                    sha256sumLine: sha256sumsLineIndex + 1 + index,
+                    isGitLink
                 }
             })
             return sources;
@@ -138,8 +129,6 @@ const extractSources = (lines) => {
     }
     return sources;
 }
-
-const looksLikeGitHash = (str) => /^[0-9a-f]{40}$/.test(str);
 
 const joinSourcesWithWorkDependenciesByUrl = async (sources) => {
     const workDependenciesMap = await workDependenciesAsMap();
@@ -203,10 +192,11 @@ const updatePkgBuild = async () => {
             source.url = 'git+https://github.com/5cript/nui-sftp.git',
             source.urlWithFragment = `git+https://github.com/5cript/nui-sftp.git#tag=${version.tag}`;
             source.isMainPackage = true;
+            source.isGitLink = true;
         }
         const revisionChanged = source.refType !== source.newRefType || source.refValue !== source.newRefValue;
 
-        if (!source.isMainPackage) {
+        if (!source.isMainPackage && source.isGitLink) {
             if (source.newRefType && source.newRefValue) {
                 const oldLine = pkgbuildLines[source.lineIndex];
                 const newLine = reassembleSourceLine(source);

@@ -12,3 +12,6 @@ SOURCE_DIR=$(canonicalPath "${SOURCE_DIR}")
 flatpak-builder --force-clean --install-deps-from=flathub build/flatpak org.nuicpp.nui_sftp.yml
 flatpak build-export build/flatpak-export build/flatpak
 flatpak build-bundle build/flatpak-export build/nui-sftp.flatpak org.nuicpp.nui_sftp --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+
+# How to install:
+# flatpak install --user --reinstall build/nui-sftp.flatpak --include-sdk --include-debug

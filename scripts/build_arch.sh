@@ -17,4 +17,4 @@ cd "${BUILD_DIR}" || exit 1
 rm "${BUILD_DIR}/PKGBUILD" || true
 ln -s "${SOURCE_DIR}/PKGBUILD" PKGBUILD
 
-makepkg -c
+makepkg -fi
