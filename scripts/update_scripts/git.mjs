@@ -15,9 +15,9 @@ const pullLatestChanges = async (repoDir) => {
     await execAsync(`git -C ${repoDir} pull origin ${defaultBranchName}`);
 }
 
-const pullRevision = async (repoDir, ref) => {
-    console.log(`Pulling revision ${ref} in ${repoDir}...`);
-    await execAsync(`git -C ${repoDir} pull origin ${ref}`);
+const checkoutRevision = async (repoDir, ref) => {
+    console.log(`Checking out revision ${ref} in ${repoDir}...`);
+    await execAsync(`git -C ${repoDir} checkout ${ref}`);
 }
 
 const isOnDefaultBranch = async (repoDir) => {
@@ -38,7 +38,7 @@ const updateRepo = async (repoUrl, targetDir, ref) => {
     if (await directoryExists(targetDir)) {
         console.log(`Directory ${targetDir} already exists. Updating repository to ${ref}`);
         if (ref) {
-            await pullRevision(targetDir, ref);
+            await checkoutRevision(targetDir, ref);
         } else {
             await pullLatestChanges(targetDir);
         }
@@ -48,7 +48,7 @@ const updateRepo = async (repoUrl, targetDir, ref) => {
     console.log(`Cloning repository from ${repoUrl} to ${targetDir}...`);
     await execAsync(`git clone ${repoUrl} ${targetDir}`);
     if (ref) {
-        await pullRevision(targetDir, ref);
+        await checkoutRevision(targetDir, ref);
     }
     return;
 }

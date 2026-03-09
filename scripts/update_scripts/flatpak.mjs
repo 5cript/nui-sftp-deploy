@@ -6,8 +6,22 @@ import { looksLikeGitHash } from './git.mjs';
 
 import fs from 'node:fs/promises';
 
+async function setFunctionOnForcedVersionCmakeOptions(yamlLines) {
+    const { lineIndex, match } = findLineIndexMatching(yamlLines, /^(\s*)-DFORCED_PROJECT_VERSION=.*$/);
+    if (lineIndex === -1) {
+        console.warn('Could not find line with DFORCED_PROJECT_VERSION in flatpak YAML, skipping...');
+        return yamlLines;
+    }
+
+    const cmakeOptionsLine = yamlLines[lineIndex];
+    yamlLines[lineIndex] = match[1] + `-DFORCED_PROJECT_VERSION=${version}`;
+    console.log(`Updating DFORCED_PROJECT_VERSION in flatpak YAML from ${cmakeOptionsLine} to ${yamlLines[lineIndex]}...`);
+    return yamlLines;
+}
+
 async function updateSources(yamlLines) {
     const workDeps = await workDependenciesAsMap();
+    workDeps['nui-sftp'] = { url: 'https://github.com/5cript/nui-sftp', rev: version, branch: 'main' };
     for (const [name, { url, rev }] of Object.entries(workDeps)) {
         // find url in yaml lines
         const urlLineIndex = findLineIndexMatching(yamlLines, new RegExp(`\\s*url:\\s*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)).lineIndex;
@@ -32,15 +46,16 @@ async function updateSources(yamlLines) {
             continue;
         }
 
+        const refLineSpacePrefix = yamlLines[refLineIndex].match(/^(\s*)/)[1];
         const refType = yamlLines[refLineIndex].match(/^\s*(tag|commit):\s*v?.*/)[1];
         const newRefValue = rev;
 
         console.log(`Updating source for work dependency ${name} in flatpak YAML from ${refType} ${yamlLines[refLineIndex]} to ${refType} ${newRefValue}...`);
 
         if (looksLikeGitHash(newRefValue)) {
-            yamlLines[refLineIndex] = yamlLines[refLineIndex].replace(/^\s*tag:\s*v?.*/, `commit: ${newRefValue}`);
+            yamlLines[refLineIndex] = yamlLines[refLineIndex].replace(/^\s*tag:\s*v?.*/, `${refLineSpacePrefix}commit: ${newRefValue}`);
         } else {
-            yamlLines[refLineIndex] = yamlLines[refLineIndex].replace(/^\s*commit:\s*v?.*/, `tag: ${newRefValue}`);
+            yamlLines[refLineIndex] = yamlLines[refLineIndex].replace(/^\s*commit:\s*v?.*/, `${refLineSpacePrefix}tag: ${newRefValue}`);
         }
     }
     return yamlLines;
@@ -48,6 +63,7 @@ async function updateSources(yamlLines) {
 
 export async function updateFlatpakYaml() {
     const yamlContent = await fs.readFile(flatpakYamlPath, 'utf-8');
-    const lines = await updateSources(splitLines(yamlContent));
+    let lines = await updateSources(splitLines(yamlContent));
+    lines = await setFunctionOnForcedVersionCmakeOptions(lines);
     await fs.writeFile(flatpakYamlPath, lines.join('\n'), 'utf-8');
 }
