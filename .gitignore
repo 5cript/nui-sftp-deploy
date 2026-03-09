@@ -1,0 +1,4 @@
+build/*
+checkout/*
+.vscode/*
+node_modules/*

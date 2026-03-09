@@ -1,0 +1,194 @@
+id: org.nuicpp.nui_sftp
+runtime: org.gnome.Platform
+runtime-version: '49'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm21
+  - org.freedesktop.Sdk.Extension.node24
+command: nui-sftp
+buildsystem: simple
+
+finish-args:
+  - --share=network
+  - --filesystem=host
+  - --socket=wayland
+  - --socket=x11
+  - --socket=fallback-x11
+  - --socket=ssh-auth
+  - --device=dri
+  - --device=input
+
+modules:
+  - name: boost
+    buildsystem: simple
+    build-commands:
+      - ./bootstrap.sh --prefix=/app
+      - ./b2 --with-program_options --with-filesystem --with-system --with-serialization --with-thread --with-mpi --with-iostreams --with-asio --with-process install
+    sources:
+      - type: archive
+        url: https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.gz
+        sha256: 5e93d582aff26868d581a52ae78c7d8edf3f3064742c6e77901a1f18a437eea9
+    cleanup:
+      - '/lib/cmake/boost*'
+      - '/include'
+
+
+  - name: libssh
+    buildsystem: simple
+    build-commands:
+      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app
+      - cmake --build build --target install
+    sources:
+      - type: git
+        url: https://git.libssh.org/projects/libssh.git/
+        tag: libssh-0.11.4
+    cleanup:
+      - '/include'
+      - '/lib64/pkgconfig/libssh.pc'
+      - '/lib64/cmake/libssh'
+
+  - name: interval-tree
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/include
+      - cp -r include/interval-tree /app/include/interval-tree
+    sources:
+      - type: git
+        url: https://github.com/5cript/interval-tree.git
+        tag: v3.1.1
+    cleanup:
+      - '/include'
+
+  - name: nlohmann-json
+    buildsystem: simple
+    build-commands:
+      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app
+      - cmake --build build --target install
+    sources:
+      - type: git
+        url: https://github.com/nlohmann/json.git
+        tag: v3.12.0
+    cleanup:
+      - '/include'
+
+  - name: fmt
+    buildsystem: simple
+    build-commands:
+      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app
+      - cmake --build build --target install
+    sources:
+      - type: git
+        url: https://github.com/fmtlib/fmt.git
+        tag: 12.1.0
+    cleanup:
+      - '/include'
+      - '/lib64/libfmt.a'
+      - '/lib64/pkgconfig/fmt.pc'
+      - '/lib64/cmake/fmt'
+
+  - name: nui-sftp-frontend
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/frontend
+      - cp -r * /app/frontend
+    sources:
+      - type: archive
+        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-sftp-releases/linux-frontend/nui-sftp-linux-frontend_0.0.2-beta.tar.gz
+        sha256: ca2b6a832ce7fe842bb3318dcf91e83b5be816d4457ca5013af90b34f73c4c10
+
+  - name: nui-sftp
+    buildsystem: simple
+    build-options:
+      env:
+        CC: clang
+        CXX: clang++
+        LD: lld
+        INSTALL_TARGET: /app
+        Boost_ROOT: /app
+        BUILD_DIRECTORY: build/flatpak
+        PKG_CONFIG_PATH: /app/usr/lib/pkgconfig
+      append-path: "/usr/lib/sdk/llvm21/bin:/usr/lib/sdk/node24/bin"
+      prepend-ld-library-path: "/usr/lib/sdk/llvm21/lib"
+      # build-args:
+      #   - --share=network
+    build-commands:
+      - cmake
+          -B build/flatpak
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_CXX_COMPILER=clang++
+          -DCMAKE_LINKER=lld
+          -DCMAKE_CXX_EXTENSIONS=ON
+          -DCMAKE_CXX_STANDARD=23
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          -DOFFLINE_BUILD=ON
+          -DJSON_Diagnostics=ON
+      - cmake --build build/flatpak
+      - OMIT_FRONTEND=true ./scripts/deploy.sh
+      # Patch desktop file to rename icon "nui_sftp.svg" to "org.nuicpp.nui_sftp.svg"
+      - sed -i 's/Icon=nui_sftp/Icon=org.nuicpp.nui_sftp/g' org.nuicpp.nui_sftp.desktop
+      # Install AppStream metadata
+      - install -Dm644 org.nuicpp.nui_sftp.metainfo.xml /app/share/metainfo/org.nuicpp.nui_sftp.metainfo.xml
+      # Install desktop file
+      - install -Dm644 org.nuicpp.nui_sftp.desktop /app/share/applications/org.nuicpp.nui_sftp.desktop
+      # Image
+      - install -Dm644 NUI-SFTP_Logo-01.svg /app/share/icons/hicolor/scalable/apps/org.nuicpp.nui_sftp.svg
+    sources:
+      - type: git
+        url: https://github.com/5cript/nui-sftp
+        commit: e72524033622eb20a815111ff4b8a022c2352b0d
+      - type: git
+        url: https://github.com/NuiCpp/Nui.git
+        commit: 3983d25294c9c9affb4d6022b702b59616aa3b1d
+        dest: 'dependencies/Nui'
+      - type: git
+        url: https://github.com/5cript/roar.git
+        commit: a787bce9c8132f4c860bc9e55bff742fd1a3276f
+        dest: 'dependencies/roar'
+      - type: git
+        url: https://github.com/DNKpp/gimo.git
+        commit: 16377a6d496b31a9272f9a079c060fba15258bcc
+        dest: 'dependencies/gimo'
+      - type: git
+        url: https://github.com/NuiCpp/traits.git
+        commit: 6c9caa21c48c9e1f7f039a7bdf8805a0940fce0a
+        dest: 'dependencies/traits'
+      - type: git
+        url: https://github.com/5cript/portable-file-dialogs.git
+        commit: 13ac8d8655514486d0d700ea7063dcb05f8363da
+        dest: 'dependencies/portable-file-dialogs'
+      - type: git
+        url: https://github.com/5cript/webview.git
+        commit: 1dc3cbda951de8de0ff2ae5cc286b070d61f972d
+        dest: 'dependencies/webview'
+      - type: git
+        url: https://github.com/jbeder/yaml-cpp.git
+        commit: 89ff142b991af432b5d7a7cee55282f082a7e629
+        dest: 'dependencies/yaml-cpp'
+      - type: git
+        url: https://github.com/rapidfuzz/rapidfuzz-cpp.git
+        commit: b8ce411e91e01599d0697ad307933e05ddf3a723
+        dest: 'dependencies/rapidfuzz'
+      - type: git
+        url: https://github.com/gabime/spdlog.git
+        tag: v1.17.0
+        dest: 'dependencies/spdlog'
+      - type: git
+        url: https://github.com/SpartanJ/efsw.git
+        tag: 87abe599995d5646f5d83cf2e3a225bd73148b3a
+        dest: 'dependencies/efsw'
+      - type: archive
+        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz
+        sha256: 30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e
+        dest: 'dependencies/icons'
+        strip-components: 0
+      - type: git
+        url: https://github.com/5cript/promise-cpp.git
+        commit: bfad5bdd58f29465741858d826338e5b4ca65826
+        dest: 'dependencies/promise-cpp'
+      - type: file
+        path: org.nuicpp.nui_sftp.metainfo.xml
+      - type: file
+        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01.svg
+        sha256: 6a8217c9f00ded6893324649394a9dbc9e5004a2644735fd3f18934bb29bcae6
