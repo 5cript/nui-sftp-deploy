@@ -25,6 +25,7 @@ makedepends=(
     python
     nodejs
 )
+options=('!debug')
 source=(
     "$pkgname::git+$url.git#tag=${pkgver//_/-}"
     "git+https://github.com/NuiCpp/Nui.git#commit=970676604bc3bc63fa32e547c90a76dec8daf6bd"
