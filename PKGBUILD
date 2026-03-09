@@ -1,7 +1,7 @@
 # Maintainer: Tim Ebbeke <tim 06 tr (at) gmail dot com>
 
 pkgname=nui-sftp
-pkgver=e72524033622eb20a815111ff4b8a022c2352b0d
+pkgver=0.0.3_beta
 pkgrel=1
 pkgdesc="NUI-based SFTP application"
 arch=('x86_64')
@@ -27,8 +27,8 @@ makedepends=(
 )
 options=('!debug')
 source=(
-    "$pkgname::git+$url.git#tag=${pkgver//_/-}"
-    "git+https://github.com/NuiCpp/Nui.git#commit=970676604bc3bc63fa32e547c90a76dec8daf6bd"
+    "$pkgname::git+$url.git#commit=bf9dd8c0ad0844fcd3a86bd5ddd425fe69bd06ae"
+    "git+https://github.com/NuiCpp/Nui.git#commit=d066aebccc5ef40612e4c072ad14686ca8c16072"
     "git+https://github.com/5cript/roar.git#commit=a787bce9c8132f4c860bc9e55bff742fd1a3276f"
     "git+https://github.com/DNKpp/gimo.git#commit=16377a6d496b31a9272f9a079c060fba15258bcc"
     "git+https://github.com/NuiCpp/traits.git#commit=6c9caa21c48c9e1f7f039a7bdf8805a0940fce0a"
@@ -37,8 +37,8 @@ source=(
     "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01.svg"
 )
 sha256sums=(
-    'SKIP'
-    'SKIP'
+    '71e20abed64716f90bf10546de7716ccb5e170bcddca0bdbd10c13e9c80ad076'
+    '06bb027424dee282a5d9806b6a9ffec4be6084790a6312120174244b27610299'
     '411be282af945718509ce24cc0c2ef837657398c23386a0cb7035d1ecc6367d5'
     '8d5c5f36710425e8660470db14a5d6011e20b4e9be638f3ab34ad81f9fe286b7'
     '77bed25f96135cdcf1b8274664c9564375f9823866e7d55e843f75a213af5359'
@@ -64,6 +64,7 @@ build() {
         -S "$srcdir/$pkgname" \
         -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
+        -DFORCED_PROJECT_VERSION="$pkgver" \
         -DCMAKE_C_COMPILER=clang \
         -DCMAKE_CXX_COMPILER=clang++ \
         -DCMAKE_LINKER=lld \
