@@ -141,7 +141,7 @@ modules:
         tag: v0.0.3-beta
       - type: git
         url: https://github.com/NuiCpp/Nui.git
-        commit: 3983d25294c9c9affb4d6022b702b59616aa3b1d
+        commit: d066aebccc5ef40612e4c072ad14686ca8c16072
         dest: 'dependencies/Nui'
       - type: git
         url: https://github.com/5cript/roar.git

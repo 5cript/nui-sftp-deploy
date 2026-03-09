@@ -35,6 +35,7 @@ source=(
     "git+https://github.com/NuiCpp/ui5.git#commit=a514318f9110f7e77574abd283ef0c5ecf634f40"
     "git+https://github.com/5cript/5cript-nui-components.git#commit=fb33b5f751eed174b930329fbecf52138e63c0cf"
     "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01.svg"
+    "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-sftp-releases/linux-frontend/nui-sftp-linux-frontend_${pkgver//_/-}.tar.gz"
 )
 sha256sums=(
     '71e20abed64716f90bf10546de7716ccb5e170bcddca0bdbd10c13e9c80ad076'
@@ -45,6 +46,7 @@ sha256sums=(
     '64e6a4c24ef2e229721482448f8b139c50c41bbdecaea4cf79ce079a8d21e4a0'
     'b48e921daff6efe9b9ce1520ae9ee431c0f8ed6428d8190cd33750df8049398a'
     '6a8217c9f00ded6893324649394a9dbc9e5004a2644735fd3f18934bb29bcae6'
+    '41ea0eb74825d5bdd259570b14f450ea2a99f900dd25012a48d9f5e4c25eae69'
 )
 
 build() {
@@ -69,6 +71,7 @@ build() {
         -DCMAKE_CXX_COMPILER=clang++ \
         -DCMAKE_LINKER=lld \
         -DCMAKE_CXX_STANDARD=23 \
+        -DOMIT_FRONTEND_BUILD=ON \
         -DNUI_FETCH_TRAITS=OFF
 
     cmake --build "$srcdir/$pkgname/build"
@@ -84,9 +87,11 @@ package() {
     mkdir -p "$pkgdir"/opt/"$pkgname"/themes
     mkdir -p "$pkgdir"/opt/"$pkgname"/themes/dark
 
+    # Unpack frontend tarball
+    tar -xzf "$srcdir/nui-sftp-linux-frontend_${pkgver//_/-}.tar.gz" -C "$pkgdir"/opt/"$pkgname"/frontend --strip-components=1
+
     # Copy files
     install -m755 "$srcdir/$pkgname/build/bin/$pkgname" "$pkgdir"/opt/"$pkgname"/bin/"$pkgname"
-    cp -r "$srcdir/$pkgname/build/frontend" "$pkgdir"/opt/"$pkgname"/
     cp -r "$srcdir/$pkgname/build/assets" "$pkgdir"/opt/"$pkgname"/
     install -m644 "$srcdir/$pkgname/LICENSE" "$pkgdir"/opt/"$pkgname"/LICENSE
     install -m644 "$srcdir/$pkgname/build/themes/dark/css_variables.css" "$pkgdir"/opt/"$pkgname"/themes/dark/css_variables.css

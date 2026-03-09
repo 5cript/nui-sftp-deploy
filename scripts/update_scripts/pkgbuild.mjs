@@ -105,7 +105,7 @@ async function calcChecksumHttp(url, integ) {
     }
 }
 
-const extractSources = (lines) => {
+const extractSources = (lines, version) => {
     const sourceLineIndex = lines.findIndex(line => line.startsWith('source='));
     if (sourceLineIndex === -1) {
         throw new Error('No source line found in PKGBUILD');
@@ -158,6 +158,10 @@ const extractSources = (lines) => {
                         hadNamePrefix
                     }
                 } else {
+                    // replace ${pkgver//_/-} or ${pkgver} with version
+                    line = line.replace(/\$\{pkgver\/\/_\/-\}/g, version.full);
+                    line = line.replace(/\$\{pkgver\}/g, version.full);
+
                     return {
                         name,
                         protocol: line.startsWith("https") ? "https" : null,
@@ -229,7 +233,7 @@ const updatePkgBuild = async () => {
     const oldPkgver = pkgverLineIndex.match[1];
     console.log(`Current pkgver in PKGBUILD: ${oldPkgver}`);
 
-    const joined = await joinSourcesWithWorkDependenciesByUrl(extractSources(pkgbuildLines));
+    const joined = await joinSourcesWithWorkDependenciesByUrl(extractSources(pkgbuildLines, version));
     // Update sources:
     for (let source of joined) {
         if (source.name == '$pkgname') {
