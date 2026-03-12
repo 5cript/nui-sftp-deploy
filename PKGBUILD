@@ -1,7 +1,7 @@
 # Maintainer: Tim Ebbeke <tim 06 tr (at) gmail dot com>
 
 pkgname=nui-sftp
-pkgver=0.0.3_beta
+pkgver=0.0.5
 pkgrel=1
 pkgdesc="NUI-based SFTP application"
 arch=('x86_64')
@@ -27,7 +27,7 @@ makedepends=(
 )
 options=('!debug')
 source=(
-    "$pkgname::git+$url.git#commit=bf9dd8c0ad0844fcd3a86bd5ddd425fe69bd06ae"
+    "$pkgname::git+$url.git#tag=v${pkgver//_/-}"
     "git+https://github.com/NuiCpp/Nui.git#commit=d066aebccc5ef40612e4c072ad14686ca8c16072"
     "git+https://github.com/5cript/roar.git#commit=a787bce9c8132f4c860bc9e55bff742fd1a3276f"
     "git+https://github.com/DNKpp/gimo.git#commit=16377a6d496b31a9272f9a079c060fba15258bcc"
@@ -35,10 +35,10 @@ source=(
     "git+https://github.com/NuiCpp/ui5.git#commit=a514318f9110f7e77574abd283ef0c5ecf634f40"
     "git+https://github.com/5cript/5cript-nui-components.git#commit=fb33b5f751eed174b930329fbecf52138e63c0cf"
     "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01.svg"
-    "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-sftp-releases/linux-frontend/nui-sftp-linux-frontend_${pkgver//_/-}.tar.gz"
+    "https://github.com/5cript/nui-sftp/releases/download/v${pkgver}/nui-sftp-linux-frontend_${pkgver}.tar.gz"
 )
 sha256sums=(
-    '71e20abed64716f90bf10546de7716ccb5e170bcddca0bdbd10c13e9c80ad076'
+    '6fc3bea15d2c08b6ac902a647102b178665c67e680e2fdb5f3f3e81fe531ba70'
     '06bb027424dee282a5d9806b6a9ffec4be6084790a6312120174244b27610299'
     '411be282af945718509ce24cc0c2ef837657398c23386a0cb7035d1ecc6367d5'
     '8d5c5f36710425e8660470db14a5d6011e20b4e9be638f3ab34ad81f9fe286b7'
@@ -46,7 +46,7 @@ sha256sums=(
     '64e6a4c24ef2e229721482448f8b139c50c41bbdecaea4cf79ce079a8d21e4a0'
     'b48e921daff6efe9b9ce1520ae9ee431c0f8ed6428d8190cd33750df8049398a'
     '6a8217c9f00ded6893324649394a9dbc9e5004a2644735fd3f18934bb29bcae6'
-    '41ea0eb74825d5bdd259570b14f450ea2a99f900dd25012a48d9f5e4c25eae69'
+    '7d97c50cac458a9dcfab1ef4d6b8288df4c72f7eb52f59fc3b46a45702c7107c'
 )
 
 build() {

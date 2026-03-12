@@ -5,7 +5,6 @@ on:
     branches:
       - 'main'
       - 'release/**'
-      - 'feat/pipelines'
   workflow_dispatch:
     inputs:
       version:

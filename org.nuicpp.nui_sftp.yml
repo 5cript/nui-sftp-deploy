@@ -124,7 +124,7 @@ modules:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DOFFLINE_BUILD=ON
           -DJSON_Diagnostics=ON
-          -DFORCED_PROJECT_VERSION=v0.0.3-beta
+          -DFORCED_PROJECT_VERSION=v0.0.5
       - cmake --build build/flatpak
       - OMIT_FRONTEND=true ./scripts/deploy.sh
       # Patch desktop file to rename icon "nui_sftp.svg" to "org.nuicpp.nui_sftp.svg"
@@ -138,7 +138,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v0.0.3-beta
+        tag: v0.0.5
       - type: git
         url: https://github.com/NuiCpp/Nui.git
         commit: d066aebccc5ef40612e4c072ad14686ca8c16072

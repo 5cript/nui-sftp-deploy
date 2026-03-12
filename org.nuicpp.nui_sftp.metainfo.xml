@@ -20,6 +20,16 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.0.5" date="2026-03-11">
+            <description>
+                <p>Fixed Frontend Artifact Upload</p>
+            </description>
+        </release>
+        <release version="v0.0.4" date="2026-03-11">
+            <description>
+                <p>Moved from CMake 4.2 to CMake 4.1</p>
+            </description>
+        </release>
         <release version="v0.0.3-beta" date="2026-03-07">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
