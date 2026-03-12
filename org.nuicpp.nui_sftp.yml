@@ -124,6 +124,7 @@ modules:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DOFFLINE_BUILD=ON
           -DJSON_Diagnostics=ON
+          -DFORCED_PROJECT_VERSION=v0.0.5
       - cmake --build build/flatpak
       - OMIT_FRONTEND=true ./scripts/deploy.sh
       # Patch desktop file to rename icon "nui_sftp.svg" to "org.nuicpp.nui_sftp.svg"
@@ -137,10 +138,10 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        commit: e72524033622eb20a815111ff4b8a022c2352b0d
+        tag: v0.0.5
       - type: git
         url: https://github.com/NuiCpp/Nui.git
-        commit: 3983d25294c9c9affb4d6022b702b59616aa3b1d
+        commit: d066aebccc5ef40612e4c072ad14686ca8c16072
         dest: 'dependencies/Nui'
       - type: git
         url: https://github.com/5cript/roar.git
@@ -176,7 +177,7 @@ modules:
         dest: 'dependencies/spdlog'
       - type: git
         url: https://github.com/SpartanJ/efsw.git
-        tag: 87abe599995d5646f5d83cf2e3a225bd73148b3a
+        commit: 87abe599995d5646f5d83cf2e3a225bd73148b3a
         dest: 'dependencies/efsw'
       - type: archive
         url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz

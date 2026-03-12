@@ -1,0 +1,116 @@
+name: Archlinux PKGBUILD
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'release/**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g. 1.2.3 or v1.2.3)'
+        required: true
+        default: 'vX.Y.Z'
+        type: string
+
+env:
+  BUILD_TYPE: Release
+  BUILD_DIR: build/clang_release
+
+jobs:
+  archlinux:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+      # Dont need I think
+      # options: --privileged
+
+    steps:
+      - name: Install dependencies
+        # Only install package NOT in dependencies for makepkg and only used for the workflow. To find missing dependencies.
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm \
+            git \
+            zip \
+            tar \
+            unzip \
+            python \
+            github-cli \
+            curl \
+            aws-cli-v2
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Test bun
+        run: bun --version
+
+      - name: Run prepare_release.mjs
+        if: github.event_name == 'workflow_dispatch'
+        run: bun run ./scripts/prepare_release.mjs --version ${{ github.event.inputs.version }}
+
+      - name: Create User for makepkg
+        run: |
+          sudo useradd -m pkguser
+          echo "pkguser ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/pkguser
+          sudo passwd -d pkguser  # Remove password for user
+
+      - name: Build Archlinux package
+        env:
+          # Lets make this fixed for the workflow to avoid any issues with different versions of makepkg.
+          PKGEXT: .pkg.tar.zst
+        run: |
+          mkdir -p makepkg_dir
+          chown pkguser:pkguser makepkg_dir
+          sudo -u pkguser bash -c "ln -s $GITHUB_WORKSPACE/PKGBUILD makepkg_dir/PKGBUILD"
+          sudo -u pkguser bash -c "cd makepkg_dir && makepkg -sf --noconfirm"
+
+      - name: Find Package
+        run: |
+          cd makepkg_dir
+          PACKAGE_FILE=$(ls *.pkg.tar.zst)
+          echo "PACKAGE_FILE=$PACKAGE_FILE" >> $GITHUB_ENV
+
+      - name: Extract Version
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          VERSION=$(./scripts/extract_version.sh)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Produce Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.PACKAGE_FILE }}
+          path: makepkg_dir/${{ env.PACKAGE_FILE }}
+
+      - name: Upload Artifact to Release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASEUPLOADPAT }}
+        run: |
+          gh release upload "v${{ env.VERSION }}" "makepkg_dir/${{ env.PACKAGE_FILE }}" --repo 5cript/nui-sftp
+
+      # Not very useful to upload the package, users should makepkg from source themselves,
+      # but I want to archive it anyway.
+      - name: Upload package to MEGA S4
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MEGAS4ACCESS }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MEGAS4KEY }}
+          ENDPOINT: https://s3.eu-central-1.s4.mega.io
+          FILENAME: ${{ env.PACKAGE_FILE }}
+          S3_PATH: "s3://nui-sftp-releases/archlinux/${{ (github.event_name == 'workflow_dispatch' && 'x86_64/user_trigger') || 'x86_64' }}/"
+        run: |
+          # Check if the file exists on the remote
+          if aws s3 ls "${{ env.S3_PATH }}${{ env.FILENAME }}" --endpoint-url ${{ env.ENDPOINT }} > /dev/null 2>&1; then
+            echo "Error: File ${{ env.FILENAME }} already exists in S4. Exiting to prevent overwrite."
+            exit 0
+          fi
+
+          # If it doesnt exist, upload it
+          aws s3 cp "makepkg_dir/${{ env.FILENAME }}" "${{ env.S3_PATH }}" --endpoint-url ${{ env.ENDPOINT }}

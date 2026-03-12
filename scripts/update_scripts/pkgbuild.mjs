@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { Readable } from 'node:stream';
 import { parsedVersion } from './version.mjs';
 import { pkgbuildPath, cloneLocation } from './files_and_dirs.mjs';
 import { splitLines, onLineMatchingModify, findLineIndexMatching } from './text_editing.mjs';
@@ -75,7 +76,36 @@ function calcChecksumGit(url, checkoutDir, integ) {
     });
 }
 
-const extractSources = (lines) => {
+async function calcChecksumHttp(url, integ) {
+    try {
+        const res = await fetch(url);
+        if (!res.ok) {
+            throw new Error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
+        }
+
+        const hash = spawn(`${integ}sum`, [], { stdio: ['pipe', 'pipe', 'inherit'] });
+        Readable.fromWeb(res.body).pipe(hash.stdin);
+
+        let output = "";
+        hash.stdout.on("data", (d) => {
+            output += d.toString("utf8");
+        });
+
+        return new Promise((resolve, reject) => {
+            hash.on("close", (code) => {
+                if (code !== 0) {
+                    return reject(new Error(`Hash process exited with code ${code}`));
+                }
+                const sum = output.trim().split(/\s+/)[0];
+                resolve(sum);
+            });
+        });
+    } catch (err) {
+        console.error(`Error fetching ${url}:`, err);
+    }
+}
+
+const extractSources = (lines, version) => {
     const sourceLineIndex = lines.findIndex(line => line.startsWith('source='));
     if (sourceLineIndex === -1) {
         throw new Error('No source line found in PKGBUILD');
@@ -90,12 +120,14 @@ const extractSources = (lines) => {
             const sources = lines.slice(sourceLineIndex + 1, i).map(line => line.trim().replace(/"/g, '')).map((line, index) => {
                 let name = '';
                 let isGitLink = false;
+                let hadNamePrefix = false;
                 if (line.startsWith('git+')) {
                     isGitLink = true;
                 }
                 if (line.indexOf('::') !== -1) {
                     const parts = line.split('::');
                     name = parts[0];
+                    hadNamePrefix = true;
                     line = parts[1];
                 } else {
                     // get name from url if it is in the form git+
@@ -107,21 +139,40 @@ const extractSources = (lines) => {
                         name = urlParts[urlParts.length - 1].replace('.git', '');
                     }
                 }
-                const protocolEndIndex = line.indexOf('+');
-                const urlEndIndex = line.indexOf('#');
-                const protocol = line.substring(0, protocolEndIndex);
-                const url = line.substring(protocolEndIndex + 1, urlEndIndex);
-                const refTypeAndValue = line.substring(urlEndIndex + 1);
-                const [refType, refValue] = refTypeAndValue.split('=');
-                return {
-                    name,
-                    protocol,
-                    url,
-                    lineIndex: sourceLineIndex + 1 + index,
-                    refType,
-                    refValue,
-                    sha256sumLine: sha256sumsLineIndex + 1 + index,
-                    isGitLink
+                if (isGitLink) {
+                    const protocolEndIndex = line.indexOf('+');
+                    const urlEndIndex = line.indexOf('#');
+                    const protocol = line.substring(0, protocolEndIndex);
+                    const url = line.substring(protocolEndIndex + 1, urlEndIndex);
+                    const refTypeAndValue = line.substring(urlEndIndex + 1);
+                    const [refType, refValue] = refTypeAndValue.split('=');
+                    return {
+                        name,
+                        protocol,
+                        url,
+                        lineIndex: sourceLineIndex + 1 + index,
+                        refType,
+                        refValue,
+                        sha256sumLine: sha256sumsLineIndex + 1 + index,
+                        isGitLink,
+                        hadNamePrefix
+                    }
+                } else {
+                    // replace ${pkgver//_/-} or ${pkgver} with version
+                    line = line.replace(/\$\{pkgver\/\/_\/-\}/g, version.full);
+                    line = line.replace(/\$\{pkgver\}/g, version.full);
+
+                    return {
+                        name,
+                        protocol: line.startsWith("https") ? "https" : null,
+                        url: line,
+                        lineIndex: sourceLineIndex + 1 + index,
+                        refType: null,
+                        refValue: null,
+                        sha256sumLine: sha256sumsLineIndex + 1 + index,
+                        isGitLink: false,
+                        hadNamePrefix
+                    }
                 }
             })
             return sources;
@@ -137,13 +188,11 @@ const joinSourcesWithWorkDependenciesByUrl = async (sources) => {
         if (matchingWorkDependency) {
             let newType = source.refType;
             let newRef = source.refValue;
-            if (looksLikeGitHash(matchingWorkDependency.rev))
-            {
+            if (looksLikeGitHash(matchingWorkDependency.rev)) {
                 newType = 'commit';
                 newRef = matchingWorkDependency.rev;
             }
-            else
-            {
+            else {
                 newType = 'tag';
                 newRef = matchingWorkDependency.rev;
             }
@@ -160,7 +209,7 @@ const joinSourcesWithWorkDependenciesByUrl = async (sources) => {
 }
 
 const reassembleSourceLine = (source) => {
-    const namePart = source.name ? `${source.name}::` : '';
+    const namePart = (source.hadNamePrefix && source.name) ? `${source.name}::` : '';
     return `    "${namePart}${source.protocol}+${source.urlWithFragment}"`;
 }
 
@@ -169,7 +218,7 @@ const updatePkgBuild = async () => {
 
     const version = parsedVersion();
     let pkgbuildLines = splitLines(await fs.readFile(pkgbuildPath, 'utf-8'));
-        pkgbuildLines = onLineMatchingModify(pkgbuildLines, /^pkgver=(.+)$/, (line, match) => {
+    pkgbuildLines = onLineMatchingModify(pkgbuildLines, /^pkgver=(.+)$/, (line, match) => {
         const oldVersion = match[1];
         const newVersion = version.dehyphenated;
 
@@ -184,15 +233,16 @@ const updatePkgBuild = async () => {
     const oldPkgver = pkgverLineIndex.match[1];
     console.log(`Current pkgver in PKGBUILD: ${oldPkgver}`);
 
-    const joined = await joinSourcesWithWorkDependenciesByUrl(extractSources(pkgbuildLines));
+    const joined = await joinSourcesWithWorkDependenciesByUrl(extractSources(pkgbuildLines, version));
     // Update sources:
     for (let source of joined) {
         if (source.name == '$pkgname') {
             source.name = 'nui-sftp',
-            source.url = 'git+https://github.com/5cript/nui-sftp.git',
-            source.urlWithFragment = `git+https://github.com/5cript/nui-sftp.git#tag=${version.tag}`;
+                source.url = 'git+https://github.com/5cript/nui-sftp.git',
+                source.urlWithFragment = `git+https://github.com/5cript/nui-sftp.git#tag=${version.tag}`;
             source.isMainPackage = true;
             source.isGitLink = true;
+            source.protocol = 'git';
         }
         const revisionChanged = source.refType !== source.newRefType || source.refValue !== source.newRefValue;
 
@@ -209,13 +259,24 @@ const updatePkgBuild = async () => {
             }
         }
 
-        if (revisionChanged || pkgbuildLines[source.sha256sumLine].includes('SKIP')) {
-            const {sum, ret} = await calcChecksumGit(source.urlWithFragment, `${cloneLocation}/${source.name}`, 'sha256');
-            if (ret !== 0) {
-                throw new Error(`Error calculating checksum for ${source.url}`);
+        const mustRecalculateHash = revisionChanged || pkgbuildLines[source.sha256sumLine].includes('SKIP');
+
+        if (mustRecalculateHash) {
+            if (source.protocol === 'git') {
+                const { sum, ret } = await calcChecksumGit(source.urlWithFragment, `${cloneLocation}/${source.name}`, 'sha256');
+                if (ret !== 0) {
+                    throw new Error(`Error calculating checksum for ${source.url}`);
+                }
+                console.log(`Updating sha256sum for ${source.name} to ${sum}...`);
+                pkgbuildLines[source.sha256sumLine] = `    '${sum}'`;
+            } else if (source.protocol === 'https') {
+                const sum = await calcChecksumHttp(source.url, 'sha256');
+                if (!sum) {
+                    throw new Error(`Error calculating checksum for ${source.url}`);
+                }
+                console.log(`Updating sha256sum for ${source.name} to ${sum}...`);
+                pkgbuildLines[source.sha256sumLine] = `    '${sum}'`;
             }
-            console.log(`Updating sha256sum for ${source.name} to ${sum}...`);
-            pkgbuildLines[source.sha256sumLine] = `    '${sum}'`;
         }
     }
     await fs.writeFile(pkgbuildPath, pkgbuildLines.join('\n'), 'utf-8');

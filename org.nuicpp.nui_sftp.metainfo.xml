@@ -20,6 +20,29 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.0.5" date="2026-03-11">
+            <description>
+                <p>Fixed Frontend Artifact Upload</p>
+            </description>
+        </release>
+        <release version="v0.0.4" date="2026-03-11">
+            <description>
+                <p>Moved from CMake 4.2 to CMake 4.1</p>
+            </description>
+        </release>
+        <release version="v0.0.3-beta" date="2026-03-07">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>Several Changes for Package Builds by @5cript in https://github.com/5cript/nui-sftp/pull/21</li>
+                </ul>
+                <p>
+                    
+                    <strong>Full Changelog</strong>
+                    : https://github.com/5cript/nui-sftp/compare/v0.0.2-beta…v0.0.3-beta
+                </p>
+            </description>
+        </release>
         <release version="v0.0.2-beta" date="2026-03-02">
             <description>
                 <p>The CMake version script no longer fails on -beta or +build suffixes.</p>
