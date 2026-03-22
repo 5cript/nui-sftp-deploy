@@ -21,7 +21,7 @@ async function setFunctionOnForcedVersionCmakeOptions(yamlLines) {
 
 async function updateSources(yamlLines) {
     const workDeps = await workDependenciesAsMap();
-    workDeps['nui-sftp'] = { url: 'https://github.com/5cript/nui-sftp', rev: parsedVersion().full, branch: 'main' };
+    workDeps['nui-sftp'] = { url: 'https://github.com/5cript/nui-sftp', rev: parsedVersion().tag, branch: 'main' };
     for (const [name, { url, rev }] of Object.entries(workDeps)) {
         // find url in yaml lines
         const urlLineIndex = findLineIndexMatching(yamlLines, new RegExp(`\\s*url:\\s*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)).lineIndex;

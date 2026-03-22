@@ -20,6 +20,19 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.1.0" date="2026-03-22">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>Remove ui5 webcomponents by @5cript in https://github.com/5cript/nui-sftp/pull/28</li>
+                </ul>
+                <p>
+                    
+                    <strong>Full Changelog</strong>
+                    : https://github.com/5cript/nui-sftp/compare/v0.0.5…v0.1.0
+                </p>
+            </description>
+        </release>
         <release version="v0.0.5" date="2026-03-11">
             <description>
                 <p>Fixed Frontend Artifact Upload</p>
