@@ -5,6 +5,7 @@ on:
     branches:
       - 'main'
       - 'release/**'
+      - 'feat/**'
   workflow_dispatch:
     inputs:
       version:
@@ -27,6 +28,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+          aws --version
+
       - name: Extract version from PKGBUILD
         if: github.event_name != 'workflow_dispatch'
         run: |
@@ -43,12 +51,6 @@ jobs:
           bundle: nui-sftp.flatpak
           manifest-path: org.nuicpp.nui_sftp.yml
           cache-key: flatpak-builder-${{ github.sha }}
-
-      - name: Extract Version
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-          VERSION=$(./scripts/extract_version.sh)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Rename flatpak bundle
         run: |
