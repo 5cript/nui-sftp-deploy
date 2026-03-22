@@ -20,6 +20,19 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.2.0" date="2026-03-22">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>File Grid Improvements &amp; Bug Fixes by @5cript in https://github.com/5cript/nui-sftp/pull/32</li>
+                </ul>
+                <p>
+                    
+                    <strong>Full Changelog</strong>
+                    : https://github.com/5cript/nui-sftp/compare/v0.1.1…v0.2.0
+                </p>
+            </description>
+        </release>
         <release version="v0.1.1" date="2026-03-22">
             <description>
                 <h2 id="whatchanged">What changed</h2>

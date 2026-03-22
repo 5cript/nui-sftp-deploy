@@ -1,7 +1,7 @@
 # Maintainer: Tim Ebbeke <tim 06 tr (at) gmail dot com>
 
 pkgname=nui-sftp
-pkgver=0.1.1
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="NUI-based SFTP application"
 arch=('x86_64')
@@ -37,14 +37,14 @@ source=(
     "https://github.com/5cript/nui-sftp/releases/download/v${pkgver}/nui-sftp-linux-frontend_${pkgver}.tar.gz"
 )
 sha256sums=(
-    'd7e95006e01d0aa72f72ff1cc9d4741d21801f47c1a09584c0419a4cfd0e9103'
+    'f02c4d5720ecde0aba27c36620d945d1bacaba90467d64f779c948ea08953d2c'
     '7948c9f043d8ebd34b9fbc1b5c2214c59fe919b102ea699a1714abb904b01124'
     '411be282af945718509ce24cc0c2ef837657398c23386a0cb7035d1ecc6367d5'
     '8d5c5f36710425e8660470db14a5d6011e20b4e9be638f3ab34ad81f9fe286b7'
     '77bed25f96135cdcf1b8274664c9564375f9823866e7d55e843f75a213af5359'
     'b2c3cf89924b49a3d4106c49fe8123cef784acfec9189102c0a26cd5b2585559'
     '6a8217c9f00ded6893324649394a9dbc9e5004a2644735fd3f18934bb29bcae6'
-    '3808896fed768382e424d7058f2ff99e1728cd73aece2980ba3ba763bc1738f0'
+    '3ff91da3550ba9bb6fbc9c56d07bac17e30d08c527e860d37e73e05df08a05cd'
 )
 
 build() {
