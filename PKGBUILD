@@ -1,7 +1,7 @@
 # Maintainer: Tim Ebbeke <tim 06 tr (at) gmail dot com>
 
 pkgname=nui-sftp
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="NUI-based SFTP application"
 arch=('x86_64')
@@ -37,14 +37,14 @@ source=(
     "https://github.com/5cript/nui-sftp/releases/download/v${pkgver}/nui-sftp-linux-frontend_${pkgver}.tar.gz"
 )
 sha256sums=(
-    '57b452f1e9ac271751b2d3333323239b89695ff41be0ee01faf405d5613784ba'
+    'd7e95006e01d0aa72f72ff1cc9d4741d21801f47c1a09584c0419a4cfd0e9103'
     '7948c9f043d8ebd34b9fbc1b5c2214c59fe919b102ea699a1714abb904b01124'
     '411be282af945718509ce24cc0c2ef837657398c23386a0cb7035d1ecc6367d5'
     '8d5c5f36710425e8660470db14a5d6011e20b4e9be638f3ab34ad81f9fe286b7'
     '77bed25f96135cdcf1b8274664c9564375f9823866e7d55e843f75a213af5359'
     'b2c3cf89924b49a3d4106c49fe8123cef784acfec9189102c0a26cd5b2585559'
     '6a8217c9f00ded6893324649394a9dbc9e5004a2644735fd3f18934bb29bcae6'
-    'fc7f067853499686a4a793fa9675560e86b98196d38da3ee294fe2fec01c2117'
+    '3808896fed768382e424d7058f2ff99e1728cd73aece2980ba3ba763bc1738f0'
 )
 
 build() {
@@ -81,8 +81,6 @@ package() {
     mkdir -p "$pkgdir"/opt/"$pkgname"/bin
     mkdir -p "$pkgdir"/opt/"$pkgname"/frontend
     mkdir -p "$pkgdir"/opt/"$pkgname"/assets
-    mkdir -p "$pkgdir"/opt/"$pkgname"/themes
-    mkdir -p "$pkgdir"/opt/"$pkgname"/themes/dark
 
     # Unpack frontend tarball
     tar -xzf "$srcdir/nui-sftp-linux-frontend_${pkgver//_/-}.tar.gz" -C "$pkgdir"/opt/"$pkgname"/frontend --strip-components=1
@@ -91,7 +89,6 @@ package() {
     install -m755 "$srcdir/$pkgname/build/bin/$pkgname" "$pkgdir"/opt/"$pkgname"/bin/"$pkgname"
     cp -r "$srcdir/$pkgname/build/assets" "$pkgdir"/opt/"$pkgname"/
     install -m644 "$srcdir/$pkgname/LICENSE" "$pkgdir"/opt/"$pkgname"/LICENSE
-    install -m644 "$srcdir/$pkgname/build/themes/dark/css_variables.css" "$pkgdir"/opt/"$pkgname"/themes/dark/css_variables.css
 
     # Desktop
     install -Dm644 "$srcdir/$pkgname/org.nuicpp.nui_sftp.desktop" "$pkgdir"/usr/share/applications/"$pkgname".desktop

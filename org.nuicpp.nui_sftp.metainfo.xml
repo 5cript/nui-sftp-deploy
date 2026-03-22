@@ -20,6 +20,12 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.1.1" date="2026-03-22">
+            <description>
+                <h2 id="whatchanged">What changed</h2>
+                <p>There are no more ui5 themes to deploy, so they were removed from deploy.sh</p>
+            </description>
+        </release>
         <release version="v0.1.0" date="2026-03-22">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
