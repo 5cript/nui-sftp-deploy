@@ -52,14 +52,14 @@ jobs:
 
       - name: Rename flatpak bundle
         run: |
-          mv nui-sftp.flatpak "nui-sftp-flatpak-x86_64_${{ env.VERSION }}.zip"
+          mv nui-sftp.flatpak "nui-sftp-flatpak-x86_64_${{ env.VERSION }}.flatpak"
 
       - name: Upload Artifact to Release
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.RELEASEUPLOADPAT }}
         run: |
-          gh release upload "v${{ env.VERSION }}" "nui-sftp-flatpak-x86_64_${{ env.VERSION }}.zip" --repo 5cript/nui-sftp
+          gh release upload "v${{ env.VERSION }}" "nui-sftp-flatpak-x86_64_${{ env.VERSION }}.flatpak" --repo 5cript/nui-sftp
 
       - name: Upload artifacts to MEGA S4
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
@@ -67,11 +67,11 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.MEGAS4ACCESS }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MEGAS4KEY }}
           ENDPOINT: https://s3.eu-central-1.s4.mega.io
-          FILENAME: "nui-sftp-flatpak-x86_64_${{ env.VERSION }}.zip"
+          FILENAME: "nui-sftp-flatpak-x86_64_${{ env.VERSION }}.flatpak"
           S3_PATH: "s3://nui-sftp-releases/flatpak/${{ (github.event_name == 'workflow_dispatch' && 'x86_64/user_trigger') || 'x86_64' }}/"
         run: |
           # 1. Check if the file exists on the remote S4 storage
-          # We point to the full URI: s3://bucket/path/filename.zip
+          # We point to the full URI: s3://bucket/path/filename.flatpak
           if aws s3 ls "${{ env.S3_PATH }}${{ env.FILENAME }}" --endpoint-url ${{ env.ENDPOINT }} > /dev/null 2>&1; then
             echo "::error::Deployment failed: ${{ env.FILENAME }} already exists in S4. Aborting to prevent overwrite."
             exit 1
