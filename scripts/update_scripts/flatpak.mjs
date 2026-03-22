@@ -1,5 +1,5 @@
 import { flatpakYamlPath } from './files_and_dirs.mjs';
-import { version } from './args.mjs';
+import { parsedVersion } from './version.mjs';
 import { findLineIndexMatching, onLineMatchingModify, splitLines } from './text_editing.mjs';
 import { workDependenciesAsMap } from './work_dependencies.mjs';
 import { looksLikeGitHash } from './git.mjs';
@@ -14,14 +14,14 @@ async function setFunctionOnForcedVersionCmakeOptions(yamlLines) {
     }
 
     const cmakeOptionsLine = yamlLines[lineIndex];
-    yamlLines[lineIndex] = match[1] + `-DFORCED_PROJECT_VERSION=${version}`;
+    yamlLines[lineIndex] = match[1] + `-DFORCED_PROJECT_VERSION=${parsedVersion().majorMinorPatch}`;
     console.log(`Updating DFORCED_PROJECT_VERSION in flatpak YAML from ${cmakeOptionsLine} to ${yamlLines[lineIndex]}...`);
     return yamlLines;
 }
 
 async function updateSources(yamlLines) {
     const workDeps = await workDependenciesAsMap();
-    workDeps['nui-sftp'] = { url: 'https://github.com/5cript/nui-sftp', rev: version, branch: 'main' };
+    workDeps['nui-sftp'] = { url: 'https://github.com/5cript/nui-sftp', rev: parsedVersion().tag, branch: 'main' };
     for (const [name, { url, rev }] of Object.entries(workDeps)) {
         // find url in yaml lines
         const urlLineIndex = findLineIndexMatching(yamlLines, new RegExp(`\\s*url:\\s*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)).lineIndex;
@@ -32,8 +32,8 @@ async function updateSources(yamlLines) {
 
         // Search two lines up and below for "tag" or "commit":
         let refLineIndex = -1;
-        const checkFrom = Math.max(0, urlLineIndex - 2);
-        const checkTo = Math.min(yamlLines.length - 1, urlLineIndex + 2);
+        const checkFrom = Math.max(0, urlLineIndex);
+        const checkTo = Math.min(yamlLines.length - 1, urlLineIndex + 3);
         for (let i = checkFrom; i <= checkTo; ++i) {
             if (/^\s*(tag|commit):\s*v?.*/.test(yamlLines[i])) {
                 refLineIndex = i;
@@ -53,9 +53,9 @@ async function updateSources(yamlLines) {
         console.log(`Updating source for work dependency ${name} in flatpak YAML from ${refType} ${yamlLines[refLineIndex]} to ${refType} ${newRefValue}...`);
 
         if (looksLikeGitHash(newRefValue)) {
-            yamlLines[refLineIndex] = yamlLines[refLineIndex].replace(/^\s*tag:\s*v?.*/, `${refLineSpacePrefix}commit: ${newRefValue}`);
+            yamlLines[refLineIndex] = refLineSpacePrefix + `commit: ${newRefValue}`;
         } else {
-            yamlLines[refLineIndex] = yamlLines[refLineIndex].replace(/^\s*commit:\s*v?.*/, `${refLineSpacePrefix}tag: ${newRefValue}`);
+            yamlLines[refLineIndex] = refLineSpacePrefix + `tag: ${newRefValue}`; // Assuming it's a tag if it doesn't look like a git hash
         }
     }
     return yamlLines;

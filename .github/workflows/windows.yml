@@ -130,7 +130,7 @@ jobs:
           path: ${{ env.WSPACE }}/nui-sftp-windows-x86_64_${{ env.VERSION }}.zip
 
       - name: Upload Artifact to Release
-        # if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.RELEASEUPLOADPAT }}
         run: |
