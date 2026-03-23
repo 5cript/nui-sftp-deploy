@@ -1,6 +1,6 @@
 id: org.nuicpp.nui_sftp
 runtime: org.gnome.Platform
-runtime-version: '49'
+runtime-version: '50'
 sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm21
@@ -93,8 +93,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-sftp-releases/linux-frontend/nui-sftp-linux-frontend_0.0.2-beta.tar.gz
-        sha256: ca2b6a832ce7fe842bb3318dcf91e83b5be816d4457ca5013af90b34f73c4c10
+        url: https://github.com/5cript/nui-sftp/releases/download/v0.2.0/nui-sftp-linux-frontend_0.2.0.tar.gz
+        sha256: 3ff91da3550ba9bb6fbc9c56d07bac17e30d08c527e860d37e73e05df08a05cd
 
   - name: nui-sftp
     buildsystem: simple

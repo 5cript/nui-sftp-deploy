@@ -1,22 +1,22 @@
 const splitLines = (str) => str.split(/\r?\n/);
 const onLineMatchingModify = (lines, regex, modifyFn) => {
-  const modifiedLines = [];
+    const modifiedLines = [];
 
-  for (const line of lines) {
-    const match = regex.exec(line);
+    for (const line of lines) {
+        const match = regex.exec(line);
 
-    if (match) {
-      modifiedLines.push(modifyFn(line, match));
-    } else {
-      modifiedLines.push(line);
+        if (match) {
+            modifiedLines.push(modifyFn(line, match));
+        } else {
+            modifiedLines.push(line);
+        }
     }
-  }
 
-  return modifiedLines;
+    return modifiedLines;
 };
-const findLineIndexMatching = (lines, regex) => {
-  let match = null;
-    for (let i = 0; i < lines.length; i++) {
+const findLineIndexMatching = (lines, regex, start = 0) => {
+    let match = null;
+    for (let i = start; i < lines.length; i++) {
         const match = regex.exec(lines[i]);
         if (match) {
             return { lineIndex: i, match };
