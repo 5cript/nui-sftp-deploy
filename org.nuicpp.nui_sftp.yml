@@ -93,8 +93,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v0.3.0/nui-sftp-linux-frontend_0.3.0.tar.gz
-        sha256: 35983aac5871c50f52fbdc81d0d32e1c3c2fd6b8bbdbe4cabded7c9d7d4bcf2b
+        url: https://github.com/5cript/nui-sftp/releases/download/v0.3.1/nui-sftp-linux-frontend_0.3.1.tar.gz
+        sha256: d0c6c419973aaa8877c51349b33fdad06d07ff022168186194550774fa006db3
 
   - name: nui-sftp
     buildsystem: simple
@@ -124,7 +124,7 @@ modules:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DOFFLINE_BUILD=ON
           -DJSON_Diagnostics=ON
-          -DFORCED_PROJECT_VERSION=0.3.0
+          -DFORCED_PROJECT_VERSION=0.3.1
       - cmake --build build/flatpak
       - OMIT_FRONTEND=true ./scripts/deploy.sh
       # Patch desktop file to rename icon "nui_sftp.svg" to "org.nuicpp.nui_sftp.svg"
