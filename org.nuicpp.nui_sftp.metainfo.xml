@@ -20,6 +20,11 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.3.0" date="2026-03-25">
+            <description>
+                <p>Dark/Light and full custom theming.</p>
+            </description>
+        </release>
         <release version="v0.2.0" date="2026-03-22">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>

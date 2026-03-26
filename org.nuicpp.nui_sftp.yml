@@ -93,8 +93,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v0.2.0/nui-sftp-linux-frontend_0.2.0.tar.gz
-        sha256: 3ff91da3550ba9bb6fbc9c56d07bac17e30d08c527e860d37e73e05df08a05cd
+        url: https://github.com/5cript/nui-sftp/releases/download/v0.3.0/nui-sftp-linux-frontend_0.3.0.tar.gz
+        sha256: 35983aac5871c50f52fbdc81d0d32e1c3c2fd6b8bbdbe4cabded7c9d7d4bcf2b
 
   - name: nui-sftp
     buildsystem: simple
@@ -124,7 +124,7 @@ modules:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DOFFLINE_BUILD=ON
           -DJSON_Diagnostics=ON
-          -DFORCED_PROJECT_VERSION=0.2.0
+          -DFORCED_PROJECT_VERSION=0.3.0
       - cmake --build build/flatpak
       - OMIT_FRONTEND=true ./scripts/deploy.sh
       # Patch desktop file to rename icon "nui_sftp.svg" to "org.nuicpp.nui_sftp.svg"
@@ -141,11 +141,11 @@ modules:
         tag: v0.2.0
       - type: git
         url: https://github.com/NuiCpp/Nui.git
-        tag: v3.0.0
+        tag: v3.1.1
         dest: 'dependencies/Nui'
       - type: git
         url: https://github.com/5cript/roar.git
-        commit: a787bce9c8132f4c860bc9e55bff742fd1a3276f
+        commit: 52acf8675404d6e370a4f7f6ce8e78d507b18e5d
         dest: 'dependencies/roar'
       - type: git
         url: https://github.com/DNKpp/gimo.git
