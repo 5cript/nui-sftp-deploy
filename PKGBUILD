@@ -34,7 +34,7 @@ source=(
     "git+https://github.com/DNKpp/gimo.git#commit=16377a6d496b31a9272f9a079c060fba15258bcc"
     "git+https://github.com/NuiCpp/traits.git#commit=6c9caa21c48c9e1f7f039a7bdf8805a0940fce0a"
     "git+https://github.com/5cript/5cript-nui-components.git#commit=21f0fcfae77f54e1b08c5ee67efb995a9b427978"
-    "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01.svg"
+    "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg"
     "https://github.com/5cript/nui-sftp/releases/download/v${pkgver}/nui-sftp-linux-frontend_${pkgver}.tar.gz"
 )
 sha256sums=(
@@ -44,7 +44,7 @@ sha256sums=(
     '8d5c5f36710425e8660470db14a5d6011e20b4e9be638f3ab34ad81f9fe286b7'
     '77bed25f96135cdcf1b8274664c9564375f9823866e7d55e843f75a213af5359'
     '727cff714421fe7d70c350cb69861356b7e46b53c53b1faedbd32b229a163f0b'
-    '6a8217c9f00ded6893324649394a9dbc9e5004a2644735fd3f18934bb29bcae6'
+    'cf0fc442069dfd28bd8b7769da6dfdca92111044ea9817197716ed9bfada3869'
     '49bc1a701cef8fe82157ba2fbf539b86af3c0897b81bf99154677faf3e6b79a2'
 )
 
@@ -95,7 +95,7 @@ package() {
 
     # Desktop
     install -Dm644 "$srcdir/$pkgname/org.nuicpp.nui_sftp.desktop" "$pkgdir"/usr/share/applications/"$pkgname".desktop
-    install -Dm644 "NUI-SFTP_Logo-01.svg" "$pkgdir"/usr/share/icons/hicolor/scalable/apps/nui_sftp.svg
+    install -Dm644 "NUI-SFTP_Logo-01_nopad.svg" "$pkgdir"/usr/share/icons/hicolor/scalable/apps/nui_sftp.svg
 
     ln -s "/opt/$pkgname/bin/$pkgname" "$pkgdir"/usr/bin/"$pkgname"
 }

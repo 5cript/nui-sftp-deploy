@@ -134,7 +134,7 @@ modules:
       # Install desktop file
       - install -Dm644 org.nuicpp.nui_sftp.desktop /app/share/applications/org.nuicpp.nui_sftp.desktop
       # Image
-      - install -Dm644 NUI-SFTP_Logo-01.svg /app/share/icons/hicolor/scalable/apps/org.nuicpp.nui_sftp.svg
+      - install -Dm644 NUI-SFTP_Logo-01_nopad.svg /app/share/icons/hicolor/scalable/apps/org.nuicpp.nui_sftp.svg
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
@@ -191,5 +191,5 @@ modules:
       - type: file
         path: org.nuicpp.nui_sftp.metainfo.xml
       - type: file
-        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01.svg
-        sha256: 6a8217c9f00ded6893324649394a9dbc9e5004a2644735fd3f18934bb29bcae6
+        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg
+        sha256: cf0fc442069dfd28bd8b7769da6dfdca92111044ea9817197716ed9bfada3869
