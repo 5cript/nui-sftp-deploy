@@ -20,6 +20,22 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.5.0" date="2026-03-31">
+            <description>
+                <h2 id="whatchanged">What changed?</h2>
+                <ul>
+                    <li>#50 &amp; #49 Improved operation progress bar visibility and fixed several overflow and twitching issues.</li>
+                    <li>#45 Added load for custom themes on box click.</li>
+                    <li>#48 Ctrl + A selected &quot;..&quot;, which would lead to problems on transfers.</li>
+                    <li>#47 End/Home buttons for selection in file grid now work.</li>
+                    <li>#46 Some Confirm Dialog instances can now be &quot;ignored&quot; until reactivated via settings.</li>
+                </ul>
+                <h2 id="knownissues">Known issues</h2>
+                <ul>
+                    <li>Language keys are missing. This will be fixed later with together with the language file split and a tool to match ui language references with the yaml file and find missing keys.</li>
+                </ul>
+            </description>
+        </release>
         <release version="v0.4.0" date="2026-03-30">
             <description>
                 <h2 id="whatchanged">What changed</h2>
