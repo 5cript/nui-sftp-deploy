@@ -20,6 +20,19 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.4.0" date="2026-03-30">
+            <description>
+                <h2 id="whatchanged">What changed</h2>
+                <ul>
+                    <li>#43 Path box suggestion sorting and fuzzing</li>
+                    <li>#42 Hide dot files</li>
+                    <li>#41 Path box should now enter on enter press</li>
+                    <li>#40 Fixed terminal encoding issues. Also implemented termios settings</li>
+                    <li>#37 &amp; #38 Improved password input box</li>
+                    <li>#36 Symlinks that are directories are can now be entered</li>
+                </ul>
+            </description>
+        </release>
         <release version="v0.3.1" date="2026-03-26">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
