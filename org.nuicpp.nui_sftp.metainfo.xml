@@ -20,6 +20,38 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.6.1" date="2026-04-03">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>Feat/asset finder improvements by @5cript in https://github.com/5cript/nui-sftp/pull/87</li>
+                </ul>
+                <p>
+                    
+                    <strong>Full Changelog</strong>
+                    : https://github.com/5cript/nui-sftp/compare/v0.6.0…v0.6.1
+                </p>
+            </description>
+        </release>
+        <release version="v0.6.0" date="2026-04-03">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>Split language file into each language</li>
+                    <li>Improved loading of files through custom scheme / asset finding and loading</li>
+                    <li>Created tool to check language files completeness</li>
+                    <li>Made file explorer columns resizeable, auto resize on container resize and spread column to available size on button press</li>
+                    <li>Added the program icon to the toolbar</li>
+                    <li>Closing a single PTY channel no longer closes the entire connection.</li>
+                    <li>Closing a single PTY channel now closes the terminal tab.</li>
+                    <li>Fixed issue in saving the terminal contents on connection loss.</li>
+                    <li>Operation queue auto remove text no longer looks disabled.</li>
+                    <li>Bright / Dark mode button no longer shows question mark on system mode setting, but finds out what the system mode is and shows the opposite to switch to.</li>
+                    <li>&quot;Scan could not be applied to transfer&quot; console message fixed.</li>
+                    <li>Progress bar no longer animates on 100%</li>
+                </ul>
+            </description>
+        </release>
         <release version="v0.5.0" date="2026-03-31">
             <description>
                 <h2 id="whatchanged">What changed?</h2>
