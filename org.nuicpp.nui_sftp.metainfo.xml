@@ -20,6 +20,19 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.6.1" date="2026-04-03">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>Feat/asset finder improvements by @5cript in https://github.com/5cript/nui-sftp/pull/87</li>
+                </ul>
+                <p>
+                    
+                    <strong>Full Changelog</strong>
+                    : https://github.com/5cript/nui-sftp/compare/v0.6.0…v0.6.1
+                </p>
+            </description>
+        </release>
         <release version="v0.6.0" date="2026-04-03">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
