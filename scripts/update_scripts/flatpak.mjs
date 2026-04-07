@@ -75,7 +75,7 @@ async function updateSources(yamlLines) {
     workDeps['nui-sftp'] = { url: 'https://github.com/5cript/nui-sftp', rev: parsedVersion().tag, branch: 'main' };
     for (const [name, { url, rev }] of Object.entries(workDeps)) {
         // find url in yaml lines
-        const urlLineIndex = findLineIndexMatching(yamlLines, new RegExp(`\\s*url:\\s*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)).lineIndex;
+        const urlLineIndex = findLineIndexMatching(yamlLines, new RegExp(`\\s*url:\\s*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`)).lineIndex;
         if (urlLineIndex === -1) {
             console.warn(`Could not find url line for work dependency ${name} in flatpak YAML, skipping...`);
             continue;

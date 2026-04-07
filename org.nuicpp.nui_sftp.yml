@@ -11,6 +11,7 @@ buildsystem: simple
 finish-args:
   - --share=network
   - --filesystem=host
+  - --filesystem=/tmp
   - --socket=wayland
   - --socket=x11
   - --socket=fallback-x11
@@ -86,6 +87,20 @@ modules:
       - '/lib64/pkgconfig/fmt.pc'
       - '/lib64/cmake/fmt'
 
+  - name: sdbus-cpp
+    buildsystem: simple
+    build-commands:
+      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app -DSDBUSCPP_BUILD_TESTS=OFF -DSDBUSCPP_BUILD_DOCS=OFF
+      - cmake --build build --target install
+    sources:
+      - type: git
+        url: https://github.com/Kistler-Group/sdbus-cpp.git
+        tag: v2.1.0
+    cleanup:
+      - '/include'
+      - '/lib64/cmake/sdbus-c++'
+      - '/lib64/pkgconfig/sdbus-c++.pc'
+
   - name: nui-sftp-frontend
     buildsystem: simple
     build-commands:
@@ -93,8 +108,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v0.6.1/nui-sftp-linux-frontend_0.6.1.tar.gz
-        sha256: 9eb975554c1b297ee23a2f73ec7e78b2279cbb5224460a735f274789f8e5629a
+        url: https://github.com/5cript/nui-sftp/releases/download/v0.7.1/nui-sftp-linux-frontend_0.7.1.tar.gz
+        sha256: 1102936b01d05638ccb944e1abc5d994eea6794ec3e7dcb802386fea8fd6569f
 
   - name: nui-sftp
     buildsystem: simple
@@ -124,12 +139,13 @@ modules:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DOFFLINE_BUILD=ON
           -DJSON_Diagnostics=ON
-          -DFORCED_PROJECT_VERSION=0.6.1
+          -DFORCED_PROJECT_VERSION=0.7.1
       - cmake --build build/flatpak
       - OMIT_FRONTEND=true ./scripts/deploy.sh
       # Copy icons to assets/icons dir
       - mkdir -p /app/assets/icons
       - cp -r dependencies/icons/* /app/assets/icons/
+      - cp dependencies/icons/os_folders/windows/11/folder_main.png /app/assets/icons/folder_main.png
       # Patch desktop file to rename icon "nui_sftp.svg" to "org.nuicpp.nui_sftp.svg"
       - sed -i 's/Icon=nui_sftp/Icon=org.nuicpp.nui_sftp/g' org.nuicpp.nui_sftp.desktop
       # Install AppStream metadata
@@ -141,10 +157,10 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v0.2.0
+        tag: v0.7.1
       - type: git
         url: https://github.com/NuiCpp/Nui.git
-        tag: v3.3.0
+        tag: v3.4.1
         dest: 'dependencies/Nui'
       - type: git
         url: https://github.com/5cript/roar.git
