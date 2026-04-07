@@ -145,6 +145,7 @@ modules:
       # Copy icons to assets/icons dir
       - mkdir -p /app/assets/icons
       - cp -r dependencies/icons/* /app/assets/icons/
+      - cp dependencies/icons/os_folders/windows/11/folder_main.png /app/assets/icons/folder_main.png
       # Patch desktop file to rename icon "nui_sftp.svg" to "org.nuicpp.nui_sftp.svg"
       - sed -i 's/Icon=nui_sftp/Icon=org.nuicpp.nui_sftp/g' org.nuicpp.nui_sftp.desktop
       # Install AppStream metadata
