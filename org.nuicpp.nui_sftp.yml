@@ -17,6 +17,7 @@ finish-args:
   - --socket=ssh-auth
   - --device=dri
   - --device=input
+  - --socket=session-bus
 
 modules:
   - name: boost
@@ -86,6 +87,20 @@ modules:
       - '/lib64/pkgconfig/fmt.pc'
       - '/lib64/cmake/fmt'
 
+  - name: sdbus-cpp
+    buildsystem: simple
+    build-commands:
+      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app -DSDBUSCPP_BUILD_TESTS=OFF -DSDBUSCPP_BUILD_DOCS=OFF
+      - cmake --build build --target install
+    sources:
+      - type: git
+        url: https://github.com/Kistler-Group/sdbus-cpp.git
+        tag: v2.1.0
+    cleanup:
+      - '/include'
+      - '/lib64/cmake/sdbus-c++'
+      - '/lib64/pkgconfig/sdbus-c++.pc'
+
   - name: nui-sftp-frontend
     buildsystem: simple
     build-commands:
@@ -93,8 +108,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v0.6.1/nui-sftp-linux-frontend_0.6.1.tar.gz
-        sha256: 9eb975554c1b297ee23a2f73ec7e78b2279cbb5224460a735f274789f8e5629a
+        url: https://github.com/5cript/nui-sftp/releases/download/v0.7.0/nui-sftp-linux-frontend_0.7.0.tar.gz
+        sha256: c0876c8b5204038e2ae12c42b58619ab8866c332605d02b5694c0947e52495c7
 
   - name: nui-sftp
     buildsystem: simple
@@ -124,7 +139,7 @@ modules:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DOFFLINE_BUILD=ON
           -DJSON_Diagnostics=ON
-          -DFORCED_PROJECT_VERSION=0.6.1
+          -DFORCED_PROJECT_VERSION=0.7.0
       - cmake --build build/flatpak
       - OMIT_FRONTEND=true ./scripts/deploy.sh
       # Copy icons to assets/icons dir
@@ -141,10 +156,10 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v0.2.0
+        tag: v0.7.0
       - type: git
         url: https://github.com/NuiCpp/Nui.git
-        tag: v3.3.0
+        tag: v3.4.0
         dest: 'dependencies/Nui'
       - type: git
         url: https://github.com/5cript/roar.git

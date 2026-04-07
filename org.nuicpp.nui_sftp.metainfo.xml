@@ -20,6 +20,11 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.7.0" date="2026-04-07">
+            <description>
+                <p>Open and monitor files and directories.</p>
+            </description>
+        </release>
         <release version="v0.6.1" date="2026-04-03">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
