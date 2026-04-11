@@ -1,7 +1,7 @@
 # Maintainer: Tim Ebbeke <tim 06 tr (at) gmail dot com>
 
 pkgname=nui-sftp
-pkgver=0.7.1
+pkgver=0.8.0
 pkgrel=1
 pkgdesc="NUI-based SFTP application"
 arch=('x86_64')
@@ -34,20 +34,20 @@ source=(
     "git+https://github.com/5cript/roar.git#commit=52acf8675404d6e370a4f7f6ce8e78d507b18e5d"
     "git+https://github.com/DNKpp/gimo.git#commit=16377a6d496b31a9272f9a079c060fba15258bcc"
     "git+https://github.com/NuiCpp/traits.git#commit=6c9caa21c48c9e1f7f039a7bdf8805a0940fce0a"
-    "git+https://github.com/5cript/5cript-nui-components.git#commit=711492fb9bf023564ddbe02b069aa3185b5ae222"
+    "git+https://github.com/5cript/5cript-nui-components.git#commit=71c8c537d093de24b222cb23429fd1952dee0df7"
     "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg"
     "https://github.com/5cript/nui-sftp/releases/download/v${pkgver}/nui-sftp-linux-frontend_${pkgver}.tar.gz"
     "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz"
 )
 sha256sums=(
-    '0935c9bb9f4202cc2d37a8b0a460397360ffe846740ab4c43b64cea4a5d02ccd'
+    '975921efab71d72f37d639b512ac9fae24e250b511b2ec83ef5a8351be425257'
     '2ea45837c9653193b9f432065bce450adbe549d9e0c136ea9a5d32d0aa91b1de'
     '444ad0bb110a2543bcf29b4ecbd4def53b937bc35e9e587a28f92bf52503c7dd'
     '8d5c5f36710425e8660470db14a5d6011e20b4e9be638f3ab34ad81f9fe286b7'
     '77bed25f96135cdcf1b8274664c9564375f9823866e7d55e843f75a213af5359'
-    '90e627bb6d911cb38f3caabf59c1e85367886969cc5119a6647a1c5c99a691cf'
+    '101c6b833e401c5e794ab3b5634c46272dc89d0a111eb4d839d4093f80989847'
     'cf0fc442069dfd28bd8b7769da6dfdca92111044ea9817197716ed9bfada3869'
-    '1102936b01d05638ccb944e1abc5d994eea6794ec3e7dcb802386fea8fd6569f'
+    'aa7031fd0691def4c1e102429fdd1e7afa9d64765c40fa7c41e18ea0ac62c070'
     '30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e'
 )
 
@@ -101,7 +101,7 @@ package() {
     # Desktop
     install -Dm644 "$srcdir/$pkgname/org.nuicpp.nui_sftp.desktop" "$pkgdir"/usr/share/applications/"$pkgname".desktop
     install -Dm644 "NUI-SFTP_Logo-01_nopad.svg" "$pkgdir"/usr/share/icons/hicolor/scalable/apps/nui_sftp.svg
-    install -Dm644 "NUI-SFTP_Logo-01_nopad.svg" "$pkgdir"/opt/"$pkgname"/assets/nui-sftp-logo.svg
+    install -Dm644 "NUI-SFTP_Logo-01_nopad.svg" "$pkgdir"/opt/"$pkgname"/assets/icons/nui-sftp-logo.svg
 
     ln -s "/opt/$pkgname/bin/$pkgname" "$pkgdir"/usr/bin/"$pkgname"
 }

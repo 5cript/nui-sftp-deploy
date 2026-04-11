@@ -20,6 +20,22 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.8.0" date="2026-04-11">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>Rename / Clone Session by @5cript in https://github.com/5cript/nui-sftp/pull/95</li>
+                    <li>Rename Session, Fixed Local Shell on Linux and more by @5cript in https://github.com/5cript/nui-sftp/pull/96</li>
+                    <li>Single Side Explorer &amp; Local Session Fixes by @5cript in https://github.com/5cript/nui-sftp/pull/101</li>
+                    <li>Places Panel for File Grid by @5cript in https://github.com/5cript/nui-sftp/pull/103</li>
+                </ul>
+                <p>
+                    
+                    <strong>Full Changelog</strong>
+                    : https://github.com/5cript/nui-sftp/compare/v0.7.1…v0.8.0
+                </p>
+            </description>
+        </release>
         <release version="v0.7.1" date="2026-04-07">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
