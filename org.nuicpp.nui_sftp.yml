@@ -108,8 +108,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v0.7.1/nui-sftp-linux-frontend_0.7.1.tar.gz
-        sha256: 1102936b01d05638ccb944e1abc5d994eea6794ec3e7dcb802386fea8fd6569f
+        url: https://github.com/5cript/nui-sftp/releases/download/v0.8.0/nui-sftp-linux-frontend_0.8.0.tar.gz
+        sha256: aa7031fd0691def4c1e102429fdd1e7afa9d64765c40fa7c41e18ea0ac62c070
 
   - name: nui-sftp
     buildsystem: simple
@@ -139,7 +139,7 @@ modules:
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DOFFLINE_BUILD=ON
           -DJSON_Diagnostics=ON
-          -DFORCED_PROJECT_VERSION=0.7.1
+          -DFORCED_PROJECT_VERSION=0.8.0
       - cmake --build build/flatpak
       - OMIT_FRONTEND=true ./scripts/deploy.sh
       # Copy icons to assets/icons dir
@@ -157,7 +157,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v0.7.1
+        tag: v0.8.0
       - type: git
         url: https://github.com/NuiCpp/Nui.git
         tag: v3.4.1
