@@ -109,10 +109,19 @@ jobs:
             "${{ env.WSPACE }}/nui-sftp/${{ env.BUILD_DIR }}" \
             --config "${{ env.BUILD_TYPE }}"
 
+      - name: Download and extract icons
+        run: |
+          ICONS_DIR="${{ env.WSPACE }}/nui-sftp/dependencies/icons"
+          mkdir -p "$ICONS_DIR"
+          curl -L "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz" -o "$ICONS_DIR/icons.tar.gz"
+          tar -xzf "$ICONS_DIR/icons.tar.gz" -C "$ICONS_DIR" --strip-components=0
+          rm "$ICONS_DIR/icons.tar.gz"
+
       # Output lands in ${{ env.WSPACE }}/nui-sftp/build/install
       - name: Run deploy script
         env:
           BUILD_DIR: ${{ env.WSPACE }}/nui-sftp/${{ env.BUILD_DIR }}
+          ICONS_SOURCE: ${{ env.WSPACE }}/nui-sftp/dependencies/icons
         run: |
           cd "${{ env.WSPACE }}/nui-sftp" && bash scripts/deploy.sh
 
