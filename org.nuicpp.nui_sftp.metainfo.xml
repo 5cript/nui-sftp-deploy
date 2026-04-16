@@ -20,6 +20,34 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.9.0" date="2026-04-16">
+            <description>
+                <h2 id="filegrid">File Grid</h2>
+                <ul>
+                    <li>Added pagination to file grid when large amounts of items are in a directory</li>
+                    <li>Improved performance in the file grid by a large amount.</li>
+                    <li>Reduced list files payload size to improve performance.</li>
+                    <li>Added loading indicator when listing files takes longer.</li>
+                    <li>Improved drag and drop performance drastically.</li>
+                    <li>Fixed bug where navigating into a local directory didnt reset the navigation on failure.</li>
+                </ul>
+                <h2 id="operationsqueue">Operations &amp; Queue</h2>
+                <ul>
+                    <li>Made several individual files collapse into bulk operation instead of individual file downloads to improve UI performance</li>
+                    <li>Added pagination to operation queue to stop the operation queue from slowing down the application if the user choses not to auto clear.</li>
+                </ul>
+                <h2 id="sync">Sync</h2>
+                <ul>
+                    <li>Added sync screen to sync a directory up, down or in both directions</li>
+                </ul>
+                <h2 id="general">General</h2>
+                <ul>
+                    <li>Added more unit tests.</li>
+                    <li>Many smaller changes.</li>
+                    <li>Some utf improvements for windows, I expect more work to be needed.</li>
+                </ul>
+            </description>
+        </release>
         <release version="v0.8.0" date="2026-04-11">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
