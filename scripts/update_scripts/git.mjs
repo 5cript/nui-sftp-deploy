@@ -20,6 +20,11 @@ const checkoutRevision = async (repoDir, ref) => {
     await execAsync(`git -C ${repoDir} checkout ${ref}`);
 }
 
+const fetchAll = async (repoDir) => {
+    console.log(`Fetching all refs in ${repoDir}...`);
+    await execAsync(`git -C ${repoDir} fetch --all --tags --prune --force`);
+}
+
 const isOnDefaultBranch = async (repoDir) => {
     const { stdout } = await execAsync(`git -C ${repoDir} rev-parse --abrev-ref HEAD`);
     return stdout.trim() === defaultBranchName;
@@ -37,6 +42,7 @@ const directoryExists = async (dir) => {
 const updateRepo = async (repoUrl, targetDir, ref) => {
     if (await directoryExists(targetDir)) {
         console.log(`Directory ${targetDir} already exists. Updating repository to ${ref}`);
+        await fetchAll(targetDir);
         if (ref) {
             await checkoutRevision(targetDir, ref);
         } else {
