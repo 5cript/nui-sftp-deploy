@@ -17,6 +17,10 @@ depends=(
     boost-libs
     nlohmann-json
     sdbus-cpp
+    zlib
+    bzip2
+    zstd
+    xz
 )
 makedepends=(
     cmake
