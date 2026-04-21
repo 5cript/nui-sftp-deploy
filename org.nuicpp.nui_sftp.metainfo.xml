@@ -20,6 +20,25 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.10.0" date="2026-04-21">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>Fixing Bugs &amp; Reconnect Feature by @5cript in https://github.com/5cript/nui-sftp/pull/124</li>
+                    <li>Settings restart warning &amp; Reorder Operations by @5cript in https://github.com/5cript/nui-sftp/pull/125</li>
+                    <li>Transfer as Archive Feature by @5cript in https://github.com/5cript/nui-sftp/pull/129</li>
+                    <li>Updated README.md by @5cript in https://github.com/5cript/nui-sftp/pull/135</li>
+                    <li>Archive Transfer Fixes by @5cript in https://github.com/5cript/nui-sftp/pull/136</li>
+                    <li>More Fixes by @5cript in https://github.com/5cript/nui-sftp/pull/138</li>
+                    <li>Fixed version regex. by @5cript in https://github.com/5cript/nui-sftp/pull/139</li>
+                </ul>
+                <p>
+                    
+                    <strong>Full Changelog</strong>
+                    : https://github.com/5cript/nui-sftp/compare/v0.9.0…v0.10.0
+                </p>
+            </description>
+        </release>
         <release version="v0.9.0" date="2026-04-16">
             <description>
                 <h2 id="filegrid">File Grid</h2>
