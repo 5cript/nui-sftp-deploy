@@ -20,6 +20,11 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v0.10.1" date="2026-04-22">
+            <description>
+                <p>Moving to submodules from manually checked out deps.</p>
+            </description>
+        </release>
         <release version="v0.10.0" date="2026-04-21">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>

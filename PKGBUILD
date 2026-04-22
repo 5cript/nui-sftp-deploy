@@ -1,7 +1,7 @@
 # Maintainer: Tim Ebbeke <tim 06 tr (at) gmail dot com>
 
 pkgname=nui-sftp
-pkgver=0.10.0
+pkgver=0.10.1
 pkgrel=1
 pkgdesc="NUI-based SFTP application"
 arch=('x86_64')
@@ -34,38 +34,24 @@ makedepends=(
 options=('!debug')
 source=(
     "$pkgname::git+$url.git#tag=v${pkgver//_/-}"
-    "git+https://github.com/NuiCpp/Nui.git#tag=v3.5.0"
-    "git+https://github.com/5cript/roar.git#commit=52acf8675404d6e370a4f7f6ce8e78d507b18e5d"
-    "git+https://github.com/DNKpp/gimo.git#commit=16377a6d496b31a9272f9a079c060fba15258bcc"
-    "git+https://github.com/NuiCpp/traits.git#commit=6c9caa21c48c9e1f7f039a7bdf8805a0940fce0a"
-    "git+https://github.com/5cript/5cript-nui-components.git#commit=d5bc172d26c24d3fcd2fe87f67b156c13687d8c7"
     "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg"
     "https://github.com/5cript/nui-sftp/releases/download/v${pkgver}/nui-sftp-linux-frontend_${pkgver}.tar.gz"
     "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz"
 )
 sha256sums=(
-    '4bd2faceb75c3cc39ae9a24d6be1bf9ae315615d7be42151bffdf5abba361f3f'
-    'db82dcd12b5b614f9671ee8ae29c85f6a44af08b2d0373ff5e9603b9e2ae2289'
-    '444ad0bb110a2543bcf29b4ecbd4def53b937bc35e9e587a28f92bf52503c7dd'
-    '8d5c5f36710425e8660470db14a5d6011e20b4e9be638f3ab34ad81f9fe286b7'
-    '77bed25f96135cdcf1b8274664c9564375f9823866e7d55e843f75a213af5359'
-    'a956a001d0134e8f4ec9332c648d55ba84ad6004094a44eba1ac375565f7ddcd'
+    'e2c1f11956af05bf6f6500f8bfdd63b1fcd745ba382139151036aba0c31ccf66'
     'cf0fc442069dfd28bd8b7769da6dfdca92111044ea9817197716ed9bfada3869'
-    'f08d1d0d9c3ae97dd467e7375bc9a7974b57ecb83bcc54b82ef49ce7c8135acc'
+    '08a2aec011baa778c903420e84ec8ae130b546ad4f55aac2a38cba9bd82b33bc'
     '30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e'
 )
 
+prepare() {
+    cd "$pkgname"
+    git submodule update --init --recursive
+}
+
 build() {
     cd "$pkgname"
-
-    mkdir -p $srcdir/$pkgname/dependencies
-
-    # Make copies from sources into src/$pkgname/dependencies/*
-    cp -r "$srcdir/Nui" "$srcdir/$pkgname/dependencies/Nui"
-    cp -r "$srcdir/roar" "$srcdir/$pkgname/dependencies/roar"
-    cp -r "$srcdir/gimo" "$srcdir/$pkgname/dependencies/gimo"
-    cp -r "$srcdir/traits" "$srcdir/$pkgname/dependencies/traits"
-    cp -r "$srcdir/5cript-nui-components" "$srcdir/$pkgname/dependencies/5cript-nui-components"
 
     cmake -B "$srcdir/$pkgname/build" \
         -S "$srcdir/$pkgname" \

@@ -7,4 +7,4 @@ const cloneLocation = path.join(sourceDir, 'checkout');
 const nuiSftpRepoDir = `${cloneLocation}/nui-sftp`;
 const flatpakYamlPath = path.join(sourceDir, 'org.nuicpp.nui_sftp.yml');
 
-export { pkgbuildPath, sourceDir, nuiSftpRepoDir, cloneLocation, flatpakYamlPath };
+export { pkgbuildPath, sourceDir, nuiSftpRepoDir, flatpakYamlPath };
