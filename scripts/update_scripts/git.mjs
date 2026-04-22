@@ -5,11 +5,6 @@ import fs from 'node:fs/promises';
 const execAsync = promisify(exec);
 const defaultBranchName = 'main';
 
-const switchToDefaultBranch = async (repoDir) => {
-    console.log(`Switching to default branch in ${repoDir}...`);
-    await execAsync(`git -C ${repoDir} checkout ${defaultBranchName}`);
-}
-
 const pullLatestChanges = async (repoDir) => {
     console.log(`Pulling latest changes in ${repoDir}...`);
     await execAsync(`git -C ${repoDir} pull origin ${defaultBranchName}`);
@@ -23,11 +18,6 @@ const checkoutRevision = async (repoDir, ref) => {
 const fetchAll = async (repoDir) => {
     console.log(`Fetching all refs in ${repoDir}...`);
     await execAsync(`git -C ${repoDir} fetch --all --tags --prune --force`);
-}
-
-const isOnDefaultBranch = async (repoDir) => {
-    const { stdout } = await execAsync(`git -C ${repoDir} rev-parse --abrev-ref HEAD`);
-    return stdout.trim() === defaultBranchName;
 }
 
 const directoryExists = async (dir) => {
@@ -59,11 +49,4 @@ const updateRepo = async (repoUrl, targetDir, ref) => {
     return;
 }
 
-const checkoutSpecificRef = async (repoDir, ref) => {
-    console.log(`Checking out ref ${ref} in ${repoDir}...`);
-    await execAsync(`git -C ${repoDir} checkout ${ref}`);
-}
-
-const looksLikeGitHash = (str) => /^[0-9a-f]{40}$/.test(str);
-
-export { updateRepo, checkoutSpecificRef, looksLikeGitHash }
+export { updateRepo }

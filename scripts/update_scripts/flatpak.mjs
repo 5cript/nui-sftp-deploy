@@ -1,8 +1,6 @@
 import { flatpakYamlPath } from './files_and_dirs.mjs';
 import { parsedVersion } from './version.mjs';
-import { findLineIndexMatching, onLineMatchingModify, splitLines } from './text_editing.mjs';
-import { workDependenciesAsMap } from './work_dependencies.mjs';
-import { looksLikeGitHash } from './git.mjs';
+import { findLineIndexMatching, splitLines } from './text_editing.mjs';
 
 import fs from 'node:fs/promises';
 
@@ -41,8 +39,6 @@ async function updateFrontendStep(yamlLines) {
     const shaLine = yamlLines[shaMatch.lineIndex];
 
     const oldUrl = urlLine.match(/^\s*url:\s*(.+)\s*$/)[1];
-    // split of last part of url by slash and replace it with generated new name from version.
-    // then replace the second to last part of the url with the version tag (vX.Y.Z)
     const splitOldUrl = oldUrl.split('/');
     const newFileName = `nui-sftp-linux-frontend_${parsedVersion().full}.tar.gz`;
     splitOldUrl[splitOldUrl.length - 1] = newFileName;
@@ -52,7 +48,6 @@ async function updateFrontendStep(yamlLines) {
     console.log(`Updating nui-sftp-frontend source URL in flatpak YAML from ${oldUrl} to ${newUrl}...`);
     yamlLines[urlMatch.lineIndex] = urlLine.replace(oldUrl, newUrl);
 
-    // fetch archive to generate sha:
     const response = await fetch(newUrl);
     if (!response.ok) {
         console.warn(`Failed to fetch ${newUrl} to update sha256 in flatpak YAML, skipping sha256 update...`);
@@ -70,51 +65,37 @@ async function updateFrontendStep(yamlLines) {
     return yamlLines;
 }
 
-async function updateSources(yamlLines) {
-    const workDeps = await workDependenciesAsMap();
-    workDeps['nui-sftp'] = { url: 'https://github.com/5cript/nui-sftp', rev: parsedVersion().tag, branch: 'main' };
-    for (const [name, { url, rev }] of Object.entries(workDeps)) {
-        // find url in yaml lines
-        const urlLineIndex = findLineIndexMatching(yamlLines, new RegExp(`\\s*url:\\s*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`)).lineIndex;
-        if (urlLineIndex === -1) {
-            console.warn(`Could not find url line for work dependency ${name} in flatpak YAML, skipping...`);
-            continue;
-        }
+function updateMainSourceTag(yamlLines) {
+    const url = 'https://github.com/5cript/nui-sftp';
+    const urlLineIndex = findLineIndexMatching(yamlLines, new RegExp(`\\s*url:\\s*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`)).lineIndex;
+    if (urlLineIndex === -1) {
+        console.warn(`Could not find main nui-sftp source URL in flatpak YAML, skipping tag update...`);
+        return yamlLines;
+    }
 
-        // Search two lines up and below for "tag" or "commit":
-        let refLineIndex = -1;
-        const checkFrom = Math.max(0, urlLineIndex);
-        const checkTo = Math.min(yamlLines.length - 1, urlLineIndex + 3);
-        for (let i = checkFrom; i <= checkTo; ++i) {
-            if (/^\s*(tag|commit):\s*v?.*/.test(yamlLines[i])) {
-                refLineIndex = i;
-                break;
-            }
-        }
-
-        if (refLineIndex === -1) {
-            console.warn(`Could not find tag or commit line for work dependency ${name} in flatpak YAML, skipping...`);
-            continue;
-        }
-
-        const refLineSpacePrefix = yamlLines[refLineIndex].match(/^(\s*)/)[1];
-        const refType = yamlLines[refLineIndex].match(/^\s*(tag|commit):\s*v?.*/)[1];
-        const newRefValue = rev;
-
-        console.log(`Updating source for work dependency ${name} in flatpak YAML from ${refType} ${yamlLines[refLineIndex]} to ${refType} ${newRefValue}...`);
-
-        if (looksLikeGitHash(newRefValue)) {
-            yamlLines[refLineIndex] = refLineSpacePrefix + `commit: ${newRefValue}`;
-        } else {
-            yamlLines[refLineIndex] = refLineSpacePrefix + `tag: ${newRefValue}`; // Assuming it's a tag if it doesn't look like a git hash
+    let refLineIndex = -1;
+    const checkTo = Math.min(yamlLines.length - 1, urlLineIndex + 3);
+    for (let i = urlLineIndex; i <= checkTo; ++i) {
+        if (/^\s*(tag|commit):\s*.*/.test(yamlLines[i])) {
+            refLineIndex = i;
+            break;
         }
     }
+
+    if (refLineIndex === -1) {
+        console.warn(`Could not find tag/commit line for main nui-sftp source in flatpak YAML, skipping...`);
+        return yamlLines;
+    }
+
+    const refLineSpacePrefix = yamlLines[refLineIndex].match(/^(\s*)/)[1];
+    console.log(`Updating main nui-sftp tag in flatpak YAML from ${yamlLines[refLineIndex]} to tag: ${parsedVersion().tag}`);
+    yamlLines[refLineIndex] = refLineSpacePrefix + `tag: ${parsedVersion().tag}`;
     return yamlLines;
 }
 
 export async function updateFlatpakYaml() {
     const yamlContent = await fs.readFile(flatpakYamlPath, 'utf-8');
-    let lines = await updateSources(splitLines(yamlContent));
+    let lines = updateMainSourceTag(splitLines(yamlContent));
     lines = await setFunctionOnForcedVersionCmakeOptions(lines);
     lines = await updateFrontendStep(lines);
     await fs.writeFile(flatpakYamlPath, lines.join('\n'), 'utf-8');
