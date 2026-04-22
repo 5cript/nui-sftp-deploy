@@ -18,6 +18,9 @@ finish-args:
   - --socket=ssh-auth
   - --device=dri
   - --device=input
+  - --talk-name=org.freedesktop.portal.Desktop
+  - --talk-name=org.freedesktop.portal.Documents
+  - --talk-name=org.freedesktop.portal.OpenURI
 
 modules:
   - name: boost
@@ -86,20 +89,6 @@ modules:
       - '/lib64/libfmt.a'
       - '/lib64/pkgconfig/fmt.pc'
       - '/lib64/cmake/fmt'
-
-  - name: sdbus-cpp
-    buildsystem: simple
-    build-commands:
-      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app -DSDBUSCPP_BUILD_TESTS=OFF -DSDBUSCPP_BUILD_DOCS=OFF
-      - cmake --build build --target install
-    sources:
-      - type: git
-        url: https://github.com/Kistler-Group/sdbus-cpp.git
-        tag: v2.1.0
-    cleanup:
-      - '/include'
-      - '/lib64/cmake/sdbus-c++'
-      - '/lib64/pkgconfig/sdbus-c++.pc'
 
   - name: nui-sftp-frontend
     buildsystem: simple
