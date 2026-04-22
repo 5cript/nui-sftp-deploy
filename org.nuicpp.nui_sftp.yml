@@ -17,7 +17,9 @@ finish-args:
   - --socket=fallback-x11
   - --socket=ssh-auth
   - --device=dri
-  - --device=input
+  - --talk-name=org.freedesktop.portal.Desktop
+  - --talk-name=org.freedesktop.portal.Documents
+  - --talk-name=org.freedesktop.portal.OpenURI
 
 modules:
   - name: boost
@@ -157,7 +159,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v0.10.1
+        commit: d3e4f8d4d9a98100f7d92a40d3cc55e5d0d48e35
       - type: archive
         url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz
         sha256: 30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e
