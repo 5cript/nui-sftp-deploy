@@ -20,6 +20,20 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v1.0.1" date="2026-05-04">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>Improved documentation about package availability. by @5cript in https://github.com/5cript/nui-sftp/pull/158</li>
+                    <li>Ssh Processing Thread Crash Fix by @5cript in https://github.com/5cript/nui-sftp/pull/160</li>
+                </ul>
+                <p>
+                    
+                    <strong>Full Changelog</strong>
+                    : https://github.com/5cript/nui-sftp/compare/v1.0.0…v1.0.1
+                </p>
+            </description>
+        </release>
         <release version="v1.0.0" date="2026-05-02">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
