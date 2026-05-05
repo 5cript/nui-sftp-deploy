@@ -1,0 +1,24 @@
+#!/bin/bash
+HERE="$(dirname "$(readlink -f "${0}")")"
+export APPDIR="${HERE}"
+export PATH="${HERE}/usr/bin:${PATH}"
+export LD_LIBRARY_PATH="${HERE}/usr/lib:${HERE}/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:-}"
+export XDG_DATA_DIRS="${HERE}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+# webkitgtk-6.0 has no env override for the helper exec path, intercept
+# posix_spawn/execve via LD_PRELOAD so spawning WebKitNetworkProcess et al.
+# resolves to the bundled copy. The shim reads $APPDIR (set above).
+export LD_PRELOAD="${HERE}/usr/lib/appimage-shims/webkit_path_shim.so${LD_PRELOAD:+:${LD_PRELOAD}}"
+
+# Disable the bwrap sandbox (it requires host paths the AppImage can't expose)
+# and the dmabuf renderer (relies on the host's exact mesa+kernel combo).
+export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
+export WEBKIT_DISABLE_DMABUF_RENDERER=1
+
+if [ -d "${HERE}/apprun-hooks" ]; then
+    for hook in "${HERE}/apprun-hooks/"*.sh; do
+        [ -f "${hook}" ] && source "${hook}"
+    done
+fi
+
+exec "${HERE}/opt/nui-sftp/bin/nui-sftp" "$@"
