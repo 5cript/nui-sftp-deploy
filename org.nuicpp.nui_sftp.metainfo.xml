@@ -20,6 +20,20 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v1.0.2" date="2026-05-06">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>Prevent tests from failing when run im parallel. by @5cript in https://github.com/5cript/nui-sftp/pull/161</li>
+                    <li>Added mention of AppImage to Readme and WebPage. by @5cript in https://github.com/5cript/nui-sftp/pull/163</li>
+                </ul>
+                <p>
+                    
+                    <strong>Full Changelog</strong>
+                    : https://github.com/5cript/nui-sftp/compare/v1.0.1…v1.0.2
+                </p>
+            </description>
+        </release>
         <release version="v1.0.1" date="2026-05-04">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
