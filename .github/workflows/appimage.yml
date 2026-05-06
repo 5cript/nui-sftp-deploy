@@ -90,14 +90,6 @@ jobs:
         run: |
           gh release upload "v${{ env.VERSION }}" "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage" --repo 5cript/nui-sftp
 
-      - name: Install AWS CLI
-        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-        run: |
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
-          aws --version
-
       - name: Upload artifact to MEGA S4
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         env:
