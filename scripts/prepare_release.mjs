@@ -5,6 +5,7 @@ import { updateRepo } from "./update_scripts/git.mjs";
 import { nuiSftpRepoDir } from "./update_scripts/files_and_dirs.mjs";
 import { updateReleasesInMetainfoXml, parseMetainfoXml } from "./update_scripts/metainfo.mjs";
 import { updateFlatpakYaml } from "./update_scripts/flatpak.mjs";
+import { updateAppImageDockerfile } from "./update_scripts/appimage.mjs";
 import { version } from "./update_scripts/args.mjs";
 
 const repoUrl = 'https://github.com/5cript/nui-sftp.git';
@@ -24,5 +25,10 @@ updateReleasesInMetainfoXml(metainfoXml);
 
 await updateFlatpakYaml().catch((err) => {
     console.error('Error updating flatpak YAML:', err);
+    process.exit(1);
+});
+
+await updateAppImageDockerfile().catch((err) => {
+    console.error('Error updating AppImage Dockerfile:', err);
     process.exit(1);
 });

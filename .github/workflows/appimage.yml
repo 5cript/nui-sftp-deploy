@@ -1,0 +1,115 @@
+name: AppImage Build
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'release/**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g. 1.2.3 or v1.2.3)'
+        required: true
+        default: 'vX.Y.Z'
+        type: string
+
+env:
+  IMAGE_TAG: nui-sftp-appimage-builder:latest
+
+jobs:
+  appimage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Run prepare_release.mjs
+        if: github.event_name == 'workflow_dispatch'
+        run: bun run ./scripts/prepare_release.mjs --version ${{ github.event.inputs.version }}
+
+      - name: Extract version from PKGBUILD
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          VERSION=$(./scripts/extract_version.sh)
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Dispatch version to environment
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          VERSION="${VERSION#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Builds the AppImage builder image with GHA layer cache. First run on
+      # a clean cache is slow (~30+ min — boost + libssh + fmt + nlohmann +
+      # llvm-21 + cmake all installed/built). Subsequent runs reuse layers.
+      - name: Build builder image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./appimage/Dockerfile
+          tags: ${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Build AppImage
+        run: |
+          mkdir -p build/appimage
+          docker run --rm \
+            -u "$(id -u):$(id -g)" \
+            -v "$PWD":/workspace \
+            -e VERSION="${{ env.VERSION }}" \
+            -e APPIMAGE_EXTRACT_AND_RUN=1 \
+            -e HOME=/tmp \
+            "${{ env.IMAGE_TAG }}" \
+            bash /workspace/appimage/build_inner.sh
+
+      - name: Rename to release filename
+        run: |
+          mv "build/nui-sftp-${{ env.VERSION }}-x86_64.AppImage" \
+             "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage"
+
+      - name: Produce Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage
+          path: nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage
+
+      - name: Upload Artifact to Release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASEUPLOADPAT }}
+        run: |
+          gh release upload "v${{ env.VERSION }}" "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage" --repo 5cript/nui-sftp
+
+      - name: Install AWS CLI
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+          aws --version
+
+      - name: Upload artifact to MEGA S4
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MEGAS4ACCESS }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MEGAS4KEY }}
+          ENDPOINT: https://s3.eu-central-1.s4.mega.io
+          FILENAME: "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage"
+          S3_PATH: "s3://nui-sftp-releases/appimage/${{ (github.event_name == 'workflow_dispatch' && 'x86_64/user_trigger') || 'x86_64' }}/"
+        run: |
+          if aws s3 ls "${{ env.S3_PATH }}${{ env.FILENAME }}" --endpoint-url ${{ env.ENDPOINT }} > /dev/null 2>&1; then
+            echo "::error::Deployment failed: ${{ env.FILENAME }} already exists in S4. Aborting to prevent overwrite."
+            exit 1
+          fi
+
+          aws s3 cp "${{ env.FILENAME }}" "${{ env.S3_PATH }}" --endpoint-url ${{ env.ENDPOINT }}
