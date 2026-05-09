@@ -20,6 +20,20 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="v1.1.0" date="2026-05-09">
+            <description>
+                <h2 id="whatschanged">What&apos;s Changed</h2>
+                <ul>
+                    <li>Fix missing rpc replies by @5cript in https://github.com/5cript/nui-sftp/pull/164</li>
+                    <li>Onboarding Flow by @5cript in https://github.com/5cript/nui-sftp/pull/165</li>
+                </ul>
+                <p>
+                    
+                    <strong>Full Changelog</strong>
+                    : https://github.com/5cript/nui-sftp/compare/v1.0.2…v1.1.0
+                </p>
+            </description>
+        </release>
         <release version="v1.0.2" date="2026-05-06">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
