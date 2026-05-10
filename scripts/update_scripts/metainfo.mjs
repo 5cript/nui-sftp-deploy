@@ -5,6 +5,7 @@ import { getReleases } from './github.mjs';
 import showdown from 'showdown';
 import fsOld from 'node:fs';
 import path from 'node:path';
+import { parsedVersion } from './version.mjs';
 
 function convertReleaseToHtml(str) {
     // const window = new JSDOM('').window;
@@ -75,7 +76,7 @@ export async function updateReleasesInMetainfoXml(metainfoObj) {
                 }
             ],
             ":@": {
-                '@_version': release.tag_name,
+                '@_version': parsedVersion(release.tag_name).full,
                 '@_date': release.published_at.split('T')[0],
             }
         };
