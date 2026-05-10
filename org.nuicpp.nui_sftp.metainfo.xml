@@ -1,16 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component type="desktop">
+<component type="desktop-application">
     <id>org.nuicpp.nui_sftp</id>
     <name>nui-sftp</name>
     <summary>A SSH/SFTP client using the NuiCpp UI Framework</summary>
     <description>
-        <p>A SSH/SFTP client built with the NuiCpp UI Framework.</p>
+        <p>
+            nui-sftp is a desktop client for SSH and SFTP. It is built on libssh and the
+            NuiCpp UI framework, and combines file transfer, directory synchronization,
+            and interactive shell access over a single SSH connection per session.
+        </p>
+        <p>Features:</p>
+        <ul>
+            <li>SFTP browser with side-by-side local and remote panes, drag-and-drop transfers, and a queueable operation list.</li>
+            <li>Directory synchronization (one-way or bidirectional) with a diff preview and per-entry selection before any change is applied.</li>
+            <li>Open remote files in an external editor; subsequent saves are detected on disk and re-uploaded automatically.</li>
+            <li>Multiple interactive SSH shell channels per session, multiplexed over the same connection and presented as tabs.</li>
+            <li>Local terminal panes alongside the remote panes within the same workspace.</li>
+            <li>Per-host session profiles, configurable panel layout, themeable UI, and customizable keybinds.</li>
+            <li>Archive transfer mode for bulk uploads and downloads.</li>
+            <li>No telemetry, no account, no network access beyond the SSH/SFTP connections the user configures.</li>
+        </ul>
+        <p>
+            The source code is available on GitHub under a permissive license. nui-sftp is
+            also packaged as a native Windows build, in the Arch User Repository, and as an
+            AppImage.
+        </p>
     </description>
     <metadata_license>MIT</metadata_license>
     <project_license>MIT</project_license>
     <developer_name>Tim Ebbeke (aka 5cript)</developer_name>
     <launchable type="desktop-id">org.nuicpp.nui_sftp.desktop</launchable>
-    <url type="homepage">https://github.com/5cript/nui-sftp</url>
+    <url type="homepage">https://nui-sftp.nuicpp.org/</url>
     <url type="bugtracker">https://github.com/5cript/nui-sftp/issues</url>
     <url type="vcs-browser">https://github.com/5cript/nui-sftp</url>
     <screenshots>
@@ -20,7 +40,7 @@
         </screenshot>
     </screenshots>
     <releases>
-        <release version="v1.1.0" date="2026-05-09">
+        <release version="1.1.0" date="2026-05-09">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
@@ -28,13 +48,13 @@
                     <li>Onboarding Flow by @5cript in https://github.com/5cript/nui-sftp/pull/165</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v1.0.2…v1.1.0
                 </p>
             </description>
         </release>
-        <release version="v1.0.2" date="2026-05-06">
+        <release version="1.0.2" date="2026-05-06">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
@@ -42,13 +62,13 @@
                     <li>Added mention of AppImage to Readme and WebPage. by @5cript in https://github.com/5cript/nui-sftp/pull/163</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v1.0.1…v1.0.2
                 </p>
             </description>
         </release>
-        <release version="v1.0.1" date="2026-05-04">
+        <release version="1.0.1" date="2026-05-04">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
@@ -56,13 +76,13 @@
                     <li>Ssh Processing Thread Crash Fix by @5cript in https://github.com/5cript/nui-sftp/pull/160</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v1.0.0…v1.0.1
                 </p>
             </description>
         </release>
-        <release version="v1.0.0" date="2026-05-02">
+        <release version="1.0.0" date="2026-05-02">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
@@ -70,13 +90,13 @@
                     <li>Add WebPage by @5cript in https://github.com/5cript/nui-sftp/pull/152</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v0.10.3…v1.0.0
                 </p>
             </description>
         </release>
-        <release version="v0.10.3" date="2026-04-24">
+        <release version="0.10.3" date="2026-04-24">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
@@ -84,31 +104,31 @@
                     <li>Removed sdbus++ leftovers. by @5cript in https://github.com/5cript/nui-sftp/pull/147</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v0.10.2…v0.10.3
                 </p>
             </description>
         </release>
-        <release version="v0.10.2" date="2026-04-23">
+        <release version="0.10.2" date="2026-04-23">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
                     <li>Fix Portal, Remote Favorites and Renaming by @5cript in https://github.com/5cript/nui-sftp/pull/144</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v0.10.1…v0.10.2
                 </p>
             </description>
         </release>
-        <release version="v0.10.1" date="2026-04-22">
+        <release version="0.10.1" date="2026-04-22">
             <description>
                 <p>Moving to submodules from manually checked out deps.</p>
             </description>
         </release>
-        <release version="v0.10.0" date="2026-04-21">
+        <release version="0.10.0" date="2026-04-21">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
@@ -121,13 +141,13 @@
                     <li>Fixed version regex. by @5cript in https://github.com/5cript/nui-sftp/pull/139</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v0.9.0…v0.10.0
                 </p>
             </description>
         </release>
-        <release version="v0.9.0" date="2026-04-16">
+        <release version="0.9.0" date="2026-04-16">
             <description>
                 <h2 id="filegrid">File Grid</h2>
                 <ul>
@@ -155,7 +175,7 @@
                 </ul>
             </description>
         </release>
-        <release version="v0.8.0" date="2026-04-11">
+        <release version="0.8.0" date="2026-04-11">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
@@ -165,13 +185,13 @@
                     <li>Places Panel for File Grid by @5cript in https://github.com/5cript/nui-sftp/pull/103</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v0.7.1…v0.8.0
                 </p>
             </description>
         </release>
-        <release version="v0.7.1" date="2026-04-07">
+        <release version="0.7.1" date="2026-04-07">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
@@ -179,25 +199,25 @@
                 </ul>
             </description>
         </release>
-        <release version="v0.7.0" date="2026-04-07">
+        <release version="0.7.0" date="2026-04-07">
             <description>
                 <p>Open and monitor files and directories.</p>
             </description>
         </release>
-        <release version="v0.6.1" date="2026-04-03">
+        <release version="0.6.1" date="2026-04-03">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
                     <li>Feat/asset finder improvements by @5cript in https://github.com/5cript/nui-sftp/pull/87</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v0.6.0…v0.6.1
                 </p>
             </description>
         </release>
-        <release version="v0.6.0" date="2026-04-03">
+        <release version="0.6.0" date="2026-04-03">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
@@ -216,7 +236,7 @@
                 </ul>
             </description>
         </release>
-        <release version="v0.5.0" date="2026-03-31">
+        <release version="0.5.0" date="2026-03-31">
             <description>
                 <h2 id="whatchanged">What changed?</h2>
                 <ul>
@@ -232,7 +252,7 @@
                 </ul>
             </description>
         </release>
-        <release version="v0.4.0" date="2026-03-30">
+        <release version="0.4.0" date="2026-03-30">
             <description>
                 <h2 id="whatchanged">What changed</h2>
                 <ul>
@@ -245,85 +265,85 @@
                 </ul>
             </description>
         </release>
-        <release version="v0.3.1" date="2026-03-26">
+        <release version="0.3.1" date="2026-03-26">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
                     <li>Updated components. by @5cript in https://github.com/5cript/nui-sftp/pull/34</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v0.3.0…v0.3.1
                 </p>
             </description>
         </release>
-        <release version="v0.3.0" date="2026-03-25">
+        <release version="0.3.0" date="2026-03-25">
             <description>
                 <p>Dark/Light and full custom theming.</p>
             </description>
         </release>
-        <release version="v0.2.0" date="2026-03-22">
+        <release version="0.2.0" date="2026-03-22">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
                     <li>File Grid Improvements &amp; Bug Fixes by @5cript in https://github.com/5cript/nui-sftp/pull/32</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v0.1.1…v0.2.0
                 </p>
             </description>
         </release>
-        <release version="v0.1.1" date="2026-03-22">
+        <release version="0.1.1" date="2026-03-22">
             <description>
                 <h2 id="whatchanged">What changed</h2>
                 <p>There are no more ui5 themes to deploy, so they were removed from deploy.sh</p>
             </description>
         </release>
-        <release version="v0.1.0" date="2026-03-22">
+        <release version="0.1.0" date="2026-03-22">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
                     <li>Remove ui5 webcomponents by @5cript in https://github.com/5cript/nui-sftp/pull/28</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v0.0.5…v0.1.0
                 </p>
             </description>
         </release>
-        <release version="v0.0.5" date="2026-03-11">
+        <release version="0.0.5" date="2026-03-11">
             <description>
                 <p>Fixed Frontend Artifact Upload</p>
             </description>
         </release>
-        <release version="v0.0.4" date="2026-03-11">
+        <release version="0.0.4" date="2026-03-11">
             <description>
                 <p>Moved from CMake 4.2 to CMake 4.1</p>
             </description>
         </release>
-        <release version="v0.0.3-beta" date="2026-03-07">
+        <release version="0.0.3-beta" date="2026-03-07">
             <description>
                 <h2 id="whatschanged">What&apos;s Changed</h2>
                 <ul>
                     <li>Several Changes for Package Builds by @5cript in https://github.com/5cript/nui-sftp/pull/21</li>
                 </ul>
                 <p>
-                    
+
                     <strong>Full Changelog</strong>
                     : https://github.com/5cript/nui-sftp/compare/v0.0.2-beta…v0.0.3-beta
                 </p>
             </description>
         </release>
-        <release version="v0.0.2-beta" date="2026-03-02">
+        <release version="0.0.2-beta" date="2026-03-02">
             <description>
                 <p>The CMake version script no longer fails on -beta or +build suffixes.</p>
             </description>
         </release>
-        <release version="v0.0.1-beta" date="2026-03-02">
+        <release version="0.0.1-beta" date="2026-03-02">
             <description>
                 <p>Initial feature onset.</p>
             </description>

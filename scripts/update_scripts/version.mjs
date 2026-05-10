@@ -1,16 +1,19 @@
 const semverRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
-import { version } from "./args.mjs";
+import { version as defaultVersion } from "./args.mjs";
 
-const parsedVersion = () => {
-    let sanitizedVersion = version;
-    let tag = version;
-    if (version.startsWith('v')) {
-        console.warn(`Version ${version} starts with 'v'. Stripping it for parsing.`);
-        sanitizedVersion = version.substring(1);
+const parsedVersion = (input) => {
+    const source = input ?? defaultVersion;
+    let sanitizedVersion = source;
+    let tag = source;
+    if (source.startsWith('v')) {
+        if (input === undefined) {
+            console.warn(`Version ${source} starts with 'v'. Stripping it for parsing.`);
+        }
+        sanitizedVersion = source.substring(1);
     }
     else {
-        tag = 'v' + version;
+        tag = 'v' + source;
     }
     const match = sanitizedVersion.match(semverRegex);
     if (!match) {
