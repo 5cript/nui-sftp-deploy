@@ -6,21 +6,20 @@ sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm21
   - org.freedesktop.Sdk.Extension.node24
 command: nui-sftp
-buildsystem: simple
 
 finish-args:
   - --share=network
+  - --share=ipc
   - --filesystem=host
-  - --filesystem=/tmp
   - --socket=wayland
-  - --socket=x11
   - --socket=fallback-x11
   - --socket=ssh-auth
   - --device=dri
-  - --device=input
-  - --talk-name=org.freedesktop.portal.Desktop
-  - --talk-name=org.freedesktop.portal.Documents
-  - --talk-name=org.freedesktop.portal.OpenURI
+
+cleanup:
+  - /include
+  - /lib/cmake
+  - /lib/pkgconfig
 
 modules:
   - name: boost
@@ -32,24 +31,17 @@ modules:
       - type: archive
         url: https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.gz
         sha256: 5e93d582aff26868d581a52ae78c7d8edf3f3064742c6e77901a1f18a437eea9
-    cleanup:
-      - '/lib/cmake/boost*'
-      - '/include'
-
 
   - name: libssh
     buildsystem: simple
     build-commands:
-      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app
+      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app -DWITH_EXAMPLES=OFF
       - cmake --build build --target install
     sources:
       - type: git
         url: https://git.libssh.org/projects/libssh.git/
         tag: libssh-0.11.4
-    cleanup:
-      - '/include'
-      - '/lib64/pkgconfig/libssh.pc'
-      - '/lib64/cmake/libssh'
+        commit: ca9c055d7c78ce357346ac7c2b14047568d47aa1
 
   - name: interval-tree
     buildsystem: simple
@@ -60,35 +52,15 @@ modules:
       - type: git
         url: https://github.com/5cript/interval-tree.git
         tag: v3.1.1
-    cleanup:
-      - '/include'
+        commit: dab26b24cd1b163b5640cf6dd9d52968b3532869
 
   - name: nlohmann-json
-    buildsystem: simple
-    build-commands:
-      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app
-      - cmake --build build --target install
+    buildsystem: cmake-ninja
     sources:
       - type: git
         url: https://github.com/nlohmann/json.git
         tag: v3.12.0
-    cleanup:
-      - '/include'
-
-  - name: fmt
-    buildsystem: simple
-    build-commands:
-      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app
-      - cmake --build build --target install
-    sources:
-      - type: git
-        url: https://github.com/fmtlib/fmt.git
-        tag: 12.1.0
-    cleanup:
-      - '/include'
-      - '/lib64/libfmt.a'
-      - '/lib64/pkgconfig/fmt.pc'
-      - '/lib64/cmake/fmt'
+        commit: 55f93686c01528224f448c19128836e7df245f72
 
   - name: nui-sftp-frontend
     buildsystem: simple
@@ -101,7 +73,9 @@ modules:
         sha256: 9849abaa9889dfb1670a2498133b5fabc8bf010f72252325ba075c2614f392c8
 
   - name: nui-sftp
-    buildsystem: simple
+    buildsystem: cmake-ninja
+    builddir: true
+    no-make-install: true
     build-options:
       env:
         CC: clang
@@ -109,51 +83,50 @@ modules:
         LD: lld
         INSTALL_TARGET: /app
         Boost_ROOT: /app
-        BUILD_DIRECTORY: build/flatpak
-        PKG_CONFIG_PATH: /app/usr/lib/pkgconfig
       append-path: "/usr/lib/sdk/llvm21/bin:/usr/lib/sdk/node24/bin"
       prepend-ld-library-path: "/usr/lib/sdk/llvm21/lib"
-      # build-args:
-      #   - --share=network
-    build-commands:
-      - cmake
-          -B build/flatpak
-          -G Ninja
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_C_COMPILER=clang
-          -DCMAKE_CXX_COMPILER=clang++
-          -DCMAKE_LINKER=lld
-          -DCMAKE_CXX_EXTENSIONS=ON
-          -DCMAKE_CXX_STANDARD=23
-          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          -DOFFLINE_BUILD=ON
-          -DJSON_Diagnostics=ON
-          -DFORCED_PROJECT_VERSION=1.1.0
-      - cmake --build build/flatpak
-      - OMIT_FRONTEND=true ./scripts/deploy.sh
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_C_COMPILER=clang
+      - -DCMAKE_CXX_COMPILER=clang++
+      - -DCMAKE_LINKER=lld
+      - -DCMAKE_CXX_EXTENSIONS=ON
+      - -DCMAKE_CXX_STANDARD=23
+      - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - -DOFFLINE_BUILD=ON
+      - -DJSON_Diagnostics=ON
+      - -DFORCED_PROJECT_VERSION=1.1.0
+    post-install:
+      - OMIT_FRONTEND=true BUILD_DIRECTORY="$(pwd)" ../scripts/deploy.sh
       # Copy icons to assets/icons dir
       - mkdir -p /app/assets/icons
-      - cp -r dependencies/icons/* /app/assets/icons/
-      - cp dependencies/icons/os_folders/windows/11/folder_main.png /app/assets/icons/folder_main.png
-      # Patch desktop file to rename icon "nui_sftp.svg" to "org.nuicpp.nui_sftp.svg"
-      - sed -i 's/Icon=nui_sftp/Icon=org.nuicpp.nui_sftp/g' org.nuicpp.nui_sftp.desktop
+      - cp -r ../dependencies/icons/* /app/assets/icons/
+      - cp ../dependencies/icons/os_folders/windows/11/folder_main.png /app/assets/icons/folder_main.png
+      # Rename the desktop Icon= entry to the reverse-DNS app id used by Flatpak.
+      # Upstream ships "Icon=nui_sftp" because the icon filename differs across
+      # packaging formats.
+      - desktop-file-edit --set-icon=org.nuicpp.nui_sftp ../org.nuicpp.nui_sftp.desktop
       # Install AppStream metadata
-      - install -Dm644 org.nuicpp.nui_sftp.metainfo.xml /app/share/metainfo/org.nuicpp.nui_sftp.metainfo.xml
+      - install -Dm644 ../deploy-meta/org.nuicpp.nui_sftp.metainfo.xml /app/share/metainfo/org.nuicpp.nui_sftp.metainfo.xml
       # Install desktop file
-      - install -Dm644 org.nuicpp.nui_sftp.desktop /app/share/applications/org.nuicpp.nui_sftp.desktop
+      - install -Dm644 ../org.nuicpp.nui_sftp.desktop /app/share/applications/org.nuicpp.nui_sftp.desktop
       # Image
-      - install -Dm644 NUI-SFTP_Logo-01_nopad.svg /app/share/icons/hicolor/scalable/apps/org.nuicpp.nui_sftp.svg
+      - install -Dm644 ../NUI-SFTP_Logo-01_nopad.svg /app/share/icons/hicolor/scalable/apps/org.nuicpp.nui_sftp.svg
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
         tag: v1.1.0
+        commit: 6055e2749e77bb22bd70553fc433e013c75c7fd2
       - type: archive
         url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz
         sha256: 30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e
         dest: 'dependencies/icons'
         strip-components: 0
-      - type: file
-        path: org.nuicpp.nui_sftp.metainfo.xml
+      - type: git
+        url: https://github.com/5cript/nui-sftp-deploy
+        tag: flatpak/1.1.0
+        commit: c13519e3a3db11401bcd203b4cab8971ebb178dc
+        dest: deploy-meta
       - type: file
         url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg
         sha256: cf0fc442069dfd28bd8b7769da6dfdca92111044ea9817197716ed9bfada3869

@@ -4,11 +4,9 @@
     <name>nui-sftp</name>
     <summary>A SSH/SFTP client using the NuiCpp UI Framework</summary>
     <description>
-        <p>
-            nui-sftp is a desktop client for SSH and SFTP. It is built on libssh and the
+        <p>nui-sftp is a desktop client for SSH and SFTP. It is built on libssh and the
             NuiCpp UI framework, and combines file transfer, directory synchronization,
-            and interactive shell access over a single SSH connection per session.
-        </p>
+            and interactive shell access over a single SSH connection per session.</p>
         <p>Features:</p>
         <ul>
             <li>SFTP browser with side-by-side local and remote panes, drag-and-drop transfers, and a queueable operation list.</li>
@@ -20,11 +18,9 @@
             <li>Archive transfer mode for bulk uploads and downloads.</li>
             <li>No telemetry, no account, no network access beyond the SSH/SFTP connections the user configures.</li>
         </ul>
-        <p>
-            The source code is available on GitHub under a permissive license. nui-sftp is
+        <p>The source code is available on GitHub under a permissive license. nui-sftp is
             also packaged as a native Windows build, in the Arch User Repository, and as an
-            AppImage.
-        </p>
+            AppImage.</p>
     </description>
     <metadata_license>MIT</metadata_license>
     <project_license>MIT</project_license>

@@ -1,8 +1,12 @@
-import { flatpakYamlPath } from './files_and_dirs.mjs';
+import { flatpakYamlPath, nuiSftpRepoDir } from './files_and_dirs.mjs';
 import { parsedVersion } from './version.mjs';
 import { findLineIndexMatching, splitLines } from './text_editing.mjs';
 
 import fs from 'node:fs/promises';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execAsync = promisify(exec);
 
 async function setFunctionOnForcedVersionCmakeOptions(yamlLines) {
     const { lineIndex, match } = findLineIndexMatching(yamlLines, /^(\s*)-DFORCED_PROJECT_VERSION=.*$/);
@@ -65,37 +69,71 @@ async function updateFrontendStep(yamlLines) {
     return yamlLines;
 }
 
-function updateMainSourceTag(yamlLines) {
-    const url = 'https://github.com/5cript/nui-sftp';
-    const urlLineIndex = findLineIndexMatching(yamlLines, new RegExp(`\\s*url:\\s*${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`)).lineIndex;
+// Resolve the commit SHA a tag points at by asking the local clone.
+// updateRepo() in prepare_release.mjs has already fetched + checked out
+// the requested tag, so the ref is guaranteed to exist locally.
+async function resolveCommitForTag(repoDir, tag) {
+    try {
+        const { stdout } = await execAsync(`git -C ${repoDir} rev-parse ${tag}^{commit}`);
+        return stdout.trim();
+    } catch (err) {
+        console.warn(`Failed to resolve commit for tag '${tag}' in ${repoDir}: ${err.message}`);
+        return null;
+    }
+}
+
+// Update the `tag:` and `commit:` lines that follow a known `url:` line.
+// Both must already be present in the manifest; this never inserts new keys.
+function updateGitSourceTagAndCommit(yamlLines, exactUrl, newTag, newCommit, windowSize = 6) {
+    const escapedUrl = exactUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const urlLineIndex = findLineIndexMatching(yamlLines, new RegExp(`^\\s*url:\\s*${escapedUrl}\\s*$`)).lineIndex;
     if (urlLineIndex === -1) {
-        console.warn(`Could not find main nui-sftp source URL in flatpak YAML, skipping tag update...`);
+        console.warn(`Could not find git source URL '${exactUrl}' in flatpak YAML, skipping...`);
         return yamlLines;
     }
 
-    let refLineIndex = -1;
-    const checkTo = Math.min(yamlLines.length - 1, urlLineIndex + 3);
-    for (let i = urlLineIndex; i <= checkTo; ++i) {
-        if (/^\s*(tag|commit):\s*.*/.test(yamlLines[i])) {
-            refLineIndex = i;
-            break;
-        }
+    const checkTo = Math.min(yamlLines.length - 1, urlLineIndex + windowSize);
+    let tagLineIndex = -1;
+    let commitLineIndex = -1;
+    for (let i = urlLineIndex + 1; i <= checkTo; ++i) {
+        if (tagLineIndex === -1 && /^\s*tag:\s*.+$/.test(yamlLines[i])) tagLineIndex = i;
+        if (commitLineIndex === -1 && /^\s*commit:\s*.+$/.test(yamlLines[i])) commitLineIndex = i;
+        if (tagLineIndex !== -1 && commitLineIndex !== -1) break;
     }
 
-    if (refLineIndex === -1) {
-        console.warn(`Could not find tag/commit line for main nui-sftp source in flatpak YAML, skipping...`);
-        return yamlLines;
+    if (tagLineIndex !== -1) {
+        const indent = yamlLines[tagLineIndex].match(/^(\s*)/)[1];
+        console.log(`Updating tag for ${exactUrl}: '${yamlLines[tagLineIndex].trim()}' -> 'tag: ${newTag}'`);
+        yamlLines[tagLineIndex] = `${indent}tag: ${newTag}`;
+    } else {
+        console.warn(`No tag: line found for ${exactUrl} within ${windowSize} lines of url:, skipping tag update...`);
     }
 
-    const refLineSpacePrefix = yamlLines[refLineIndex].match(/^(\s*)/)[1];
-    console.log(`Updating main nui-sftp tag in flatpak YAML from ${yamlLines[refLineIndex]} to tag: ${parsedVersion().tag}`);
-    yamlLines[refLineIndex] = refLineSpacePrefix + `tag: ${parsedVersion().tag}`;
+    if (commitLineIndex !== -1) {
+        const indent = yamlLines[commitLineIndex].match(/^(\s*)/)[1];
+        console.log(`Updating commit for ${exactUrl}: '${yamlLines[commitLineIndex].trim()}' -> 'commit: ${newCommit}'`);
+        yamlLines[commitLineIndex] = `${indent}commit: ${newCommit}`;
+    } else {
+        console.warn(`No commit: line found for ${exactUrl} within ${windowSize} lines of url:, skipping commit update...`);
+    }
+
     return yamlLines;
+}
+
+async function updateMainSourceRef(yamlLines) {
+    const tag = parsedVersion().tag;
+    const commit = await resolveCommitForTag(nuiSftpRepoDir, tag);
+    if (!commit) {
+        console.warn('Skipping main nui-sftp source ref update: could not resolve commit.');
+        return yamlLines;
+    }
+    return updateGitSourceTagAndCommit(yamlLines, 'https://github.com/5cript/nui-sftp', tag, commit);
 }
 
 export async function updateFlatpakYaml() {
     const yamlContent = await fs.readFile(flatpakYamlPath, 'utf-8');
-    let lines = updateMainSourceTag(splitLines(yamlContent));
+    let lines = splitLines(yamlContent);
+    lines = await updateMainSourceRef(lines);
     lines = await setFunctionOnForcedVersionCmakeOptions(lines);
     lines = await updateFrontendStep(lines);
     await fs.writeFile(flatpakYamlPath, lines.join('\n'), 'utf-8');
