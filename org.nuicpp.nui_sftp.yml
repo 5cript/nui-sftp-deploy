@@ -127,6 +127,7 @@ modules:
         url: https://github.com/5cript/nui-sftp-deploy
         tag: flatpak/1.1.0
         commit: c13519e3a3db11401bcd203b4cab8971ebb178dc
+        disable-submodules: true
         dest: deploy-meta
       - type: file
         url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg
