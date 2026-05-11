@@ -33,10 +33,11 @@ modules:
         sha256: 5e93d582aff26868d581a52ae78c7d8edf3f3064742c6e77901a1f18a437eea9
 
   - name: libssh
-    buildsystem: simple
-    build-commands:
-      - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app -DWITH_EXAMPLES=OFF
-      - cmake --build build --target install
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DWITH_EXAMPLES=OFF
     sources:
       - type: git
         url: https://git.libssh.org/projects/libssh.git/
