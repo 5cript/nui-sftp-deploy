@@ -36,6 +36,20 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.1.1" date="2026-05-16">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Feat/docs flatpak update by @5cript in https://github.com/5cript/nui-sftp/pull/167</li>
+                    <li>Fixed reconnect multi terminal restore. by @5cript in https://github.com/5cript/nui-sftp/pull/168</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.1.0…v1.1.1
+                </p>
+            </description>
+        </release>
         <release version="1.1.0" date="2026-05-09">
             <description>
                 <p>What&apos;s Changed</p>
@@ -44,7 +58,7 @@
                     <li>Onboarding Flow by @5cript in https://github.com/5cript/nui-sftp/pull/165</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v1.0.2…v1.1.0
                 </p>
@@ -58,7 +72,7 @@
                     <li>Added mention of AppImage to Readme and WebPage. by @5cript in https://github.com/5cript/nui-sftp/pull/163</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v1.0.1…v1.0.2
                 </p>
@@ -72,7 +86,7 @@
                     <li>Ssh Processing Thread Crash Fix by @5cript in https://github.com/5cript/nui-sftp/pull/160</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v1.0.0…v1.0.1
                 </p>
@@ -86,7 +100,7 @@
                     <li>Add WebPage by @5cript in https://github.com/5cript/nui-sftp/pull/152</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v0.10.3…v1.0.0
                 </p>
@@ -100,7 +114,7 @@
                     <li>Removed sdbus++ leftovers. by @5cript in https://github.com/5cript/nui-sftp/pull/147</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v0.10.2…v0.10.3
                 </p>
@@ -113,7 +127,7 @@
                     <li>Fix Portal, Remote Favorites and Renaming by @5cript in https://github.com/5cript/nui-sftp/pull/144</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v0.10.1…v0.10.2
                 </p>
@@ -137,7 +151,7 @@
                     <li>Fixed version regex. by @5cript in https://github.com/5cript/nui-sftp/pull/139</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v0.9.0…v0.10.0
                 </p>
@@ -181,7 +195,7 @@
                     <li>Places Panel for File Grid by @5cript in https://github.com/5cript/nui-sftp/pull/103</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v0.7.1…v0.8.0
                 </p>
@@ -207,7 +221,7 @@
                     <li>Feat/asset finder improvements by @5cript in https://github.com/5cript/nui-sftp/pull/87</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v0.6.0…v0.6.1
                 </p>
@@ -268,7 +282,7 @@
                     <li>Updated components. by @5cript in https://github.com/5cript/nui-sftp/pull/34</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v0.3.0…v0.3.1
                 </p>
@@ -286,7 +300,7 @@
                     <li>File Grid Improvements &amp; Bug Fixes by @5cript in https://github.com/5cript/nui-sftp/pull/32</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v0.1.1…v0.2.0
                 </p>
@@ -305,7 +319,7 @@
                     <li>Remove ui5 webcomponents by @5cript in https://github.com/5cript/nui-sftp/pull/28</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v0.0.5…v0.1.0
                 </p>
@@ -328,7 +342,7 @@
                     <li>Several Changes for Package Builds by @5cript in https://github.com/5cript/nui-sftp/pull/21</li>
                 </ul>
                 <p>
-
+                    
                     <em>Full Changelog</em>
                     : https://github.com/5cript/nui-sftp/compare/v0.0.2-beta…v0.0.3-beta
                 </p>

@@ -16,6 +16,35 @@ function convertReleaseToHtml(str) {
     return html;
 }
 
+// AppStream <description> only permits: p, ul, ol, li, em, code.
+// Everything else (h1-h6, strong, b, i, a, ...) is rejected by the flatpak/appstream linter.
+// showdown produces several of those from GitHub release markdown, so we rewrite the parsed
+// tree before it gets serialised back into the metainfo XML.
+const TAG_RENAMES = {
+    h1: 'p', h2: 'p', h3: 'p', h4: 'p', h5: 'p', h6: 'p',
+    strong: 'em',
+    b: 'em',
+    i: 'em',
+};
+
+function sanitizeAppStreamNodes(nodes) {
+    if (!Array.isArray(nodes)) return;
+    for (const node of nodes) {
+        const tag = Object.keys(node).find(k => k !== ':@');
+        if (!tag || tag.startsWith('#') || tag === 'comment' || tag === 'cdata') continue;
+
+        sanitizeAppStreamNodes(node[tag]);
+
+        const renamed = TAG_RENAMES[tag];
+        if (renamed) {
+            node[renamed] = node[tag];
+            delete node[tag];
+            // <p>/<em> don't accept the id attribute showdown adds to headings.
+            delete node[':@'];
+        }
+    }
+}
+
 function htmlToFastXmlFormat(html) {
     const parser = new XMLParser({
         ignoreAttributes: false,
@@ -29,6 +58,7 @@ function htmlToFastXmlFormat(html) {
     });
 
     const parsed = parser.parse(html);
+    sanitizeAppStreamNodes(parsed);
     return parsed;
 }
 
