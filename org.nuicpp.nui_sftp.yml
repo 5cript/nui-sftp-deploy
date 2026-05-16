@@ -70,8 +70,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v1.1.0/nui-sftp-linux-frontend_1.1.0.tar.gz
-        sha256: 9849abaa9889dfb1670a2498133b5fabc8bf010f72252325ba075c2614f392c8
+        url: https://github.com/5cript/nui-sftp/releases/download/v1.1.1/nui-sftp-linux-frontend_1.1.1.tar.gz
+        sha256: 1a967af0ab93e5bac67e79b93b0272f7b79b79de7e4ff46b967d9c09e581969e
 
   - name: nui-sftp
     buildsystem: cmake-ninja
@@ -116,8 +116,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v1.1.0
-        commit: 6055e2749e77bb22bd70553fc433e013c75c7fd2
+        tag: v1.1.1
+        commit: 2e78074b4fd5a92a38b9901081c3e464c08b7238
       - type: archive
         url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz
         sha256: 30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e
@@ -125,8 +125,8 @@ modules:
         strip-components: 0
       - type: git
         url: https://github.com/5cript/nui-sftp-deploy
-        tag: flatpak/1.1.0
-        commit: c13519e3a3db11401bcd203b4cab8971ebb178dc
+        tag: flatpak/1.1.0_1
+        commit: 8ff88536f0342261ee3bbab55d147ad4cfff80bd
         disable-submodules: true
         dest: deploy-meta
       - type: file
