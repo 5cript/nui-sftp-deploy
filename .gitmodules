@@ -1,3 +1,6 @@
 [submodule "arch"]
 	path = arch
 	url = https://aur.archlinux.org/nui-sftp.git
+[submodule "flathub"]
+	path = flathub
+	url = git@github.com:flathub/org.nuicpp.nui_sftp.git
