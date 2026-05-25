@@ -7,12 +7,33 @@ import fsOld from 'node:fs';
 import path from 'node:path';
 import { parsedVersion } from './version.mjs';
 
+// Strip the "## Download" section (and everything until the next h1/h2 or EOF)
+// from a release body, so it doesn't end up in the AppStream changelog.
+function stripDownloadSection(markdown) {
+    const lines = markdown.split('\n');
+    const out = [];
+    let skipping = false;
+    for (const line of lines) {
+        if (skipping) {
+            if (/^#{1,2} (?!#)/.test(line)) {
+                skipping = false;
+                out.push(line);
+            }
+            continue;
+        }
+        if (/^##\s+Download\s*$/i.test(line)) {
+            skipping = true;
+            continue;
+        }
+        out.push(line);
+    }
+    return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 function convertReleaseToHtml(str) {
-    // const window = new JSDOM('').window;
-    // const purify = DOMPurify(window);
-    // const clean = purify.sanitize(str);
+    const cleaned = stripDownloadSection(str);
     const converter = new showdown.Converter();
-    const html = converter.makeHtml(str);
+    const html = converter.makeHtml(cleaned);
     return html;
 }
 
