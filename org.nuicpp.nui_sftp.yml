@@ -70,8 +70,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v1.2.0/nui-sftp-linux-frontend_1.2.0.tar.gz
-        sha256: 096a57b9d2ecaf3d37cdb7968cddecbf0daf96c180595d83577e9524421d7b68
+        url: https://github.com/5cript/nui-sftp/releases/download/v1.3.0/nui-sftp-linux-frontend_1.3.0.tar.gz
+        sha256: 24fe751fe7c6ecd7d9f49d23860503f6d312fc0143a6c3673e0668aa5ed6d767
 
   - name: nui-sftp
     buildsystem: cmake-ninja
@@ -116,8 +116,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v1.2.0
-        commit: ef23dde8e0fc5bee03797142121a06afc493c9fc
+        tag: v1.3.0
+        commit: eb406493889b9f5d11ca34b2a3c03125c3faa02d
       - type: archive
         url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz
         sha256: 30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e
