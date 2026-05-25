@@ -1,4 +1,4 @@
-#!/bin/bun
+#!/bin/env bun
 
 import { updatePkgBuild } from "./update_scripts/pkgbuild.mjs";
 import { updateRepo } from "./update_scripts/git.mjs";
