@@ -93,6 +93,37 @@ Submission-specific details that are still in flight (will be folded into
 - **AppImage** — `appimage/Dockerfile` is updated by `prepare_release.mjs`;
   the actual build runs in CI.
 
+## Windows (Inno Setup)
+
+`windows/nui-sftp.iss` is an Inno Setup script that wraps the portable zip's
+file tree into a per-machine installer with Start Menu / optional desktop /
+optional PATH integration. Upgrades are handled automatically by Inno Setup's
+stable `AppId` mechanism. No special migration logic is needed across
+releases.
+
+`prepare_release.mjs` updates the `MyAppVersion` literal inside the `.iss` so
+it stays in lockstep with `PKGBUILD`'s `pkgver` and the Flatpak manifest's
+`FORCED_PROJECT_VERSION`. The CI workflow overrides it via ISCC's `/D` flag at
+build time; the literal only matters for ad-hoc local invocations.
+
+### Local build
+
+The local build expects the [main scp repo](https://github.com/5cript/nui-sftp)
+to be checked out as a sibling of this repo (i.e. `../nui-sftp/`). Inside the
+scp checkout, run a Windows build (MSYS2 clang64, see scp's
+`.github/workflows/windows.yml`) and then `bash scripts/deploy.sh` to stage
+the install tree at `../nui-sftp/build/install`.
+
+Then, from this repo:
+
+```bash
+./scripts/build_installer.sh --version 1.2.3
+```
+
+The script auto-locates ISCC.exe (Inno Setup 6) and writes the installer to
+`build/nui-sftp-windows-x86_64_<version>-setup.exe`. Install Inno Setup with
+`winget install JRSoftware.InnoSetup` if missing.
+
 ## Local Flatpak builds
 
 [`scripts/build_flatpak.sh`](scripts/build_flatpak.sh) invokes
