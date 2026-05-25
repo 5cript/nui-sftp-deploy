@@ -36,6 +36,22 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.3.0" date="2026-05-25">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Update Windows installation instructions in README by @5cript in https://github.com/5cript/nui-sftp/pull/171</li>
+                    <li>Feat/better first session ux by @5cript in https://github.com/5cript/nui-sftp/pull/178</li>
+                </ul>
+                <p>Improved startup experience, by eliminating config load and defaulting warnings.
+Also improved the buttons in the toolbar and gave the &quot;add server&quot; button a highlight, when no servers are configured, otherwise connect is highlighted. Connect is disabled when there are no servers configured.</p>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.2.0…v1.3.0
+                </p>
+            </description>
+        </release>
         <release version="1.2.0" date="2026-05-25">
             <description>
                 <p>What&apos;s Changed</p>
