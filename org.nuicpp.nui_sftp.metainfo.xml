@@ -36,6 +36,19 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.2.0" date="2026-05-25">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Add ico for windows as app icon. by @5cript in https://github.com/5cript/nui-sftp/pull/170</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.1.1…v1.2.0
+                </p>
+            </description>
+        </release>
         <release version="1.1.1" date="2026-05-16">
             <description>
                 <p>What&apos;s Changed</p>
