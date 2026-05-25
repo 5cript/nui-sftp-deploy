@@ -53,6 +53,7 @@ jobs:
             mingw-w64-clang-x86_64-bzip2
             mingw-w64-clang-x86_64-zstd
             mingw-w64-clang-x86_64-xz
+            mingw-w64-clang-x86_64-imagemagick
 
       - name: Workspace Path Fixup
         run: |
@@ -133,18 +134,39 @@ jobs:
           zip -r "nui-sftp-windows-x86_64_${{ env.VERSION }}.zip" "nui-sftp"
           mv "nui-sftp-windows-x86_64_${{ env.VERSION }}.zip" "${{ env.WSPACE }}"
 
-      - name: Produce Artifact
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer
+        env:
+          SOURCE_DIR: ${{ env.WSPACE }}/nui-sftp/build/install
+          OUTPUT_DIR: ${{ env.WSPACE }}/installer-out
+        run: |
+          bash scripts/build_installer.sh \
+            --version "${{ env.VERSION }}" \
+            --source-dir "$SOURCE_DIR" \
+            --output-dir "$OUTPUT_DIR"
+          mv "$OUTPUT_DIR/nui-sftp-windows-x86_64_${{ env.VERSION }}-setup.exe" "${{ env.WSPACE }}/"
+
+      - name: Produce Zip Artifact
         uses: actions/upload-artifact@v6
         with:
           name: nui-sftp-windows-x86_64_${{ env.VERSION }}.zip
           path: ${{ env.WSPACE }}/nui-sftp-windows-x86_64_${{ env.VERSION }}.zip
 
-      - name: Upload Artifact to Release
+      - name: Produce Installer Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: nui-sftp-windows-x86_64_${{ env.VERSION }}-setup.exe
+          path: ${{ env.WSPACE }}/nui-sftp-windows-x86_64_${{ env.VERSION }}-setup.exe
+
+      - name: Upload Artifacts to Release
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.RELEASEUPLOADPAT }}
         run: |
           gh release upload "v${{ env.VERSION }}" "${{ env.WSPACE }}/nui-sftp-windows-x86_64_${{ env.VERSION }}.zip" --repo 5cript/nui-sftp
+          gh release upload "v${{ env.VERSION }}" "${{ env.WSPACE }}/nui-sftp-windows-x86_64_${{ env.VERSION }}-setup.exe" --repo 5cript/nui-sftp
 
       - name: Upload artifacts to MEGA S4
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
@@ -152,14 +174,18 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.MEGAS4ACCESS }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MEGAS4KEY }}
           ENDPOINT: https://s3.eu-central-1.s4.mega.io
-          FILENAME: "nui-sftp-windows-x86_64_${{ env.VERSION }}.zip"
+          ZIP_FILENAME: "nui-sftp-windows-x86_64_${{ env.VERSION }}.zip"
+          SETUP_FILENAME: "nui-sftp-windows-x86_64_${{ env.VERSION }}-setup.exe"
           S3_PATH: "s3://nui-sftp-releases/windows/${{ (github.event_name == 'workflow_dispatch' && 'x86_64/user_trigger') || 'x86_64' }}/"
         run: |
-          # Check if the file exists on the remote
-          if aws s3 ls "${{ env.S3_PATH }}${{ env.FILENAME }}" --endpoint-url ${{ env.ENDPOINT }} > /dev/null 2>&1; then
-            echo "Error: File ${{ env.FILENAME }} already exists in S4. Aborting to prevent overwrite."
-            exit 1
-          fi
+          upload_if_absent() {
+            local filename="$1"
+            if aws s3 ls "${{ env.S3_PATH }}${filename}" --endpoint-url "${{ env.ENDPOINT }}" > /dev/null 2>&1; then
+              echo "Error: File ${filename} already exists in S4. Aborting to prevent overwrite."
+              exit 1
+            fi
+            aws s3 cp "${{ env.WSPACE }}/${filename}" "${{ env.S3_PATH }}" --endpoint-url "${{ env.ENDPOINT }}"
+          }
 
-          # If it doesnt exist, upload it
-          aws s3 cp "${{ env.WSPACE }}/${{ env.FILENAME }}" "${{ env.S3_PATH }}" --endpoint-url ${{ env.ENDPOINT }}
+          upload_if_absent "${{ env.ZIP_FILENAME }}"
+          upload_if_absent "${{ env.SETUP_FILENAME }}"
