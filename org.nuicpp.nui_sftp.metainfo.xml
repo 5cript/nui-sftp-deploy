@@ -36,6 +36,34 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.3.1" date="2026-06-03">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Add SECURITY.md with vulnerability reporting details by @5cript in https://github.com/5cript/nui-sftp/pull/179</li>
+                    <li>Update Ko-fi username in FUNDING.yml by @5cript in https://github.com/5cript/nui-sftp/pull/180</li>
+                    <li>Update issue templates by @5cript in https://github.com/5cript/nui-sftp/pull/181</li>
+                    <li>Modify bug report template for nui-sftp by @5cript in https://github.com/5cript/nui-sftp/pull/182</li>
+                    <li>Added CONTRIBUTING.md by @5cript in https://github.com/5cript/nui-sftp/pull/183</li>
+                    <li>Fix bulk upload progress not reaching 100% by @5cript in https://github.com/5cript/nui-sftp/pull/191</li>
+                    <li>Fixes logic to reach 100%, the total was overshooting the actual transfer size.</li>
+                    <li>Made bug issue template less intimidating</li>
+                    <li>Made progress refresh more frequent when large buffers are used.</li>
+                    <li>Readded missing side refreshes after operations.</li>
+                    <li>Removed some logging that eats performance even on info level</li>
+                    <li>Added limit to confirm dialog on many items selected.</li>
+                    <li>Turned any delete into queued delete to avoid timeout problems.</li>
+                    <li>Made bulk delete card text more useful when not started.</li>
+                    <li>Made sort by name case insensitive.</li>
+                    <li>Optimized overwrite check for many-uploads drastically.</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.3.0…v1.3.1
+                </p>
+            </description>
+        </release>
         <release version="1.3.0" date="2026-05-25">
             <description>
                 <p>What&apos;s Changed</p>

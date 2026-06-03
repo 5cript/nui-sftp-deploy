@@ -15,7 +15,7 @@
 ; `prepare_release.mjs --version X.Y.Z` invocation. Do not edit by hand; bump
 ; via prepare_release.mjs so it stays in lockstep with PKGBUILD/flatpak/appimage.
 #ifndef MyAppVersion
-  #define MyAppVersion "1.3.0"
+  #define MyAppVersion "1.3.1"
 #endif
 #ifndef SourceDir
   #define SourceDir "..\..\nui-sftp\build\install"
