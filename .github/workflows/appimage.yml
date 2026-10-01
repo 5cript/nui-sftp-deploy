@@ -49,7 +49,7 @@ jobs:
 
       # Builds the AppImage builder image with GHA layer cache. First run on
       # a clean cache is slow (~30+ min — boost + libssh + fmt + nlohmann +
-      # llvm-21 + cmake all installed/built). Subsequent runs reuse layers.
+      # llvm-22 + cmake all installed/built). Subsequent runs reuse layers.
       - name: Build builder image
         uses: docker/build-push-action@v6
         with:

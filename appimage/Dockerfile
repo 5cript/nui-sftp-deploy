@@ -1,7 +1,9 @@
-FROM ubuntu:24.04
+# Oldest still-supported Ubuntu LTS. The appimage.github.io catalog test runs
+# the AppImage on it, so nothing bundled may need a newer glibc than 2.35.
+FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG LLVM_VERSION=21
+ARG LLVM_VERSION=22
 ARG BOOST_VERSION=1.90.0
 ARG LIBSSH_TAG=libssh-0.11.4
 ARG FMT_TAG=12.1.0
@@ -14,11 +16,13 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Base toolchain + system deps that AREN'T built from source.
 # Versions matching the flatpak manifest (boost/libssh/fmt/nlohmann-json/interval-tree)
-# are built from source below. Other deps (webkitgtk-6.0, sdbus-c++, crypto++,
-# curl, compression libs) come from Ubuntu packages.
+# are built from source below. Other deps (webkit2gtk-4.1, sdbus-c++, crypto++,
+# curl, compression libs) come from Ubuntu packages. Jammy has no webkitgtk-6.0,
+# so the AppImage uses the GTK3 / webkit2gtk-4.1 code paths.
 # libstdc++-15-dev is needed because libstdc++-14's std::ranges::to has a
 # malformed forward_like that clang correctly rejects (gcc accepts it). The
-# toolchain PPA provides gcc-15 / libstdc++-15 on Ubuntu 24.04.
+# toolchain PPA provides gcc-15 / libstdc++-15 on Ubuntu 22.04. The resulting
+# GLIBCXX requirement is covered by bundling libstdc++ (see AppRun).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates gnupg software-properties-common \
     && add-apt-repository -y ppa:ubuntu-toolchain-r/test \
@@ -28,16 +32,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         dpkg-dev patchelf squashfs-tools \
         libstdc++-15-dev \
         desktop-file-utils appstream \
-        libwebkitgtk-6.0-dev \
+        libwebkit2gtk-4.1-dev \
         libcurl4-openssl-dev \
         libcrypto++-dev \
-        libsdbus-c++-dev \
+        libsdbus-c++-dev libsystemd-dev \
         libopenmpi-dev \
         zlib1g-dev libbz2-dev libzstd-dev liblzma-dev \
-        libgtk-4-dev \
+        libgtk-3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Clang from apt.llvm.org (matches flatpak's llvm21 SDK extension).
+# Clang from apt.llvm.org (matches flatpak's llvm22 SDK extension).
 RUN curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh \
     && chmod +x /tmp/llvm.sh \
     && /tmp/llvm.sh ${LLVM_VERSION} all \
@@ -99,7 +103,8 @@ RUN cd /tmp && git clone --depth 1 --branch "${INTERVAL_TREE_TAG}" https://githu
     && rm -rf /tmp/interval-tree
 
 # linuxdeploy + gtk plugin + appimagetool. Extracted at build time so we can run
-# without FUSE inside docker.
+# without FUSE inside docker. Newer runtimes extract with 0700 directories, so
+# open them up for the non-root user CI runs the container as.
 RUN mkdir -p /opt/appimage-tools && cd /opt/appimage-tools \
     && wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
     && wget -q https://raw.githubusercontent.com/linuxdeploy/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh \
@@ -114,7 +119,8 @@ RUN mkdir -p /opt/appimage-tools && cd /opt/appimage-tools \
     && ln -sf /opt/appimage-tools/appimagetool.AppDir/AppRun       /usr/local/bin/appimagetool \
     && rm /opt/appimage-tools/linuxdeploy-x86_64.AppImage /opt/appimage-tools/appimagetool-x86_64.AppImage \
     && wget -q -O /opt/appimage-tools/runtime-x86_64 \
-        https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
+        https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64 \
+    && chmod -R a+rX /opt/appimage-tools
 
 # linuxdeploy uses appstreamcli to validate; appstream package above provides it.
 ENV APPIMAGE_EXTRACT_AND_RUN=1
