@@ -1,9 +1,9 @@
 id: org.nuicpp.nui_sftp
 runtime: org.gnome.Platform
-runtime-version: '50'
+runtime-version: '51'
 sdk: org.gnome.Sdk
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.llvm21
+  - org.freedesktop.Sdk.Extension.llvm22
   - org.freedesktop.Sdk.Extension.node24
 command: nui-sftp
 
@@ -84,8 +84,8 @@ modules:
         LD: lld
         INSTALL_TARGET: /app
         Boost_ROOT: /app
-      append-path: "/usr/lib/sdk/llvm21/bin:/usr/lib/sdk/node24/bin"
-      prepend-ld-library-path: "/usr/lib/sdk/llvm21/lib"
+      append-path: "/usr/lib/sdk/llvm22/bin:/usr/lib/sdk/node24/bin"
+      prepend-ld-library-path: "/usr/lib/sdk/llvm22/lib"
     config-opts:
       - -DCMAKE_BUILD_TYPE=Release
       - -DCMAKE_C_COMPILER=clang
