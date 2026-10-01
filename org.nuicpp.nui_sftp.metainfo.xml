@@ -36,6 +36,12 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.4.0" date="2026-10-01">
+            <description>
+                <p>Bulk Uploads and Downloads now can have concurrency (moving multiple files at the same time).
+The setting can be found in the SFTP settings and the default is 2.</p>
+            </description>
+        </release>
         <release version="1.3.1" date="2026-06-03">
             <description>
                 <p>What&apos;s Changed</p>
@@ -408,11 +414,6 @@ Also improved the buttons in the toolbar and gave the &quot;add server&quot; but
         <release version="0.0.2-beta" date="2026-03-02">
             <description>
                 <p>The CMake version script no longer fails on -beta or +build suffixes.</p>
-            </description>
-        </release>
-        <release version="0.0.1-beta" date="2026-03-02">
-            <description>
-                <p>Initial feature onset.</p>
             </description>
         </release>
     </releases>
