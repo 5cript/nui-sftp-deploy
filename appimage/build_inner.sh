@@ -76,13 +76,13 @@ sed -i "s/Icon=${PKGNAME//-/_}/Icon=${APP_ID}/g" "${APPDIR}/usr/share/applicatio
 install -Dm644 "${WORKSPACE}/${APP_ID}.metainfo.xml" \
     "${APPDIR}/usr/share/metainfo/${APP_ID}.metainfo.xml"
 
-# Bundle WebKit's helper processes + injected-bundle. On Ubuntu 24.04 these
-# live under the libdir (/usr/lib/x86_64-linux-gnu/webkitgtk-6.0/) and
+# Bundle WebKit's helper processes + injected-bundle. On Ubuntu these live
+# under the libdir (/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/) and
 # linuxdeploy-plugin-gtk doesn't copy them. The host layout is mirrored so
 # the LD_PRELOAD shim (compiled below) can rewrite the hardcoded path that
-# libwebkitgtk-6.0 uses to spawn WebKitNetworkProcess et al.
-WEBKIT_EXEC_SRC="/usr/lib/x86_64-linux-gnu/webkitgtk-6.0"
-WEBKIT_EXEC_DST="${APPDIR}/usr/lib/x86_64-linux-gnu/webkitgtk-6.0"
+# libwebkit2gtk uses to spawn WebKitNetworkProcess et al.
+WEBKIT_EXEC_SRC="/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1"
+WEBKIT_EXEC_DST="${APPDIR}${WEBKIT_EXEC_SRC}"
 if [ -d "${WEBKIT_EXEC_SRC}" ]; then
     mkdir -p "${WEBKIT_EXEC_DST}"
     cp -a "${WEBKIT_EXEC_SRC}/." "${WEBKIT_EXEC_DST}/"
@@ -97,12 +97,12 @@ else
     exit 1
 fi
 
-# webkitgtk-6.0 hardcodes /usr/lib/x86_64-linux-gnu/webkitgtk-6.0 for helper
-# spawn (the WEBKIT_EXEC_PATH env override was removed). Compile a tiny
-# LD_PRELOAD shim that intercepts posix_spawn/execve and rewrites that prefix
-# to $APPDIR/usr/lib/x86_64-linux-gnu/webkitgtk-6.0.
+# WebKitGTK release builds hardcode the helper path above for spawning and
+# ignore WEBKIT_EXEC_PATH. Compile a tiny LD_PRELOAD shim that intercepts
+# posix_spawn/execve/dlopen and rewrites that prefix into $APPDIR.
 mkdir -p "${APPDIR}/usr/lib/appimage-shims"
 clang -O2 -shared -fPIC -Wl,--no-as-needed \
+    -DWEBKIT_HOST_PREFIX="\"${WEBKIT_EXEC_SRC}\"" \
     "${WORKSPACE}/appimage/webkit_path_shim.c" \
     -o "${APPDIR}/usr/lib/appimage-shims/webkit_path_shim.so" \
     -ldl
@@ -119,7 +119,7 @@ APPRUN_SRC="${WORKSPACE}/appimage/AppRun"
 # produce the AppImage here; we run appimagetool ourselves below to control
 # compression.
 cd "${BUILD_DIR}"
-DEPLOY_GTK_VERSION=4 \
+DEPLOY_GTK_VERSION=3 \
 linuxdeploy \
     --appdir "${APPDIR}" \
     --executable "${APPDIR}/opt/${PKGNAME}/bin/${PKGNAME}" \
@@ -128,12 +128,38 @@ linuxdeploy \
     --custom-apprun "${APPRUN_SRC}" \
     --plugin gtk
 
+# libstdc++ / libgcc_s come from the gcc-15 toolchain PPA and are newer than
+# what the target systems ship. linuxdeploy's excludelist skips them, so they
+# are bundled outside usr/lib and AppRun only puts them on the library path
+# when the host copy is older.
+COMPAT_DIR="${APPDIR}/usr/optional"
+mkdir -p "${COMPAT_DIR}/libstdc++" "${COMPAT_DIR}/libgcc_s"
+cp -L /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "${COMPAT_DIR}/libstdc++/"
+cp -L /lib/x86_64-linux-gnu/libgcc_s.so.1 "${COMPAT_DIR}/libgcc_s/"
+
 # Strip every ELF in the AppDir before compression. linuxdeploy doesn't strip
 # helper processes or webkit's massive .so set; stripping shaves ~30-40 MB
 # before squashfs compression even runs.
 find "${APPDIR}" -type f \( -name '*.so' -o -name '*.so.*' \) -exec strip --strip-unneeded {} + 2>/dev/null || true
-find "${APPDIR}/opt/${PKGNAME}/bin" "${APPDIR}/usr/lib/x86_64-linux-gnu/webkitgtk-6.0" \
+find "${APPDIR}/opt/${PKGNAME}/bin" "${WEBKIT_EXEC_DST}" \
     -type f -executable -exec strip --strip-unneeded {} + 2>/dev/null || true
+
+# Fail early instead of letting the appimage.github.io catalog test find it:
+# no bundled ELF may require a glibc newer than the build host's.
+MAX_GLIBC=$(ldd --version | head -n1 | grep -oE '[0-9]+\.[0-9]+$')
+GLIBC_VIOLATIONS=0
+while IFS= read -r -d '' elf; do
+    file -b "${elf}" | grep -q '^ELF' || continue
+    required=$(objdump -T "${elf}" 2>/dev/null | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sed 's/GLIBC_//' | sort -uV | tail -n1)
+    [ -n "${required}" ] || continue
+    if [ "$(printf '%s\n%s\n' "${required}" "${MAX_GLIBC}" | sort -V | tail -n1)" != "${MAX_GLIBC}" ]; then
+        echo "ERROR: ${elf#"${APPDIR}"/} requires GLIBC_${required} (> ${MAX_GLIBC})" >&2
+        GLIBC_VIOLATIONS=$((GLIBC_VIOLATIONS + 1))
+    fi
+done < <(find "${APPDIR}" -type f -print0)
+if [ "${GLIBC_VIOLATIONS}" -ne 0 ]; then
+    exit 1
+fi
 
 # Produce the AppImage manually: mksquashfs concatenated with the type-2
 # AppImage runtime. We bypass appimagetool because its bundled mksquashfs is

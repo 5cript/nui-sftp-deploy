@@ -3,9 +3,29 @@ HERE="$(dirname "$(readlink -f "${0}")")"
 export APPDIR="${HERE}"
 export PATH="${HERE}/usr/bin:${PATH}"
 export LD_LIBRARY_PATH="${HERE}/usr/lib:${HERE}/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:-}"
+# Prepends a bundled compat lib dir to LD_LIBRARY_PATH when the host's copy
+# of the library exports an older highest symbol version than the bundled one.
+# Using the bundled copy on a newer host would break host libs (e.g. GL
+# drivers) that need the newer symbols.
+useBundledIfNewer() {
+    local soname="$1" versionPrefix="$2" bundledDir="$3"
+    local hostLib bundledVersion hostVersion
+    hostLib=$(/sbin/ldconfig -p 2>/dev/null | grep -F "${soname} (libc6,x86-64)" | head -n1 | sed 's/.*=> //')
+    bundledVersion=$(grep -aoE "${versionPrefix}[0-9.]+" "${bundledDir}/${soname}" | sort -uV | tail -n1)
+    if [ -n "${hostLib}" ] && [ -f "${hostLib}" ]; then
+        hostVersion=$(grep -aoE "${versionPrefix}[0-9.]+" "${hostLib}" | sort -uV | tail -n1)
+        if [ "$(printf '%s\n%s\n' "${hostVersion}" "${bundledVersion}" | sort -V | tail -n1)" = "${hostVersion}" ]; then
+            return
+        fi
+    fi
+    export LD_LIBRARY_PATH="${bundledDir}:${LD_LIBRARY_PATH}"
+}
+useBundledIfNewer libstdc++.so.6 GLIBCXX_ "${HERE}/usr/optional/libstdc++"
+useBundledIfNewer libgcc_s.so.1 GCC_ "${HERE}/usr/optional/libgcc_s"
+
 export XDG_DATA_DIRS="${HERE}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
-# webkitgtk-6.0 has no env override for the helper exec path, intercept
+# WebKitGTK release builds have no env override for the helper exec path, intercept
 # posix_spawn/execve via LD_PRELOAD so spawning WebKitNetworkProcess et al.
 # resolves to the bundled copy. The shim reads $APPDIR (set above).
 export LD_PRELOAD="${HERE}/usr/lib/appimage-shims/webkit_path_shim.so${LD_PRELOAD:+:${LD_PRELOAD}}"

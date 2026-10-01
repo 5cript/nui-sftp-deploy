@@ -1,14 +1,15 @@
-/* webkit_path_shim — LD_PRELOAD intercept that rewrites webkitgtk-6.0's
- * hardcoded path (/usr/lib/x86_64-linux-gnu/webkitgtk-6.0) to the bundled
- * location inside the AppImage ($APPDIR/usr/lib/...).
+/* webkit_path_shim — LD_PRELOAD intercept that rewrites WebKitGTK's
+ * hardcoded helper path (WEBKIT_HOST_PREFIX, e.g.
+ * /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1) to the bundled location inside
+ * the AppImage ($APPDIR/usr/lib/...).
  *
- * webkitgtk-6.0 removed the WEBKIT_EXEC_PATH env override, so the only way
+ * WebKitGTK release builds ignore the WEBKIT_EXEC_PATH env override, so the only way
  * to relocate its sibling files in an AppImage is to intercept the relevant
  * libc calls:
  *   - posix_spawn / execve : GSubprocess uses these to launch helper processes
  *                            (WebKitNetworkProcess, WebKitWebProcess, ...).
  *   - dlopen / dlmopen     : the injected bundle .so is dlopen'd by absolute
- *                            path from libwebkitgtk-6.0.
+ *                            path from libwebkit2gtk.
  */
 
 #define _GNU_SOURCE
@@ -20,10 +21,14 @@
 #include <string.h>
 #include <unistd.h>
 
-static const char HOST_PFX[] = "/usr/lib/x86_64-linux-gnu/webkitgtk-6.0";
+#ifndef WEBKIT_HOST_PREFIX
+#define WEBKIT_HOST_PREFIX "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1"
+#endif
+
+static const char HOST_PFX[] = WEBKIT_HOST_PREFIX;
 
 /**
- * @brief Rewrite a host webkitgtk-6.0 helper path into the AppImage-relative path.
+ * @brief Rewrite a host WebKitGTK helper path into the AppImage-relative path.
  *
  * If @p path begins with HOST_PFX and is either exactly that directory or a child
  * of it (i.e. the next character is '\0' or '/'), the AppImage prefix from
@@ -76,7 +81,7 @@ typedef int (*posix_spawn_fn)(pid_t *, const char *,
  *
  * @param pid   Out-parameter for the spawned child's PID. Forwarded unchanged.
  * @param path  Absolute path to the executable. Rewritten via ::remap if it points
- *              at the host webkitgtk-6.0 helper directory.
+ *              at the host WebKitGTK helper directory.
  * @param fa    File actions. Forwarded unchanged.
  * @param attr  Spawn attributes. Forwarded unchanged.
  * @param argv  Argument vector. Forwarded unchanged.
@@ -178,8 +183,8 @@ typedef void *(*dlopen_fn)(const char *, int);
 /**
  * @brief LD_PRELOAD interposer for @c dlopen that rewrites webkitgtk paths.
  *
- * libwebkitgtk-6.0 dlopens its injected bundle .so from the hardcoded
- * /usr/lib/x86_64-linux-gnu/webkitgtk-6.0/injected-bundle/... path. This
+ * libwebkit2gtk dlopens its injected bundle .so from the hardcoded
+ * WEBKIT_HOST_PREFIX/injected-bundle/... path. This
  * interposer reroutes that load to the bundled copy inside the AppImage.
  *
  * @param filename  Library name or absolute path. Rewritten via ::remap on a
