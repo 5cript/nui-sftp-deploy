@@ -3,7 +3,7 @@
 FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG LLVM_VERSION=21
+ARG LLVM_VERSION=22
 ARG BOOST_VERSION=1.90.0
 ARG LIBSSH_TAG=libssh-0.11.4
 ARG FMT_TAG=12.1.0
@@ -41,7 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libgtk-3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Clang from apt.llvm.org (matches flatpak's llvm21 SDK extension).
+# Clang from apt.llvm.org (matches flatpak's llvm22 SDK extension).
 RUN curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh \
     && chmod +x /tmp/llvm.sh \
     && /tmp/llvm.sh ${LLVM_VERSION} all \
