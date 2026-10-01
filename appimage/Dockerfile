@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libwebkit2gtk-4.1-dev \
         libcurl4-openssl-dev \
         libcrypto++-dev \
-        libsdbus-c++-dev \
+        libsdbus-c++-dev libsystemd-dev \
         libopenmpi-dev \
         zlib1g-dev libbz2-dev libzstd-dev liblzma-dev \
         libgtk-3-dev \
