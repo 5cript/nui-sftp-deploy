@@ -96,7 +96,7 @@ modules:
       - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - -DOFFLINE_BUILD=ON
       - -DJSON_Diagnostics=ON
-      - -DFORCED_PROJECT_VERSION=1.1.0
+      - -DFORCED_PROJECT_VERSION=1.4.0
     post-install:
       - OMIT_FRONTEND=true BUILD_DIRECTORY="$(pwd)" ../scripts/deploy.sh
       # Copy icons to assets/icons dir
