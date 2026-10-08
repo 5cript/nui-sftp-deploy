@@ -36,8 +36,23 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.5.1" date="2026-10-08">
+            <description>
+                <p>What&apos;s Changed</p>
+                <p>Adds a small fix onto the history and snippets feature</p>
+                <ul>
+                    <li>Stopped Enter in the snippet variable form from also sending a newline by @5cript in https://github.com/5cript/nui-sftp/pull/208</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.5.0…v1.5.1
+                </p>
+            </description>
+        </release>
         <release version="1.5.0" date="2026-10-08">
             <description>
+                <p>THIS RELEASE IS NOT COMPLETE (MISSING ARTIFACTS), USE 1.5.1</p>
                 <p>What&apos;s Changed</p>
                 <p>Brings the new snippet and command history feature.
 Replaces icons that were of unknown license origin with proper attributed open source icons.
