@@ -36,6 +36,28 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.5.0" date="2026-10-08">
+            <description>
+                <p>What&apos;s Changed</p>
+                <p>Brings the new snippet and command history feature.
+Replaces icons that were of unknown license origin with proper attributed open source icons.
+And fixes many many issues.</p>
+                <ul>
+                    <li>History and snippets by @5cript in https://github.com/5cript/nui-sftp/pull/198</li>
+                    <li>Version in gui by @5cript in https://github.com/5cript/nui-sftp/pull/199</li>
+                    <li>More Localization by @5cript in https://github.com/5cript/nui-sftp/pull/200</li>
+                    <li>Settings search by @5cript in https://github.com/5cript/nui-sftp/pull/202</li>
+                    <li>Snippet import by @5cript in https://github.com/5cript/nui-sftp/pull/204</li>
+                    <li>Fix windows icons by @5cript in https://github.com/5cript/nui-sftp/pull/205</li>
+                    <li>Fix command store and icons by @5cript in https://github.com/5cript/nui-sftp/pull/206</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.4.0…v1.5.0
+                </p>
+            </description>
+        </release>
         <release version="1.4.0" date="2026-10-01">
             <description>
                 <p>Bulk Uploads and Downloads now can have concurrency (moving multiple files at the same time).
@@ -414,6 +436,11 @@ Also improved the buttons in the toolbar and gave the &quot;add server&quot; but
         <release version="0.0.2-beta" date="2026-03-02">
             <description>
                 <p>The CMake version script no longer fails on -beta or +build suffixes.</p>
+            </description>
+        </release>
+        <release version="0.0.1-beta" date="2026-03-02">
+            <description>
+                <p>Initial feature onset.</p>
             </description>
         </release>
     </releases>
