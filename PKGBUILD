@@ -36,13 +36,11 @@ source=(
     "$pkgname::git+$url.git#tag=v${pkgver//_/-}"
     "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg"
     "https://github.com/5cript/nui-sftp/releases/download/v${pkgver}/nui-sftp-linux-frontend_${pkgver}.tar.gz"
-    "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz"
 )
 sha256sums=(
     '71f7d4cec28c57790e0a65acd627bb1c1d65a61922d387d954b80d15ed83b9e1'
     'cf0fc442069dfd28bd8b7769da6dfdca92111044ea9817197716ed9bfada3869'
     '84777ed08bd9b689e78a2d855d714dee25620f6fbb97edffd8d45d12bede9294'
-    '30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e'
 )
 
 prepare() {
@@ -86,7 +84,6 @@ package() {
     cp -r "$srcdir/$pkgname/static/assets" "$pkgdir"/opt/"$pkgname"/
     install -m644 "$srcdir/$pkgname/LICENSE" "$pkgdir"/opt/"$pkgname"/LICENSE
     cp -r "$srcdir/$pkgname/themes/." "$pkgdir"/opt/"$pkgname"/themes/
-    tar -xzf "$srcdir/icons.tar.gz" -C "$pkgdir"/opt/"$pkgname"/assets/icons --strip-components=0
 
     # Desktop
     install -Dm644 "$srcdir/$pkgname/org.nuicpp.nui_sftp.desktop" "$pkgdir"/usr/share/applications/"$pkgname".desktop

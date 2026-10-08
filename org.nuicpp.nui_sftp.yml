@@ -99,10 +99,6 @@ modules:
       - -DFORCED_PROJECT_VERSION=1.4.0
     post-install:
       - OMIT_FRONTEND=true BUILD_DIRECTORY="$(pwd)" ../scripts/deploy.sh
-      # Copy icons to assets/icons dir
-      - mkdir -p /app/assets/icons
-      - cp -r ../dependencies/icons/* /app/assets/icons/
-      - cp ../dependencies/icons/os_folders/windows/11/folder_main.png /app/assets/icons/folder_main.png
       # Rename the desktop Icon= entry to the reverse-DNS app id used by Flatpak.
       # Upstream ships "Icon=nui_sftp" because the icon filename differs across
       # packaging formats.
@@ -118,11 +114,6 @@ modules:
         url: https://github.com/5cript/nui-sftp
         tag: v1.4.0
         commit: 92996b0dfb5f4713e7d5c6ef7460044958f9c22e
-      - type: archive
-        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz
-        sha256: 30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e
-        dest: 'dependencies/icons'
-        strip-components: 0
       - type: git
         url: https://github.com/5cript/nui-sftp-deploy
         tag: flatpak/1.1.0_1
