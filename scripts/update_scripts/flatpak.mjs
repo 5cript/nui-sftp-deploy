@@ -9,7 +9,7 @@ import { promisify } from 'node:util';
 const execAsync = promisify(exec);
 
 async function setFunctionOnForcedVersionCmakeOptions(yamlLines) {
-    const { lineIndex, match } = findLineIndexMatching(yamlLines, /^(\s*)-DFORCED_PROJECT_VERSION=.*$/);
+    const { lineIndex, match } = findLineIndexMatching(yamlLines, /^(\s*-\s*)-DFORCED_PROJECT_VERSION=.*$/);
     if (lineIndex === -1) {
         console.warn('Could not find line with DFORCED_PROJECT_VERSION in flatpak YAML, skipping...');
         return yamlLines;

@@ -41,8 +41,8 @@ modules:
     sources:
       - type: git
         url: https://git.libssh.org/projects/libssh.git/
-        tag: libssh-0.11.4
-        commit: ca9c055d7c78ce357346ac7c2b14047568d47aa1
+        tag: libssh-0.12.2
+        commit: 07430deb9b97b751ec5ea5a7fc307f40bf042e0a
 
   - name: interval-tree
     buildsystem: simple
@@ -70,8 +70,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v1.4.0/nui-sftp-linux-frontend_1.4.0.tar.gz
-        sha256: 84777ed08bd9b689e78a2d855d714dee25620f6fbb97edffd8d45d12bede9294
+        url: https://github.com/5cript/nui-sftp/releases/download/v1.5.1/nui-sftp-linux-frontend_1.5.1.tar.gz
+        sha256: 9fa37d3f3056b049c9a998755ae7fbefcb26348ca533d7298b3b2964e1df5102
 
   - name: nui-sftp
     buildsystem: cmake-ninja
@@ -96,13 +96,9 @@ modules:
       - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - -DOFFLINE_BUILD=ON
       - -DJSON_Diagnostics=ON
-      - -DFORCED_PROJECT_VERSION=1.1.0
+      - -DFORCED_PROJECT_VERSION=1.5.1
     post-install:
       - OMIT_FRONTEND=true BUILD_DIRECTORY="$(pwd)" ../scripts/deploy.sh
-      # Copy icons to assets/icons dir
-      - mkdir -p /app/assets/icons
-      - cp -r ../dependencies/icons/* /app/assets/icons/
-      - cp ../dependencies/icons/os_folders/windows/11/folder_main.png /app/assets/icons/folder_main.png
       # Rename the desktop Icon= entry to the reverse-DNS app id used by Flatpak.
       # Upstream ships "Icon=nui_sftp" because the icon filename differs across
       # packaging formats.
@@ -116,13 +112,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v1.4.0
-        commit: 92996b0dfb5f4713e7d5c6ef7460044958f9c22e
-      - type: archive
-        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz
-        sha256: 30ffa48c3a509e878db31a1e5d80376242852e34d9c2aa3b44d2e3d1da2ce32e
-        dest: 'dependencies/icons'
-        strip-components: 0
+        tag: v1.5.1
+        commit: 99aa41d3f10aa799693324d2e476a4f601897e25
       - type: git
         url: https://github.com/5cript/nui-sftp-deploy
         tag: flatpak/1.1.0_1

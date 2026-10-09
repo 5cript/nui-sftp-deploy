@@ -24,7 +24,6 @@ git clone --depth 1 --branch "v${VERSION}" --recurse-submodules \
 # Same external inputs the PKGBUILD uses.
 cd "${BUILD_DIR}"
 wget -q "https://github.com/5cript/nui-sftp/releases/download/v${VERSION}/${PKGNAME}-linux-frontend_${VERSION}.tar.gz"
-wget -q "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/icons.tar.gz"
 wget -q "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg"
 
 # Build (mirrors the PKGBUILD build() flags).
@@ -59,7 +58,6 @@ install -m755 "${SRC_DIR}/build/bin/${PKGNAME}" "${APPDIR}/opt/${PKGNAME}/bin/${
 cp -r "${SRC_DIR}/static/assets/." "${APPDIR}/opt/${PKGNAME}/assets/"
 install -m644 "${SRC_DIR}/LICENSE" "${APPDIR}/opt/${PKGNAME}/LICENSE"
 cp -r "${SRC_DIR}/themes/." "${APPDIR}/opt/${PKGNAME}/themes/"
-tar -xzf "${BUILD_DIR}/icons.tar.gz" -C "${APPDIR}/opt/${PKGNAME}/assets/icons"
 
 install -Dm644 "${BUILD_DIR}/NUI-SFTP_Logo-01_nopad.svg" \
     "${APPDIR}/opt/${PKGNAME}/assets/icons/nui-sftp-logo.svg"

@@ -7,11 +7,11 @@ import { updateReleasesInMetainfoXml, parseMetainfoXml } from "./update_scripts/
 import { updateFlatpakYaml } from "./update_scripts/flatpak.mjs";
 import { updateAppImageDockerfile } from "./update_scripts/appimage.mjs";
 import { updateInnoSetup } from "./update_scripts/innosetup.mjs";
-import { version } from "./update_scripts/args.mjs";
+import { parsedVersion } from "./update_scripts/version.mjs";
 
 const repoUrl = 'https://github.com/5cript/nui-sftp.git';
 
-await updateRepo(repoUrl, nuiSftpRepoDir, version).catch((err) => {
+await updateRepo(repoUrl, nuiSftpRepoDir, parsedVersion().tag).catch((err) => {
     console.error('Error updating repository:', err);
     process.exit(1);
 });
