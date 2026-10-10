@@ -1,5 +1,36 @@
 #!/bin/bash
 HERE="$(dirname "$(readlink -f "${0}")")"
+
+# Snapshot of the host environment. Everything below changes it for nui-sftp
+# itself, and recordHostEnvironment tells nui-sftp how to undo that for the
+# host programs it starts (local terminals, file managers).
+declare -A hostEnvironment
+for name in $(compgen -e); do
+    hostEnvironment["${name}"]="${!name}"
+done
+# Set by the AppImage runtime before AppRun starts.
+appImageRuntimeVariables=(APPDIR APPIMAGE ARGV0 OWD)
+
+recordHostEnvironment() {
+    local name
+    for name in $(compgen -e); do
+        case "${name}" in NUI_SFTP_APPIMAGE_*) continue ;; esac
+        if [ -z "${hostEnvironment[${name}]+set}" ]; then
+            export "NUI_SFTP_APPIMAGE_UNSET_${name}=1"
+        elif [ "${hostEnvironment[${name}]}" != "${!name}" ]; then
+            export "NUI_SFTP_APPIMAGE_ORIGINAL_${name}=${hostEnvironment[${name}]}"
+        fi
+    done
+    for name in "${!hostEnvironment[@]}"; do
+        if [ -z "${!name+set}" ]; then
+            export "NUI_SFTP_APPIMAGE_ORIGINAL_${name}=${hostEnvironment[${name}]}"
+        fi
+    done
+    for name in "${appImageRuntimeVariables[@]}"; do
+        unset "NUI_SFTP_APPIMAGE_ORIGINAL_${name}"
+        export "NUI_SFTP_APPIMAGE_UNSET_${name}=1"
+    done
+}
 export APPDIR="${HERE}"
 export PATH="${HERE}/usr/bin:${PATH}"
 export LD_LIBRARY_PATH="${HERE}/usr/lib:${HERE}/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:-}"
@@ -40,5 +71,7 @@ if [ -d "${HERE}/apprun-hooks" ]; then
         [ -f "${hook}" ] && source "${hook}"
     done
 fi
+
+recordHostEnvironment
 
 exec "${HERE}/opt/nui-sftp/bin/nui-sftp" "$@"

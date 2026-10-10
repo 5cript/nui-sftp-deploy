@@ -126,6 +126,11 @@ linuxdeploy \
     --custom-apprun "${APPRUN_SRC}" \
     --plugin gtk
 
+# linuxdeploy renames the custom AppRun to AppRun.wrapped and puts a generated
+# AppRun in front that runs the GTK hook first. Ours sources the hooks itself
+# and must see the untouched host environment, so it replaces the generated one.
+mv -f "${APPDIR}/AppRun.wrapped" "${APPDIR}/AppRun"
+
 # libstdc++ / libgcc_s come from the gcc-15 toolchain PPA and are newer than
 # what the target systems ship. linuxdeploy's excludelist skips them, so they
 # are bundled outside usr/lib and AppRun only puts them on the library path
