@@ -45,6 +45,13 @@ jobs:
             librsvg \
             dylibbundler
 
+      # The default Xcode 16.4 clang segfaults on parts of nui-sftp, the image also carries newer ones.
+      - name: Select newest Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)
+          echo "DEVELOPER_DIR=${XCODE}/Contents/Developer" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="${XCODE}/Contents/Developer" clang++ --version
+
       - name: Extract version from PKGBUILD
         if: github.event_name != 'workflow_dispatch'
         run: |
