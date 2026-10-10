@@ -31,6 +31,15 @@ function findFlatpakBoostVersion(yamlLines) {
     return urlIdx.match ? urlIdx.match[1] : null;
 }
 
+function findFlatpakLibsshArchive(yamlLines) {
+    const urlIdx = findLineIndexMatching(
+        yamlLines, /https:\/\/www\.libssh\.org\/files\/\d+\.\d+\/libssh-(\d+\.\d+\.\d+)\.tar\.xz/
+    );
+    if (!urlIdx.match) return { version: null, sha256: null };
+    const shaMatch = (yamlLines[urlIdx.lineIndex + 1] ?? '').match(/^\s*sha256:\s*([0-9a-f]{64})\s*$/);
+    return { version: urlIdx.match[1], sha256: shaMatch ? shaMatch[1] : null };
+}
+
 function applyArgUpdate(dockerLines, argName, value) {
     if (!value) {
         console.warn(`Could not find ${argName} value in flatpak YAML, skipping...`);
@@ -56,9 +65,11 @@ export async function updateAppImageDockerfile() {
     console.log(`Updating AppImage Dockerfile at ${appimageDockerfilePath}...`);
 
     const yamlLines = splitLines(await fs.readFile(flatpakYamlPath, 'utf-8'));
+    const libssh = findFlatpakLibsshArchive(yamlLines);
     const versions = {
         BOOST_VERSION: findFlatpakBoostVersion(yamlLines),
-        LIBSSH_TAG: findFlatpakModuleTag(yamlLines, 'libssh'),
+        LIBSSH_VERSION: libssh.version,
+        LIBSSH_SHA256: libssh.sha256,
         FMT_TAG: findFlatpakModuleTag(yamlLines, 'fmt'),
         JSON_TAG: findFlatpakModuleTag(yamlLines, 'nlohmann-json'),
         INTERVAL_TREE_TAG: findFlatpakModuleTag(yamlLines, 'interval-tree'),

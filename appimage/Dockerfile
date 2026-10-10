@@ -5,7 +5,8 @@ FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG LLVM_VERSION=22
 ARG BOOST_VERSION=1.90.0
-ARG LIBSSH_TAG=libssh-0.12.2
+ARG LIBSSH_VERSION=0.12.2
+ARG LIBSSH_SHA256=49560f677d96e3706a904ac2de1116e25f3680937d51e5c92198fcba4a1c1e9f
 ARG FMT_TAG=12.1.0
 ARG JSON_TAG=v3.12.0
 ARG INTERVAL_TREE_TAG=v3.1.1
@@ -77,11 +78,14 @@ RUN cd /tmp \
     && cd / && rm -rf "/tmp/boost_${BOOST_VERSION//./_}" "/tmp/boost_${BOOST_VERSION//./_}.tar.gz"
 
 # libssh
-RUN cd /tmp && git clone --depth 1 --branch "${LIBSSH_TAG}" https://git.libssh.org/projects/libssh.git \
-    && cd libssh \
+RUN cd /tmp \
+    && wget -q "https://www.libssh.org/files/${LIBSSH_VERSION%.*}/libssh-${LIBSSH_VERSION}.tar.xz" \
+    && echo "${LIBSSH_SHA256}  libssh-${LIBSSH_VERSION}.tar.xz" | sha256sum -c - \
+    && tar xf "libssh-${LIBSSH_VERSION}.tar.xz" \
+    && cd "libssh-${LIBSSH_VERSION}" \
     && cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local \
     && cmake --build build --target install \
-    && cd / && rm -rf /tmp/libssh
+    && cd / && rm -rf "/tmp/libssh-${LIBSSH_VERSION}" "/tmp/libssh-${LIBSSH_VERSION}.tar.xz"
 
 # fmt
 RUN cd /tmp && git clone --depth 1 --branch "${FMT_TAG}" https://github.com/fmtlib/fmt.git \
