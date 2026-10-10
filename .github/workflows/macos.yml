@@ -1,0 +1,133 @@
+name: macOS
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'release/**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g. 1.2.3 or v1.2.3)'
+        required: true
+        default: 'vX.Y.Z'
+        type: string
+
+env:
+  BUILD_TYPE: Release
+  BUILD_DIR: build/clang_release
+
+jobs:
+  macos-arm64:
+    # Homebrew bottles target the runner's macOS, which makes it the oldest macOS the bundled
+    # libraries run on. Keep it at the LSMinimumSystemVersion of the bundle (15.2).
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install \
+            cmake \
+            ninja \
+            pkgconf \
+            boost \
+            cryptopp \
+            openssl@3 \
+            libssh \
+            fmt \
+            nlohmann-json \
+            zstd \
+            xz \
+            imagemagick \
+            librsvg \
+            dylibbundler
+
+      - name: Extract version from PKGBUILD
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          VERSION=$(./scripts/extract_version.sh)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Dispatch version to environment
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          echo "VERSION=${VERSION#v}" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: actions/checkout@v6
+        with:
+          repository: 5cript/nui-sftp
+          path: nui-sftp
+          fetch-tags: true
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configure CMake
+        run: |
+          cmake \
+            -B "nui-sftp/${{ env.BUILD_DIR }}" \
+            -S "nui-sftp" \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DFORCED_PROJECT_VERSION=${{ env.VERSION }} \
+            -DCMAKE_CXX_EXTENSIONS=on \
+            -DNUI_ENABLE_TESTS=off \
+            -DNUI_BUILD_EXAMPLES=off \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DJSON_Diagnostics=ON \
+            -DNUI_FETCH_TRAITS=OFF \
+            -DBREW_PREFIX="$(brew --prefix)" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.2
+
+      - name: Build
+        run: |
+          cmake --build \
+            "nui-sftp/${{ env.BUILD_DIR }}" \
+            --config "${{ env.BUILD_TYPE }}"
+
+      # Output lands in nui-sftp/build/install/nui-sftp.app
+      - name: Run deploy script
+        run: |
+          cd nui-sftp && bash scripts/deploy.sh
+
+      - name: Build disk image
+        run: |
+          bash scripts/build_dmg.sh \
+            --version "${{ env.VERSION }}" \
+            --source-dir nui-sftp/build/install \
+            --output-dir "${{ github.workspace }}"
+
+      - name: Produce DMG Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: nui-sftp-macos-arm64_${{ env.VERSION }}.dmg
+          path: ${{ github.workspace }}/nui-sftp-macos-arm64_${{ env.VERSION }}.dmg
+
+      - name: Upload Artifacts to Release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASEUPLOADPAT }}
+        run: |
+          gh release upload "v${{ env.VERSION }}" "${{ github.workspace }}/nui-sftp-macos-arm64_${{ env.VERSION }}.dmg" --repo 5cript/nui-sftp
+
+      - name: Upload artifacts to MEGA S4
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MEGAS4ACCESS }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MEGAS4KEY }}
+          ENDPOINT: https://s3.eu-central-1.s4.mega.io
+          DMG_FILENAME: "nui-sftp-macos-arm64_${{ env.VERSION }}.dmg"
+          S3_PATH: "s3://nui-sftp-releases/macos/${{ (github.event_name == 'workflow_dispatch' && 'arm64/user_trigger') || 'arm64' }}/"
+        run: |
+          if aws s3 ls "${S3_PATH}${DMG_FILENAME}" --endpoint-url "${ENDPOINT}" > /dev/null 2>&1; then
+            echo "Error: File ${DMG_FILENAME} already exists in S4. Aborting to prevent overwrite."
+            exit 1
+          fi
+          aws s3 cp "${{ github.workspace }}/${DMG_FILENAME}" "${S3_PATH}" --endpoint-url "${ENDPOINT}"
