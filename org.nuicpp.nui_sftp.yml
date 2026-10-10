@@ -39,10 +39,9 @@ modules:
       - -DCMAKE_BUILD_TYPE=Release
       - -DWITH_EXAMPLES=OFF
     sources:
-      - type: git
-        url: https://git.libssh.org/projects/libssh.git/
-        tag: libssh-0.12.2
-        commit: 07430deb9b97b751ec5ea5a7fc307f40bf042e0a
+      - type: archive
+        url: https://www.libssh.org/files/0.12/libssh-0.12.2.tar.xz
+        sha256: 49560f677d96e3706a904ac2de1116e25f3680937d51e5c92198fcba4a1c1e9f
 
   - name: interval-tree
     buildsystem: simple
@@ -70,8 +69,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v1.5.1/nui-sftp-linux-frontend_1.5.1.tar.gz
-        sha256: 9fa37d3f3056b049c9a998755ae7fbefcb26348ca533d7298b3b2964e1df5102
+        url: https://github.com/5cript/nui-sftp/releases/download/v1.5.2/nui-sftp-linux-frontend_1.5.2.tar.gz
+        sha256: 5f9f6aa23090fe825819bfd1da88f1d729910bc199bffda295b3c5ea15addb5d
 
   - name: nui-sftp
     buildsystem: cmake-ninja
@@ -96,7 +95,7 @@ modules:
       - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - -DOFFLINE_BUILD=ON
       - -DJSON_Diagnostics=ON
-      - -DFORCED_PROJECT_VERSION=1.5.1
+      - -DFORCED_PROJECT_VERSION=1.5.2
     post-install:
       - OMIT_FRONTEND=true BUILD_DIRECTORY="$(pwd)" ../scripts/deploy.sh
       # Rename the desktop Icon= entry to the reverse-DNS app id used by Flatpak.
@@ -112,8 +111,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v1.5.1
-        commit: 99aa41d3f10aa799693324d2e476a4f601897e25
+        tag: v1.5.2
+        commit: 4218a803bc8da559ce89131c7b66827e5d86316e
       - type: git
         url: https://github.com/5cript/nui-sftp-deploy
         tag: flatpak/1.1.0_1
