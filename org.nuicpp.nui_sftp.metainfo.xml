@@ -36,6 +36,20 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.5.2" date="2026-10-10">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Started host programs with the host environment instead of the AppImage Env by @5cript in https://github.com/5cript/nui-sftp/pull/214</li>
+                    <li>Fix termios control characters by @5cript in https://github.com/5cript/nui-sftp/pull/215</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.5.1…v1.5.2
+                </p>
+            </description>
+        </release>
         <release version="1.5.1" date="2026-10-08">
             <description>
                 <p>What&apos;s Changed</p>
