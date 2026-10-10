@@ -22,7 +22,9 @@ classify() {
         *.appimage)              echo "linux|AppImage" ;;
         *.flatpak)               echo "linux|Flatpak bundle" ;;
         *linux-frontend*.tar.gz) echo "other|Linux frontend tarball" ;;
-        *.dmg)                   echo "macos|Universal DMG" ;;
+        *arm64*.dmg)             echo "macos|Apple Silicon DMG" ;;
+        *x86_64*.dmg)            echo "macos|Intel DMG" ;;
+        *.dmg)                   echo "macos|DMG" ;;
         *.pkg)                   echo "macos|macOS installer package" ;;
         *-setup.exe|*setup.exe)  echo "windows|Windows installer" ;;
         *windows*.zip)           echo "windows|Windows zip" ;;
