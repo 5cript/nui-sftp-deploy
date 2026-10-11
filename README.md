@@ -134,8 +134,10 @@ There is no per-release file to update for macOS: the workflow reads the version
 and wraps it into `nui-sftp-macos-arm64_<version>.dmg`. On `main` the image is uploaded to the
 GitHub release and to S4 under `macos/arm64/`.
 
-The runner is `macos-15` on purpose: the Homebrew libraries bundled into the app are built for
-the runner's macOS, which makes it the oldest version the app runs on.
+nui-sftp is compiled with Homebrew's `llvm@23` instead of AppleClang. Its
+`scripts/macos/build_dependencies.sh` builds libc++ and all libraries statically for macOS 15.2
+(cached between runs), so the app links nothing but the OS and the runner's macOS version does not
+matter.
 
 ### Local build
 
