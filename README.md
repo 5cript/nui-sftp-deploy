@@ -67,28 +67,61 @@ git add arch && git commit -m "Bump arch submodule to 1.2.0"
 
 ## Flatpak (Flathub)
 
-Once the Flathub submission has been accepted, Flathub creates a per-app
-repository at `https://github.com/flathub/org.nuicpp.nui_sftp`. The intended
-release flow mirrors the AUR one:
+The app lives on Flathub in [flathub/org.nuicpp.nui_sftp](https://github.com/flathub/org.nuicpp.nui_sftp),
+which is checked out here as the `flathub/` submodule. Flathub builds whatever manifest is on its
+`master` branch. That manifest takes the AppStream metainfo (with the release notes) from this
+repository, the `deploy-meta` source pinned to a `flatpak/<version>` tag, so every release needs
+that tag too.
 
-1. Add the Flathub repo as a submodule (e.g. `flathub/`) once it exists.
-2. Run `prepare_release.mjs` to update `org.nuicpp.nui_sftp.yml` and
-   `org.nuicpp.nui_sftp.metainfo.xml` in this repo.
-3. A copy script (analogous to `copy_pkgbuild_to_arch.sh`) will copy the
-   manifest and metainfo into the Flathub submodule and create a release
-   commit there.
-4. Pushing to the Flathub submodule's `master` branch triggers the Flathub
-   buildbot, which publishes the new version once the build succeeds on all
-   architectures.
+Releasing version 1.2.0 to Flathub, after the release branch here is merged:
 
-Submission-specific details that are still in flight (will be folded into
-`prepare_release.mjs` once the workflow stabilises):
+1. Update `main` and tag the merge commit of the release. The tag is what the Flathub manifest
+   points at, so push it before anything else:
 
-- The Flatpak manifest pulls the metainfo from a tag on this repository
-  (`flatpak/<version>`) via a `type: git` source under the name `deploy-meta`.
-  Each release therefore needs the manifest *and* a matching tag pushed
-  here, with the tag's commit SHA written into the manifest's `commit:`
-  field. Until the submission is accepted this is filled in by hand.
+   ```bash
+   git checkout main && git pull
+   git tag -a flatpak/1.2.0 -m flatpak/1.2.0
+   git push origin flatpak/1.2.0
+   ```
+
+2. Start a branch in the submodule from Flathub's current `master`:
+
+   ```bash
+   git -C flathub fetch origin
+   git -C flathub checkout -b release/1.2.0 origin/master
+   ```
+
+3. Copy the manifest over. The script refuses to run unless the deploy repository's `HEAD` is
+   exactly at a `flatpak/*` tag; if there are commits on top already, run it from the tag with
+   `git checkout flatpak/1.2.0` and go back to `main` afterwards.
+
+   ```bash
+   ./scripts/copy_manifest_to_flathub.sh
+   ```
+
+   It copies `org.nuicpp.nui_sftp.yml` into `flathub/`, pins `deploy-meta` to the tag and its
+   commit and commits "Update to 1.2.0" in the submodule. Look over that commit before pushing.
+
+4. Push the branch and open a pull request against `master` on
+   [flathub/org.nuicpp.nui_sftp](https://github.com/flathub/org.nuicpp.nui_sftp/pulls):
+
+   ```bash
+   git -C flathub push -u origin release/1.2.0
+   ```
+
+   Flathub's bot builds the pull request and links a test build. Install it and check that the app
+   starts before merging.
+
+5. Merge the pull request. Flathub then builds `master` and publishes the update, which takes a
+   few hours to show up for users.
+
+6. Record the new submodule commits here, together with the AUR one (see above), and push:
+
+   ```bash
+   git add arch flathub
+   git commit -m "Submodule Updates from 1.2.0"
+   git push origin main
+   ```
 
 ## Other targets
 
