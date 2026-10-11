@@ -15,6 +15,8 @@ the scripts that update them in lockstep when a new upstream release is cut.
 | `org.nuicpp.nui_sftp.yml` | Flatpak / Flathub manifest. |
 | `org.nuicpp.nui_sftp.metainfo.xml` | AppStream metainfo (descriptions, screenshots, releases). |
 | `appimage/` | AppImage Dockerfile and helpers. |
+| `windows/` | Inno Setup script for the Windows installer. |
+| `scripts/build_dmg.sh` | Wraps the macOS app bundle into a disk image. |
 | `scripts/prepare_release.mjs` | Top-level release-prep entrypoint (run with `bun`). |
 | `scripts/update_scripts/*.mjs` | Per-target updaters invoked by `prepare_release.mjs`. |
 
@@ -123,6 +125,29 @@ Then, from this repo:
 The script auto-locates ISCC.exe (Inno Setup 6) and writes the installer to
 `build/nui-sftp-windows-x86_64_<version>-setup.exe`. Install Inno Setup with
 `winget install JRSoftware.InnoSetup` if missing.
+
+## macOS (disk image)
+
+There is no per-release file to update for macOS: the workflow reads the version from
+`PKGBUILD`, builds nui-sftp with `-DFORCED_PROJECT_VERSION` (which also lands in the bundle's
+`Info.plist`), runs nui-sftp's `scripts/deploy.sh` to assemble the ad-hoc signed `nui-sftp.app`
+and wraps it into `nui-sftp-macos-arm64_<version>.dmg`. On `main` the image is uploaded to the
+GitHub release and to S4 under `macos/arm64/`.
+
+nui-sftp is compiled with Homebrew's `llvm@23` instead of AppleClang. Its
+`scripts/macos/build_dependencies.sh` builds libc++ and all libraries statically for macOS 15.2
+(cached between runs), so the app links nothing but the OS and the runner's macOS version does not
+matter.
+
+### Local build
+
+On a Mac, with nui-sftp checked out as a sibling and `bash scripts/deploy.sh` run there:
+
+```bash
+./scripts/build_dmg.sh --version 1.2.3
+```
+
+The image lands in `build/`.
 
 ## Local Flatpak builds
 
