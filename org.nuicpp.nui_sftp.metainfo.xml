@@ -36,9 +36,24 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.6.1" date="2026-10-11">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>macos llvm toolchain by @5cript in https://github.com/5cript/nui-sftp/pull/219</li>
+                    <li>Makes the program able to be built using newer clang versions on mac. Also fixes some issues from the mac port.</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.6.0…v1.6.1
+                </p>
+            </description>
+        </release>
         <release version="1.6.0" date="2026-10-10">
             <description>
                 <p>What&apos;s Changed</p>
+                <p>(Due to issues regarding mac, this release is incomplete)</p>
                 <p>The application is now able to run on macos, file/dir opener, open with dialog, file watching and everything else working.
 Updated nui to fix macos related bugs. Also fixed bugs when connecting to a mac system (wrong home directory).</p>
                 <p>PRs</p>
