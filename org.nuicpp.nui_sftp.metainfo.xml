@@ -36,6 +36,25 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.7.0" date="2026-10-12">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Fix fmt deprecation warnings by @5cript in https://github.com/5cript/nui-sftp/pull/223</li>
+                    <li>Update website and readme images by @5cript in https://github.com/5cript/nui-sftp/pull/224</li>
+                    <li>Gave the macOS bundle a Local Network usage description by @5cript in https://github.com/5cript/nui-sftp/pull/225</li>
+                    <li>Direct Connect Inheritables Selection and Multi User by @5cript in https://github.com/5cript/nui-sftp/pull/227</li>
+                    <li>Open files on double click and Enter in the file explorer by @5cript in https://github.com/5cript/nui-sftp/pull/229</li>
+                    <li>Fix sync screen performance by @5cript in https://github.com/5cript/nui-sftp/pull/230</li>
+                    <li>Also fixes some bugs in the synchronization</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.6.2…v1.7.0
+                </p>
+            </description>
+        </release>
         <release version="1.6.2" date="2026-10-11">
             <description>
                 <p>What&apos;s Changed</p>
