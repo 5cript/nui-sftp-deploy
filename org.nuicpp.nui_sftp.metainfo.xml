@@ -36,6 +36,22 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.7.2" date="2026-10-16">
+            <description>
+                <p>What&apos;s Changed</p>
+                <p>Improves security and behaviour across many several edge cases and fixes some bugs.</p>
+                <ul>
+                    <li>Improve file operation safety Part 1 by @5cript in https://github.com/5cript/nui-sftp/pull/233</li>
+                    <li>Improve file operation safety Part 2 by @5cript in https://github.com/5cript/nui-sftp/pull/238</li>
+                    <li>Improve file operation safety Part 3 by @5cript in https://github.com/5cript/nui-sftp/pull/239</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.7.1…v1.7.2
+                </p>
+            </description>
+        </release>
         <release version="1.7.1" date="2026-10-16">
             <description>
                 <p>What&apos;s Changed</p>
