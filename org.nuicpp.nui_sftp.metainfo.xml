@@ -36,6 +36,21 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.7.1" date="2026-10-16">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Fix pty input loss by @5cript in https://github.com/5cript/nui-sftp/pull/231</li>
+                    <li>Fix macOS Pipeline by @5cript in https://github.com/5cript/nui-sftp/pull/234</li>
+                    <li>Fix file grid paint cost by @5cript in https://github.com/5cript/nui-sftp/pull/235</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.7.0…v1.7.1
+                </p>
+            </description>
+        </release>
         <release version="1.7.0" date="2026-10-12">
             <description>
                 <p>What&apos;s Changed</p>
