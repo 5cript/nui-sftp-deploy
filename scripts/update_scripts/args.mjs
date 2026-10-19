@@ -2,7 +2,7 @@ import { parseArgs } from "node:util";
 import { getReleases } from "./github.mjs";
 
 let {
-    values: { version }
+    values: { version, 'cef-distribution': cefDistributionFile }
 } = parseArgs({
     args: Bun.argv,
     options: {
@@ -10,6 +10,10 @@ let {
             type: 'string',
             short: 'v',
             description: 'New version to set in PKGBUILD'
+        },
+        'cef-distribution': {
+            type: 'string',
+            description: 'Local cef_distribution.json instead of the one of the release'
         }
     },
     strict: true,
@@ -27,4 +31,4 @@ if (!version) {
     version = latestRelease.tag_name;
 }
 
-export { version };
+export { version, cefDistributionFile };

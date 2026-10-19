@@ -7,6 +7,7 @@ import { updateReleasesInMetainfoXml, parseMetainfoXml } from "./update_scripts/
 import { updateFlatpakYaml } from "./update_scripts/flatpak.mjs";
 import { updateAppImageDockerfile } from "./update_scripts/appimage.mjs";
 import { updateInnoSetup } from "./update_scripts/innosetup.mjs";
+import { updateCefDistribution } from "./update_scripts/cef.mjs";
 import { parsedVersion } from "./update_scripts/version.mjs";
 
 const repoUrl = 'https://github.com/5cript/nui-sftp.git';
@@ -26,6 +27,11 @@ updateReleasesInMetainfoXml(metainfoXml);
 
 await updateFlatpakYaml().catch((err) => {
     console.error('Error updating flatpak YAML:', err);
+    process.exit(1);
+});
+
+await updateCefDistribution().catch((err) => {
+    console.error('Error updating the CEF distribution:', err);
     process.exit(1);
 });
 
