@@ -56,16 +56,6 @@ useBundledIfNewer libgcc_s.so.1 GCC_ "${HERE}/usr/optional/libgcc_s"
 
 export XDG_DATA_DIRS="${HERE}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
-# WebKitGTK release builds have no env override for the helper exec path, intercept
-# posix_spawn/execve via LD_PRELOAD so spawning WebKitNetworkProcess et al.
-# resolves to the bundled copy. The shim reads $APPDIR (set above).
-export LD_PRELOAD="${HERE}/usr/lib/appimage-shims/webkit_path_shim.so${LD_PRELOAD:+:${LD_PRELOAD}}"
-
-# Disable the bwrap sandbox (it requires host paths the AppImage can't expose)
-# and the dmabuf renderer (relies on the host's exact mesa+kernel combo).
-export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
-export WEBKIT_DISABLE_DMABUF_RENDERER=1
-
 if [ -d "${HERE}/apprun-hooks" ]; then
     for hook in "${HERE}/apprun-hooks/"*.sh; do
         [ -f "${hook}" ] && source "${hook}"

@@ -9,7 +9,7 @@ ARG LIBSSH_VERSION=0.12.2
 ARG LIBSSH_SHA256=49560f677d96e3706a904ac2de1116e25f3680937d51e5c92198fcba4a1c1e9f
 ARG FMT_TAG=12.1.0
 ARG JSON_TAG=v3.12.0
-ARG INTERVAL_TREE_TAG=v3.1.1
+ARG INTERVAL_TREE_TAG=v3.1.4
 ARG CMAKE_VERSION=4.1.0
 
 # Use bash so RUN steps can use bash parameter expansion (${var//./_}).
@@ -17,13 +17,15 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Base toolchain + system deps that AREN'T built from source.
 # Versions matching the flatpak manifest (boost/libssh/fmt/nlohmann-json/interval-tree)
-# are built from source below. Other deps (webkit2gtk-4.1, sdbus-c++, crypto++,
-# curl, compression libs) come from Ubuntu packages. Jammy has no webkitgtk-6.0,
-# so the AppImage uses the GTK3 / webkit2gtk-4.1 code paths.
+# are built from source below. Other deps (GLib, SQLite, sdbus-c++, crypto++,
+# curl, compression libs) come from Ubuntu packages. The browser engine is CEF, which
+# Nui downloads at configure time.
 # libstdc++-15-dev is needed because libstdc++-14's std::ranges::to has a
 # malformed forward_like that clang correctly rejects (gcc accepts it). The
 # toolchain PPA provides gcc-15 / libstdc++-15 on Ubuntu 22.04. The resulting
-# GLIBCXX requirement is covered by bundling libstdc++ (see AppRun).
+# GLIBCXX requirement is covered by bundling libstdc++ (see AppRun). The
+# libraries of libcef.so (NSS, ATK, CUPS, X11, gbm, ...) are only needed to link
+# against it; the AppImage takes them from the host.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates gnupg software-properties-common \
     && add-apt-repository -y ppa:ubuntu-toolchain-r/test \
@@ -33,13 +35,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         dpkg-dev patchelf squashfs-tools \
         libstdc++-15-dev \
         desktop-file-utils appstream \
-        libwebkit2gtk-4.1-dev \
+        libglib2.0-dev \
+        libsqlite3-dev \
         libcurl4-openssl-dev \
         libcrypto++-dev \
         libsdbus-c++-dev libsystemd-dev \
         libopenmpi-dev \
         zlib1g-dev libbz2-dev libzstd-dev liblzma-dev \
-        libgtk-3-dev \
+        libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 libcups2 \
+        libdbus-1-3 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 \
+        libxrandr2 libxkbcommon0 libgbm1 libexpat1 libcairo2 libpango-1.0-0 \
+        libudev1 libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Clang from apt.llvm.org (matches flatpak's llvm22 SDK extension).
@@ -106,20 +112,22 @@ RUN cd /tmp && git clone --depth 1 --branch "${INTERVAL_TREE_TAG}" https://githu
     && cp -r interval-tree/include/interval-tree /usr/local/include/interval-tree \
     && rm -rf /tmp/interval-tree
 
-# linuxdeploy + gtk plugin + appimagetool. Extracted at build time so we can run
+# The installed nui-sftp only has an RPATH to CEF, linuxdeploy finds the libraries
+# above through the loader cache.
+RUN ldconfig
+
+# linuxdeploy + appimagetool. Extracted at build time so we can run
 # without FUSE inside docker. Newer runtimes extract with 0700 directories, so
 # open them up for the non-root user CI runs the container as.
 RUN mkdir -p /opt/appimage-tools && cd /opt/appimage-tools \
     && wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
-    && wget -q https://raw.githubusercontent.com/linuxdeploy/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh \
     && wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
-    && chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-gtk.sh appimagetool-x86_64.AppImage \
+    && chmod +x linuxdeploy-x86_64.AppImage appimagetool-x86_64.AppImage \
     && ./linuxdeploy-x86_64.AppImage --appimage-extract \
     && mv squashfs-root linuxdeploy.AppDir \
     && ./appimagetool-x86_64.AppImage --appimage-extract \
     && mv squashfs-root appimagetool.AppDir \
     && ln -sf /opt/appimage-tools/linuxdeploy.AppDir/AppRun        /usr/local/bin/linuxdeploy \
-    && ln -sf /opt/appimage-tools/linuxdeploy-plugin-gtk.sh        /usr/local/bin/linuxdeploy-plugin-gtk \
     && ln -sf /opt/appimage-tools/appimagetool.AppDir/AppRun       /usr/local/bin/appimagetool \
     && rm /opt/appimage-tools/linuxdeploy-x86_64.AppImage /opt/appimage-tools/appimagetool-x86_64.AppImage \
     && wget -q -O /opt/appimage-tools/runtime-x86_64 \

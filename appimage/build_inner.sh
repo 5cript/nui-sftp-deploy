@@ -26,7 +26,8 @@ cd "${BUILD_DIR}"
 wget -q "https://github.com/5cript/nui-sftp/releases/download/v${VERSION}/${PKGNAME}-linux-frontend_${VERSION}.tar.gz"
 wget -q "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg"
 
-# Build (mirrors the PKGBUILD build() flags).
+# Build (mirrors the PKGBUILD build() flags). Nui downloads the CEF distribution it pins, SHA256 checked, into a
+# directory under build/ that survives the next run.
 cd "${SRC_DIR}"
 cmake -B build -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
@@ -36,28 +37,29 @@ cmake -B build -G Ninja \
     -DCMAKE_LINKER=lld \
     -DCMAKE_CXX_STANDARD=23 \
     -DOMIT_FRONTEND_BUILD=ON \
-    -DNUI_FETCH_TRAITS=OFF
+    -DNUI_FETCH_TRAITS=OFF \
+    -DNUI_BROWSER_ENGINE=cef \
+    -DNUI_CEF_DOWNLOAD_DIR="${WORKSPACE}/build/cef-download"
 cmake --build build
 
 # AppDir layout. Resources go under opt/nui-sftp/ to match what the PKGBUILD
 # installs to /opt/nui-sftp/, so the binary's resource discovery sees the same
-# relative layout it sees on a packaged Arch install.
+# relative layout it sees on a packaged Arch install: bin/nui-sftp, CEF in
+# lib/nui-sftp, assets and themes from the install rules.
 mkdir -p "${APPDIR}/usr/bin"
 mkdir -p "${APPDIR}/usr/share/applications"
 mkdir -p "${APPDIR}/usr/share/metainfo"
 mkdir -p "${APPDIR}/usr/share/icons/hicolor/scalable/apps"
-mkdir -p "${APPDIR}/opt/${PKGNAME}/bin"
+DESTDIR="${APPDIR}" cmake --install "${SRC_DIR}/build" --prefix "/opt/${PKGNAME}"
 mkdir -p "${APPDIR}/opt/${PKGNAME}/frontend"
-mkdir -p "${APPDIR}/opt/${PKGNAME}/assets/icons"
-mkdir -p "${APPDIR}/opt/${PKGNAME}/themes"
 
 tar -xzf "${BUILD_DIR}/${PKGNAME}-linux-frontend_${VERSION}.tar.gz" \
     -C "${APPDIR}/opt/${PKGNAME}/frontend" --strip-components=1
 
-install -m755 "${SRC_DIR}/build/bin/${PKGNAME}" "${APPDIR}/opt/${PKGNAME}/bin/${PKGNAME}"
-cp -r "${SRC_DIR}/static/assets/." "${APPDIR}/opt/${PKGNAME}/assets/"
 install -m644 "${SRC_DIR}/LICENSE" "${APPDIR}/opt/${PKGNAME}/LICENSE"
-cp -r "${SRC_DIR}/themes/." "${APPDIR}/opt/${PKGNAME}/themes/"
+CEF_ROOT="$(dirname "$(sed -n 's/^NUI_CEF_LIBRARY_DIR:INTERNAL=//p' "${SRC_DIR}/build/CMakeCache.txt")")"
+install -Dm644 "${CEF_ROOT}/LICENSE.txt" "${APPDIR}/usr/share/licenses/${PKGNAME}/CEF-LICENSE.txt"
+install -Dm644 "${CEF_ROOT}/CREDITS.html" "${APPDIR}/usr/share/licenses/${PKGNAME}/CEF-CREDITS.html"
 
 install -Dm644 "${BUILD_DIR}/NUI-SFTP_Logo-01_nopad.svg" \
     "${APPDIR}/opt/${PKGNAME}/assets/icons/nui-sftp-logo.svg"
@@ -74,37 +76,6 @@ sed -i "s/Icon=${PKGNAME//-/_}/Icon=${APP_ID}/g" "${APPDIR}/usr/share/applicatio
 install -Dm644 "${WORKSPACE}/${APP_ID}.metainfo.xml" \
     "${APPDIR}/usr/share/metainfo/${APP_ID}.metainfo.xml"
 
-# Bundle WebKit's helper processes + injected-bundle. On Ubuntu these live
-# under the libdir (/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/) and
-# linuxdeploy-plugin-gtk doesn't copy them. The host layout is mirrored so
-# the LD_PRELOAD shim (compiled below) can rewrite the hardcoded path that
-# libwebkit2gtk uses to spawn WebKitNetworkProcess et al.
-WEBKIT_EXEC_SRC="/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1"
-WEBKIT_EXEC_DST="${APPDIR}${WEBKIT_EXEC_SRC}"
-if [ -d "${WEBKIT_EXEC_SRC}" ]; then
-    mkdir -p "${WEBKIT_EXEC_DST}"
-    cp -a "${WEBKIT_EXEC_SRC}/." "${WEBKIT_EXEC_DST}/"
-    # Patch rpaths so the helpers find bundled libs at $ORIGIN/../.. (lib).
-    for helper in "${WEBKIT_EXEC_DST}"/* "${WEBKIT_EXEC_DST}"/injected-bundle/*; do
-        if [ -f "${helper}" ] && file "${helper}" | grep -q ELF; then
-            patchelf --set-rpath '$ORIGIN/../..:$ORIGIN/../../..' "${helper}" || true
-        fi
-    done
-else
-    echo "ERROR: ${WEBKIT_EXEC_SRC} not found, webkit helpers can't be bundled" >&2
-    exit 1
-fi
-
-# WebKitGTK release builds hardcode the helper path above for spawning and
-# ignore WEBKIT_EXEC_PATH. Compile a tiny LD_PRELOAD shim that intercepts
-# posix_spawn/execve/dlopen and rewrites that prefix into $APPDIR.
-mkdir -p "${APPDIR}/usr/lib/appimage-shims"
-clang -O2 -shared -fPIC -Wl,--no-as-needed \
-    -DWEBKIT_HOST_PREFIX="\"${WEBKIT_EXEC_SRC}\"" \
-    "${WORKSPACE}/appimage/webkit_path_shim.c" \
-    -o "${APPDIR}/usr/lib/appimage-shims/webkit_path_shim.so" \
-    -ldl
-
 # linuxdeploy expects the executable under usr/bin. Symlink, not a copy, so the
 # binary's $0 stays inside opt/<pkg>/bin/ and relative resource lookups work.
 ln -sf "../../opt/${PKGNAME}/bin/${PKGNAME}" "${APPDIR}/usr/bin/${PKGNAME}"
@@ -113,23 +84,26 @@ ln -sf "../../opt/${PKGNAME}/bin/${PKGNAME}" "${APPDIR}/usr/bin/${PKGNAME}"
 # into the AppDir during the appimage step.
 APPRUN_SRC="${WORKSPACE}/appimage/AppRun"
 
-# Bundle libs + GTK/webkit stack into the AppDir. linuxdeploy is NOT asked to
+# Bundle the libraries of nui-sftp and libcef into the AppDir. CEF itself in
+# opt/nui-sftp/lib/nui-sftp is complete already. linuxdeploy is NOT asked to
 # produce the AppImage here; we run appimagetool ourselves below to control
 # compression.
 cd "${BUILD_DIR}"
-DEPLOY_GTK_VERSION=3 \
 linuxdeploy \
     --appdir "${APPDIR}" \
     --executable "${APPDIR}/opt/${PKGNAME}/bin/${PKGNAME}" \
+    --exclude-library 'libcef.so' \
     --desktop-file "${APPDIR}/usr/share/applications/${APP_ID}.desktop" \
     --icon-file "${APPDIR}/usr/share/icons/hicolor/scalable/apps/${APP_ID}.svg" \
-    --custom-apprun "${APPRUN_SRC}" \
-    --plugin gtk
+    --custom-apprun "${APPRUN_SRC}"
 
-# linuxdeploy renames the custom AppRun to AppRun.wrapped and puts a generated
-# AppRun in front that runs the GTK hook first. Ours sources the hooks itself
-# and must see the untouched host environment, so it replaces the generated one.
-mv -f "${APPDIR}/AppRun.wrapped" "${APPDIR}/AppRun"
+# linuxdeploy points the executable's RPATH at usr/lib only, CEF stays next to it.
+patchelf --set-rpath '$ORIGIN/../lib/nui-sftp:$ORIGIN/../../../usr/lib' "${APPDIR}/opt/${PKGNAME}/bin/${PKGNAME}"
+
+# linuxdeploy bundles libcef's libraries too, NSS among them. NSS loads its crypto
+# modules (softokn, freebl) at runtime from the nss directory next to libnss3;
+# without the bundled ones it would load the host's, of another NSS version.
+cp -a /usr/lib/x86_64-linux-gnu/nss "${APPDIR}/usr/lib/"
 
 # libstdc++ / libgcc_s come from the gcc-15 toolchain PPA and are newer than
 # what the target systems ship. linuxdeploy's excludelist skips them, so they
@@ -141,10 +115,9 @@ cp -L /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "${COMPAT_DIR}/libstdc++/"
 cp -L /lib/x86_64-linux-gnu/libgcc_s.so.1 "${COMPAT_DIR}/libgcc_s/"
 
 # Strip every ELF in the AppDir before compression. linuxdeploy doesn't strip
-# helper processes or webkit's massive .so set; stripping shaves ~30-40 MB
-# before squashfs compression even runs.
+# the CEF tree or the executables.
 find "${APPDIR}" -type f \( -name '*.so' -o -name '*.so.*' \) -exec strip --strip-unneeded {} + 2>/dev/null || true
-find "${APPDIR}/opt/${PKGNAME}/bin" "${WEBKIT_EXEC_DST}" \
+find "${APPDIR}/opt/${PKGNAME}/bin" "${APPDIR}/opt/${PKGNAME}/lib/${PKGNAME}" \
     -type f -executable -exec strip --strip-unneeded {} + 2>/dev/null || true
 
 # Fail early instead of letting the appimage.github.io catalog test find it:

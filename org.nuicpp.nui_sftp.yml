@@ -1,7 +1,10 @@
 id: org.nuicpp.nui_sftp
-runtime: org.gnome.Platform
-runtime-version: '51'
-sdk: org.gnome.Sdk
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+# zypak, which Chromium's sandbox needs inside Flatpak.
+base: org.electronjs.Electron2.BaseApp
+base-version: '25.08'
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm22
   - org.freedesktop.Sdk.Extension.node24
@@ -20,6 +23,7 @@ cleanup:
   - /include
   - /lib/cmake
   - /lib/pkgconfig
+  - /lib/*.a
 
 modules:
   - name: boost
@@ -51,8 +55,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/interval-tree.git
-        tag: v3.1.1
-        commit: dab26b24cd1b163b5640cf6dd9d52968b3532869
+        tag: v3.1.4
+        commit: f932f5885286d3c0f4d7c9a01f0aeff2da1105c5
 
   - name: nlohmann-json
     buildsystem: cmake-ninja
@@ -69,8 +73,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v1.7.2/nui-sftp-linux-frontend_1.7.2.tar.gz
-        sha256: 15944efa0bf45022af1167dc425877d30edcadac8b68154aed0dcfbd7c1e6495
+        url: https://github.com/5cript/nui-sftp/releases/download/v1.8.0/nui-sftp-linux-frontend_1.8.0.tar.gz
+        sha256: de6db33c6d3678352aec31a35049c5d6f0acbef4cc7dc92eccbb0c7469cddcaf
 
   - name: nui-sftp
     buildsystem: cmake-ninja
@@ -95,7 +99,10 @@ modules:
       - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - -DOFFLINE_BUILD=ON
       - -DJSON_Diagnostics=ON
-      - -DFORCED_PROJECT_VERSION=1.7.2
+      - -DNUI_BROWSER_ENGINE=cef
+      - -DNUI_CEF_ARCHIVE=/run/build/nui-sftp/cef_binary_154.0.34+g14c5a08+chromium-154.0.8037.98_linux64_minimal.tar.bz2
+      - -DNUI_SFTP_FLATPAK=ON
+      - -DFORCED_PROJECT_VERSION=1.8.0
     post-install:
       - OMIT_FRONTEND=true BUILD_DIRECTORY="$(pwd)" ../scripts/deploy.sh
       # Rename the desktop Icon= entry to the reverse-DNS app id used by Flatpak.
@@ -108,11 +115,14 @@ modules:
       - install -Dm644 ../org.nuicpp.nui_sftp.desktop /app/share/applications/org.nuicpp.nui_sftp.desktop
       # Image
       - install -Dm644 ../NUI-SFTP_Logo-01_nopad.svg /app/share/icons/hicolor/scalable/apps/org.nuicpp.nui_sftp.svg
+      # Licenses of CEF and the Chromium components in it
+      - install -Dm644 _deps/cef/cef_binary_*/LICENSE.txt /app/share/licenses/org.nuicpp.nui_sftp/CEF-LICENSE.txt
+      - install -Dm644 _deps/cef/cef_binary_*/CREDITS.html /app/share/licenses/org.nuicpp.nui_sftp/CEF-CREDITS.html
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v1.7.2
-        commit: baff63902175d3afa7f353bf40c6cf01b36c59e6
+        tag: v1.8.0
+        commit: 2f27f374c500b1e406a48f038f299f0695ca78c8
       - type: git
         url: https://github.com/5cript/nui-sftp-deploy
         tag: flatpak/1.1.0_1
@@ -122,3 +132,8 @@ modules:
       - type: file
         url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg
         sha256: cf0fc442069dfd28bd8b7769da6dfdca92111044ea9817197716ed9bfada3869
+      # The CEF distribution Nui pins (cmake/dependencies/cef_version.cmake in Nui), extracted by NUI_CEF_ARCHIVE.
+      - type: file
+        url: https://cef-builds.spotifycdn.com/cef_binary_154.0.34%2Bg14c5a08%2Bchromium-154.0.8037.98_linux64_minimal.tar.bz2
+        dest-filename: cef_binary_154.0.34+g14c5a08+chromium-154.0.8037.98_linux64_minimal.tar.bz2
+        sha256: e87e2c76304372dd28b899ceb6efa4b353f52700594ddc358a8237ec07ec6492

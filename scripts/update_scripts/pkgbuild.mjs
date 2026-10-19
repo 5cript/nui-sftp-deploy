@@ -95,4 +95,4 @@ const updatePkgBuild = async () => {
     console.log('PKGBUILD updated successfully.');
 }
 
-export { updatePkgBuild };
+export { updatePkgBuild, findSourcesRange, findSha256sumsRange };
