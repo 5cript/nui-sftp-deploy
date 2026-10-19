@@ -3,6 +3,7 @@
 // entries, which include a NUI_CEF_VERSION_OVERRIDE) as nui-sftp-cef-distribution_<version>.json. A missing or
 // incomplete distribution, or a recipe without the expected CEF lines, fails the release preparation.
 
+import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import { parsedVersion } from './version.mjs';
 import { cefDistributionFile } from './args.mjs';
@@ -80,9 +81,31 @@ const updatePkgBuildCef = (lines, distribution) => {
     lines[shaIndex] = `    '${distribution.sha256}'`;
 };
 
+// The flatpak also builds aarch64. The release only publishes the linux64 distribution, so the linuxarm64 archive of
+// the same version is hashed from its download.
+const archDistribution = async (distribution, platform) => {
+    if (platform === distribution.platform) {
+        return distribution;
+    }
+    const archive = `cef_binary_${distribution.version}_${platform}_minimal.tar.bz2`;
+    const url = `${cefDownloadHost}/${archive.replaceAll('+', '%2B')}`;
+    console.log(`Hashing ${url}...`);
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Fetching ${url} failed: ${response.status} ${response.statusText}`);
+    }
+    const hash = crypto.createHash('sha256');
+    for await (const chunk of response.body) {
+        hash.update(chunk);
+    }
+    return { ...distribution, platform, archive, url, sha256: hash.digest('hex') };
+};
+
 const updateFlatpakCef = (lines, distribution) => {
     const urlIndex = singleLineIndex(
-        lines, /^\s*url:\s*https:\/\/cef-builds\.spotifycdn\.com\/\S+\s*$/, 'CEF source url in the flatpak manifest');
+        lines,
+        new RegExp(`^\\s*url:\\s*https:\\/\\/cef-builds\\.spotifycdn\\.com\\/\\S+_${distribution.platform}_minimal\\.tar\\.bz2\\s*$`),
+        `${distribution.platform} CEF source url in the flatpak manifest`);
     // The lines of the source entry around the url: from its "- type:" line to the next entry.
     let entryStart = urlIndex;
     while (entryStart > 0 && !/^\s*-\s*type:/.test(lines[entryStart])) {
@@ -107,9 +130,13 @@ const updateFlatpakCef = (lines, distribution) => {
     replaceInSource('sha256', distribution.sha256);
 
     const archiveIndex = singleLineIndex(
-        lines, /^\s*-\s*-DNUI_CEF_ARCHIVE=\/run\/build\/nui-sftp\/\S+\s*$/, 'NUI_CEF_ARCHIVE option in the flatpak manifest');
+        lines,
+        new RegExp(`^\\s*-\\s*-DNUI_CEF_ARCHIVE=\\/run\\/build\\/nui-sftp\\/\\S+_${distribution.platform}_minimal\\.tar\\.bz2\\s*$`),
+        `${distribution.platform} NUI_CEF_ARCHIVE option in the flatpak manifest`);
     lines[archiveIndex] = lines[archiveIndex].replace(/\/run\/build\/nui-sftp\/\S+/, `/run/build/nui-sftp/${distribution.archive}`);
 };
+
+const flatpakPlatforms = ['linux64', 'linuxarm64'];
 
 export async function updateCefDistribution({ pkgbuild = pkgbuildPath, manifest = flatpakYamlPath } = {}) {
     const distribution = await loadDistribution();
@@ -118,7 +145,9 @@ export async function updateCefDistribution({ pkgbuild = pkgbuildPath, manifest 
     const pkgbuildLines = splitLines(await fs.readFile(pkgbuild, 'utf-8'));
     const manifestLines = splitLines(await fs.readFile(manifest, 'utf-8'));
     updatePkgBuildCef(pkgbuildLines, distribution);
-    updateFlatpakCef(manifestLines, distribution);
+    for (const platform of flatpakPlatforms) {
+        updateFlatpakCef(manifestLines, await archDistribution(distribution, platform));
+    }
     await fs.writeFile(pkgbuild, pkgbuildLines.join('\n'), 'utf-8');
     await fs.writeFile(manifest, manifestLines.join('\n'), 'utf-8');
     console.log('CEF distribution updated in PKGBUILD and the flatpak manifest.');

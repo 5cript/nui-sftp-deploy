@@ -89,6 +89,14 @@ modules:
         Boost_ROOT: /app
       append-path: "/usr/lib/sdk/llvm22/bin:/usr/lib/sdk/node24/bin"
       prepend-ld-library-path: "/usr/lib/sdk/llvm22/lib"
+      # The CEF archive of the build architecture, see the CEF sources below.
+      arch:
+        x86_64:
+          config-opts:
+            - -DNUI_CEF_ARCHIVE=/run/build/nui-sftp/cef_binary_154.0.34+g14c5a08+chromium-154.0.8037.98_linux64_minimal.tar.bz2
+        aarch64:
+          config-opts:
+            - -DNUI_CEF_ARCHIVE=/run/build/nui-sftp/cef_binary_154.0.34+g14c5a08+chromium-154.0.8037.98_linuxarm64_minimal.tar.bz2
     config-opts:
       - -DCMAKE_BUILD_TYPE=Release
       - -DCMAKE_C_COMPILER=clang
@@ -100,7 +108,6 @@ modules:
       - -DOFFLINE_BUILD=ON
       - -DJSON_Diagnostics=ON
       - -DNUI_BROWSER_ENGINE=cef
-      - -DNUI_CEF_ARCHIVE=/run/build/nui-sftp/cef_binary_154.0.34+g14c5a08+chromium-154.0.8037.98_linux64_minimal.tar.bz2
       - -DNUI_SFTP_FLATPAK=ON
       - -DFORCED_PROJECT_VERSION=1.8.0
     post-install:
@@ -132,8 +139,17 @@ modules:
       - type: file
         url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg
         sha256: cf0fc442069dfd28bd8b7769da6dfdca92111044ea9817197716ed9bfada3869
-      # The CEF distribution Nui pins (cmake/dependencies/cef_version.cmake in Nui), extracted by NUI_CEF_ARCHIVE.
+      # The CEF distribution Nui pins (cmake/dependencies/cef_version.cmake in Nui), one per architecture, extracted
+      # through the NUI_CEF_ARCHIVE of that architecture.
       - type: file
+        only-arches:
+          - x86_64
         url: https://cef-builds.spotifycdn.com/cef_binary_154.0.34%2Bg14c5a08%2Bchromium-154.0.8037.98_linux64_minimal.tar.bz2
         dest-filename: cef_binary_154.0.34+g14c5a08+chromium-154.0.8037.98_linux64_minimal.tar.bz2
         sha256: e87e2c76304372dd28b899ceb6efa4b353f52700594ddc358a8237ec07ec6492
+      - type: file
+        only-arches:
+          - aarch64
+        url: https://cef-builds.spotifycdn.com/cef_binary_154.0.34%2Bg14c5a08%2Bchromium-154.0.8037.98_linuxarm64_minimal.tar.bz2
+        dest-filename: cef_binary_154.0.34+g14c5a08+chromium-154.0.8037.98_linuxarm64_minimal.tar.bz2
+        sha256: 4598b350e5a43519dbb9f1c732e8b184333572da53244ff55cc063003c34c5e4
