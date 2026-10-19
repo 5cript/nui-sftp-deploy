@@ -55,8 +55,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/interval-tree.git
-        tag: v3.1.1
-        commit: dab26b24cd1b163b5640cf6dd9d52968b3532869
+        tag: v3.1.4
+        commit: f932f5885286d3c0f4d7c9a01f0aeff2da1105c5
 
   - name: nlohmann-json
     buildsystem: cmake-ninja
