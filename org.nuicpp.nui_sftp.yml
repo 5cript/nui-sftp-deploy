@@ -1,10 +1,10 @@
 id: org.nuicpp.nui_sftp
 runtime: org.freedesktop.Platform
-runtime-version: '25.08'
+runtime-version: '26.08'
 sdk: org.freedesktop.Sdk
 # zypak, which Chromium's sandbox needs inside Flatpak.
 base: org.electronjs.Electron2.BaseApp
-base-version: '25.08'
+base-version: '26.08'
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm22
   - org.freedesktop.Sdk.Extension.node24
