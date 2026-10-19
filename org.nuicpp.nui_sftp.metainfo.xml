@@ -36,6 +36,30 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.8.0" date="2026-10-19">
+            <description>
+                <p>Chromium Embedded Framework</p>
+                <p>On Linux and macOS, nui-sftp now ships its own browser engine (Chromium via CEF) instead of the system&apos;s WebKit. Every distribution now runs the same engine, independent of the installed WebKitGTK version.</p>
+                <ul>
+                    <li>Your sessions and settings carry over, nothing needs to be migrated.</li>
+                    <li>Downloads are larger (about 150 MB), since the engine is now part of the package.</li>
+                    <li>On macOS, allow the Local Network prompt again after updating. Connections fail with &quot;No route to host&quot; until it is allowed.</li>
+                    <li>Windows is unchanged and keeps using WebView2.</li>
+                    <li>The About section now shows the browser engine and its version, and the licenses page lists CEF and Chromium.</li>
+                </ul>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Fixed missing transfer speed for desktop drops by @5cript in https://github.com/5cript/nui-sftp/pull/242</li>
+                    <li>Disabled the DMA-BUF renderer only where the GPU is not known to handle it by @5cript in https://github.com/5cript/nui-sftp/pull/243</li>
+                    <li>Move to CEF Browser Engine by @5cript in https://github.com/5cript/nui-sftp/pull/247</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : https://github.com/5cript/nui-sftp/compare/v1.7.2…v1.8.0
+                </p>
+            </description>
+        </release>
         <release version="1.7.2" date="2026-10-16">
             <description>
                 <p>What&apos;s Changed</p>
