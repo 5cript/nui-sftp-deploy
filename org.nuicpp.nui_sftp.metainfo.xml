@@ -592,5 +592,12 @@ Also improved the buttons in the toolbar and gave the &quot;add server&quot; but
             </description>
         </release>
     </releases>
+    <requires>
+        <display_length compare="ge">768</display_length>
+    </requires>
+    <recommends>
+        <control>keyboard</control>
+        <control>pointing</control>
+    </recommends>
     <content_rating type="oars-1.1"></content_rating>
 </component>
