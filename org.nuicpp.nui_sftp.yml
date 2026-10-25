@@ -73,8 +73,8 @@ modules:
       - cp -r * /app/frontend
     sources:
       - type: archive
-        url: https://github.com/5cript/nui-sftp/releases/download/v1.8.0/nui-sftp-linux-frontend_1.8.0.tar.gz
-        sha256: de6db33c6d3678352aec31a35049c5d6f0acbef4cc7dc92eccbb0c7469cddcaf
+        url: https://github.com/5cript/nui-sftp/releases/download/v1.9.0/nui-sftp-linux-frontend_1.9.0.tar.gz
+        sha256: c61f3b7c4e83c76917425a74be3ae725e08a034181da4aa4e3bf5f7f9b4f32f7
 
   - name: nui-sftp
     buildsystem: cmake-ninja
@@ -109,7 +109,7 @@ modules:
       - -DJSON_Diagnostics=ON
       - -DNUI_BROWSER_ENGINE=cef
       - -DNUI_SFTP_FLATPAK=ON
-      - -DFORCED_PROJECT_VERSION=1.8.0
+      - -DFORCED_PROJECT_VERSION=1.9.0
     post-install:
       - OMIT_FRONTEND=true BUILD_DIRECTORY="$(pwd)" ../scripts/deploy.sh
       # Rename the desktop Icon= entry to the reverse-DNS app id used by Flatpak.
@@ -128,8 +128,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/5cript/nui-sftp
-        tag: v1.8.0
-        commit: 2f27f374c500b1e406a48f038f299f0695ca78c8
+        tag: v1.9.0
+        commit: 09b3bed3e76d5e4347ad9733fecf91588a1baf92
       - type: git
         url: https://github.com/5cript/nui-sftp-deploy
         tag: flatpak/1.1.0_1
