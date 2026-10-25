@@ -22,8 +22,10 @@ await updatePkgBuild().catch((err) => {
     process.exit(1);
 });
 
-const metainfoXml = parseMetainfoXml();
-updateReleasesInMetainfoXml(metainfoXml);
+await updateReleasesInMetainfoXml(parseMetainfoXml()).catch((err) => {
+    console.error('Error updating metainfo releases:', err);
+    process.exit(1);
+});
 
 await updateFlatpakYaml().catch((err) => {
     console.error('Error updating flatpak YAML:', err);
