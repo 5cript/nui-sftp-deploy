@@ -7,6 +7,8 @@ import fsOld from 'node:fs';
 import path from 'node:path';
 import { parsedVersion } from './version.mjs';
 
+const repository = '5cript/nui-sftp';
+
 // Strip the "## Download" section (and everything until the next h1/h2 or EOF)
 // from a release body, so it doesn't end up in the AppStream changelog.
 function stripDownloadSection(markdown) {
@@ -30,8 +32,18 @@ function stripDownloadSection(markdown) {
     return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
+// AppStream rejects URLs inside <description>, the release page goes into <url type="details"> instead.
+function shortenUrls(markdown) {
+    return markdown
+        .replace(/\[([^\]]*)\]\(https?:\/\/[^)\s]*\)/g, '$1')
+        .replace(/https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/(?:pull|issues)\/(\d+)/g,
+            (match, linkedRepository, number) => linkedRepository === repository ? `#${number}` : `${linkedRepository}#${number}`)
+        .replace(/https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/compare\/(\S+)/g, '$1')
+        .replace(/https?:\/\/(\S+)/g, '$1');
+}
+
 function convertReleaseToHtml(str) {
-    const cleaned = stripDownloadSection(str);
+    const cleaned = shortenUrls(stripDownloadSection(str));
     const converter = new showdown.Converter();
     const html = converter.makeHtml(cleaned);
     return html;
@@ -99,7 +111,7 @@ export function parseMetainfoXml() {
 }
 
 export async function updateReleasesInMetainfoXml(metainfoObj) {
-    const releases = await getReleases('5cript/nui-sftp');
+    const releases = await getReleases(repository);
 
     if (metainfoObj.length < 2 || !metainfoObj[1].component) {
         throw new Error('Unexpected metainfo XML structure: missing component element');
@@ -124,6 +136,10 @@ export async function updateReleasesInMetainfoXml(metainfoObj) {
             release: [
                 {
                     description: htmlToFastXmlFormat(convertReleaseToHtml(release.body || 'No description provided.'))
+                },
+                {
+                    url: [{ '#text': release.html_url }],
+                    ':@': { '@_type': 'details' }
                 }
             ],
             ":@": {
