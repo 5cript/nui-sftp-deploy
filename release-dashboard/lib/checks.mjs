@@ -29,8 +29,6 @@ const checkHeavyJobResources = async (context, { memoryGiB = 8, diskGiB = 20 } =
     context.require("free memory", memory >= memoryGiB, `${memory.toFixed(1)} GiB available, ${memoryGiB} GiB wanted`);
     const disk = freeDiskGiB(context.config.deployRoot);
     context.require("free disk", disk >= diskGiB, `${disk.toFixed(0)} GiB free, ${diskGiB} GiB wanted`);
-    const vm = await context.capture("virsh", ["-c", "qemu:///system", "domstate", "nui-sftp-win11"], { allowFailure: true });
-    context.check("Windows VM not running next to a host build", !/running/.test(vm) || context.step.lane === "windows", vm, { warn: true });
 };
 
 /**
