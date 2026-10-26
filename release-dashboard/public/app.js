@@ -56,6 +56,10 @@ const element = (tag, properties = {}, children = []) => {
             node.className = value;
         } else if (key.startsWith("on")) {
             node.addEventListener(key.slice(2), value);
+        } else if (key === "dataset") {
+            Object.assign(node.dataset, value);
+        } else if (key === "ariaLabel") {
+            node.setAttribute("aria-label", value);
         } else {
             node[key] = value;
         }
@@ -327,6 +331,9 @@ const buildStep = (step) => {
         }
         storage.set("open-steps", [...openSteps]);
         updateStep(snapshot.steps.find((candidate) => candidate.id === step.id));
+        if (step.group) {
+            layoutLanes(root.open ? step.group : null);
+        }
     });
     elements.set(step.id, { root, head });
     updateStep(step);
@@ -349,18 +356,16 @@ const renderAll = () => {
             }
             if (phase === "Test") {
                 groupHeaders.clear();
-                const groups = [...new Set(steps.map((step) => step.group))];
-                section.append(
-                    element(
-                        "div",
-                        { class: "lanes" },
-                        groups.map((group) => {
-                            const header = element("div", { class: "lane-header" });
-                            groupHeaders.set(group, header);
-                            return element("div", { class: "lane" }, [header, ...steps.filter((step) => step.group === group).map(buildStep)]);
-                        }),
-                    ),
-                );
+                lanes.groups = [...new Set(steps.map((step) => step.group))];
+                lanes.elements = lanes.groups.map((group) => {
+                    const header = element("div", { class: "lane-header" });
+                    groupHeaders.set(group, header);
+                    return element("div", { class: "lane" }, [header, ...steps.filter((step) => step.group === group).map(buildStep)]);
+                });
+                lanes.host = element("div", { class: "lanes-host" });
+                lanes.mode = null;
+                section.append(lanes.host);
+                layoutLanes();
                 updateGroups();
             } else {
                 section.append(...steps.map(buildStep));
@@ -369,6 +374,77 @@ const renderAll = () => {
         }),
     );
     renderHeader();
+};
+
+/**
+ * The test targets side by side, or, while a step of them is expanded, a 5cript-nui-components carousel with one
+ * target per page so the expanded step gets the full width.
+ */
+const lanes = { groups: [], elements: [], host: null, mode: null, page: 0, track: null, dots: [], previous: null, next: null, counter: null };
+
+const arrowIcon = (path) => {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 512 512");
+    const shape = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    shape.setAttribute("d", path);
+    svg.append(shape);
+    return svg;
+};
+const leftArrowPath = "M326 416q-10 0-17-7L168 274q-8-6-8-18 0-11 8-19l141-134q7-7 17-7 11 0 18.5 7.5T352 122q0 10-8 18L223 256l121 116q8 8 8 18 0 11-7.5 18.5T326 416z";
+const rightArrowPath = "M186 416q-11 0-18.5-7.5T160 390q0-10 8-18l121-116-121-116q-8-8-8-18 0-11 7.5-18.5T186 96q10 0 17 7l141 134q8 8 8 19 0 12-8 18L203 409q-7 7-17 7z";
+
+const setLanePage = (page) => {
+    lanes.page = Math.max(0, Math.min(lanes.groups.length - 1, page));
+    if (lanes.mode !== "carousel") {
+        return;
+    }
+    lanes.track.style.transform = `translateX(-${lanes.page * 100}%)`;
+    lanes.track.querySelectorAll(".script-nui-carousel__card").forEach((card, index) => card.classList.toggle("script-nui-carousel__card--active", index === lanes.page));
+    lanes.dots.forEach((dot, index) => dot.classList.toggle("script-nui-carousel__dot--active", index === lanes.page));
+    lanes.previous.classList.toggle("script-nui-carousel__prev--disabled", lanes.page === 0);
+    lanes.next.classList.toggle("script-nui-carousel__next--disabled", lanes.page === lanes.groups.length - 1);
+    const pad = (value) => String(value).padStart(2, "0");
+    lanes.counter.textContent = `${laneNames[lanes.groups[lanes.page]] ?? lanes.groups[lanes.page]}  ${pad(lanes.page + 1)} / ${pad(lanes.groups.length)}`;
+};
+
+const layoutLanes = (openedGroup = null) => {
+    if (!lanes.host) {
+        return;
+    }
+    const anyOpen = snapshot.steps.some((step) => step.group && step.visible && openSteps.has(step.id));
+    if (!anyOpen) {
+        if (lanes.mode !== "grid") {
+            lanes.mode = "grid";
+            lanes.host.replaceChildren(element("div", { class: "lanes" }, lanes.elements));
+        }
+        return;
+    }
+    if (lanes.mode !== "carousel") {
+        lanes.mode = "carousel";
+        lanes.dots = lanes.groups.map((group, index) =>
+            element("button", { class: "script-nui-carousel__dot", type: "button", title: laneNames[group] ?? group, ariaLabel: `Go to ${laneNames[group] ?? group}`, onclick: () => setLanePage(index) }),
+        );
+        lanes.previous = element("button", { class: "script-nui-carousel__prev", type: "button", ariaLabel: "Previous target", onclick: () => setLanePage(lanes.page - 1) }, [arrowIcon(leftArrowPath)]);
+        lanes.next = element("button", { class: "script-nui-carousel__next", type: "button", ariaLabel: "Next target", onclick: () => setLanePage(lanes.page + 1) }, [arrowIcon(rightArrowPath)]);
+        lanes.counter = element("span", { class: "script-nui-carousel__counter" });
+        lanes.track = element(
+            "div",
+            { class: "script-nui-carousel__track script-nui-carousel__track--animated" },
+            lanes.elements.map((lane, index) => element("div", { class: "script-nui-carousel__card", dataset: { carouselIndex: index } }, [lane])),
+        );
+        lanes.host.replaceChildren(
+            element("div", { class: "script-nui-carousel script-nui-carousel--controls-top lanes-carousel" }, [
+                element("div", { class: "script-nui-carousel__controls" }, [
+                    element("div", { class: "script-nui-carousel__dots" }, lanes.dots),
+                    element("div", { class: "script-nui-carousel__arrows" }, [lanes.previous, lanes.counter, lanes.next]),
+                ]),
+                element("div", { class: "script-nui-carousel__frame" }, [lanes.track]),
+            ]),
+        );
+        const firstOpen = snapshot.steps.find((step) => step.group && step.visible && openSteps.has(step.id));
+        openedGroup ??= firstOpen.group;
+    }
+    setLanePage(openedGroup ? lanes.groups.indexOf(openedGroup) : lanes.page);
 };
 
 /**
@@ -383,8 +459,7 @@ const updateGroups = () => {
         const groupAction = (label, action, options) =>
             components.button(label, { ...options, onClick: () => post(`/api/groups/${info.id}/${action}`) });
         header.replaceChildren(
-            element("h3", { textContent: laneNames[info.id] ?? info.id }),
-            info.parallel ? components.pill("parallel", { selected: true }) : null,
+            ...[element("h3", { textContent: laneNames[info.id] ?? info.id }), info.parallel ? components.pill("parallel", { selected: true }) : null].filter(Boolean),
             element("span", { class: "lane-actions" }, [
                 groupAction("Start", "start", {
                     variant: "primary",
