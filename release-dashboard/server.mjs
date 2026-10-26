@@ -118,6 +118,9 @@ const server = createServer(async (request, response) => {
         } else if (path === "/api/run-all") {
             runner.runAll();
             sendJson(response, 200, { ok: true });
+        } else if (path === "/api/pause") {
+            runner.pause();
+            sendJson(response, 200, { ok: true });
         } else if (path === "/api/stop-all") {
             runner.stopAll();
             sendJson(response, 200, { ok: true });

@@ -325,6 +325,7 @@ const renderHeader = () => {
     const runAll = document.getElementById("run-all");
     runAll.textContent = snapshot.autoAdvance ? "Running all…" : "Run all";
     runAll.disabled = snapshot.autoAdvance;
+    document.getElementById("pause").disabled = !snapshot.autoAdvance;
     document.getElementById("setting-jobs").value = snapshot.settings.buildParallelLevel;
     document.getElementById("setting-headless").checked = snapshot.settings.headless;
     document.getElementById("setting-mac").checked = snapshot.settings.keepMacAwake;
@@ -384,6 +385,7 @@ const connectEvents = () => {
 };
 
 document.getElementById("run-all").addEventListener("click", () => post("/api/run-all"));
+document.getElementById("pause").addEventListener("click", () => post("/api/pause"));
 document.getElementById("stop-all").addEventListener("click", () => post("/api/stop-all"));
 document.getElementById("setting-jobs").addEventListener("change", (event) => post("/api/settings", { buildParallelLevel: Number(event.target.value) }));
 document.getElementById("setting-headless").addEventListener("change", (event) => post("/api/settings", { headless: event.target.checked }));

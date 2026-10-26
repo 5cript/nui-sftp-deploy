@@ -244,6 +244,11 @@ class Runner {
         this.store.broadcast({ type: "auto", autoAdvance: false });
     }
 
+    pause() {
+        this.autoAdvance = false;
+        this.store.broadcast({ type: "auto", autoAdvance: false });
+    }
+
     skip(id) {
         if (!this.running.has(id)) {
             this.store.updateStep(id, { status: "skipped", summary: "skipped by hand", endedAt: new Date().toISOString() });

@@ -89,8 +89,10 @@ const archBuild = {
             timeoutMs: 4 * 60 * 60 * 1000,
             watchers: [cmakeLoopWatcher],
         });
+        const archive = join(directory, `nui-sftp-${config.version}-1-x86_64.pkg.tar.zst`);
+        context.check("package written", newerThan(archive, started), archive);
         const binary = join(directory, "pkg", "nui-sftp", "opt", "nui-sftp", "bin", "nui-sftp");
-        context.check("package binary built", newerThan(binary, started), binary);
+        context.check("package binary", existsSync(binary), binary);
     },
 };
 
