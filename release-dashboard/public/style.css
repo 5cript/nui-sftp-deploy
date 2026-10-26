@@ -1,91 +1,110 @@
+/* The controls are 5cript-nui-components (release-dashboard/vendor), themed like nui-sftp's static/styles/main.css. */
+@import "/components/themes/light.css";
+@import "/components/button.css";
+@import "/components/pill.css";
+@import "/components/badge.css";
+@import "/components/checkbox.css";
+@import "/components/text_input.css";
+@import "/components/collapsible_section.css";
+@import "/components/message_strip.css";
+@import "/components/spinner.css";
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 :root {
-    --background: #f4f5f7;
-    --surface: #ffffff;
-    --surface-sunken: #eef0f3;
-    --border: #d9dde3;
-    --text: #1d2229;
-    --text-muted: #5f6b7a;
-    --accent: #2f6fde;
-    --passed: #1f8f4e;
-    --passed-soft: #e3f4ea;
-    --failed: #c93636;
-    --failed-soft: #fbe7e7;
-    --warning: #b7791f;
-    --warning-soft: #fdf3e1;
-    --human: #8a4fd6;
-    --human-soft: #f1e9fc;
-    --running: #2f6fde;
-    --log-background: #161a20;
-    --log-text: #d6dde6;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-size: 16px;
+    --theme-color: #90d26d;
+
+    --brighter-background: #404040;
+    --background-color: #303030;
+    --background-color-fields: #202020;
+    --color: #dddddd;
+    --color-secondary: #aaaaaa;
+    --color-fields: var(--color);
+    --border-color-fields: #505050;
+    --darker-background: color-mix(in srgb, var(--background-color) 80%, black 20%);
+    --brightness-mixin: black;
     --mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+
+    --passed: var(--script-nui-components-badge-success-background, #7cb342);
+    --warning: var(--script-nui-components-toast-warning, #e0a02e);
+    --failed: var(--script-nui-components-toast-error, #d9534f);
+    --human: var(--script-nui-components-badge-primary-background, #185fa5);
+    --skipped: var(--color-secondary);
+
+    --script-nui-components-field-theme-color: var(--theme-color);
+    --script-nui-components-checkbox-background: var(--background-color-fields);
+    --script-nui-components-checkbox-border-color: #8e8e8e;
+    --script-nui-components-checkbox-check-color: var(--theme-color);
+    --script-nui-components-button-color: var(--color);
+    --script-nui-components-button-color-regular: var(--background-color-fields);
+    --script-nui-components-button-border-color-regular: #5f5e5a;
+    --script-nui-components-button-color-primary: color-mix(in srgb, var(--theme-color) 22%, black 78%);
+    --script-nui-components-button-border-color-primary: color-mix(in srgb, var(--theme-color) 55%, black 45%);
+    --script-nui-components-badge-warning-background: var(--script-nui-components-toast-warning, #e0a02e);
+    --script-nui-components-badge-danger-background: var(--script-nui-components-toast-error, #d9534f);
+    --script-nui-components-badge-font-size: 0.75rem;
+    --script-nui-components-collapsible-color: var(--color);
+    --script-nui-components-collapsible-muted-color: var(--color-secondary);
+    --script-nui-components-collapsible-hover-background: transparent;
+    --script-nui-components-collapsible-font-size: 0.9rem;
+
+    --app-scrollbar-thumb: color-mix(in srgb, var(--color) 18%, transparent);
+    --app-scrollbar-thumb-hover: color-mix(in srgb, var(--color) 32%, transparent);
+    --app-scrollbar-thumb-active: color-mix(in srgb, var(--theme-color) 55%, transparent);
+    color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+    --theme-color: #48a814;
+    --brighter-background: #f0f0f0;
+    --background-color: #e0e0e0;
+    --background-color-fields: #cdcdcd;
+    --color: black;
+    --color-secondary: #333333;
+    --border-color-fields: #9f9f9f;
+    --darker-background: #d4d4d4;
+    --brightness-mixin: white;
+    --script-nui-components-checkbox-border-color: black;
     color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #13161b;
-        --surface: #1b1f26;
-        --surface-sunken: #22272f;
-        --border: #2e343e;
-        --text: #e3e7ed;
-        --text-muted: #8b95a3;
-        --accent: #6c9cf0;
-        --passed: #46c07a;
-        --passed-soft: #18301f;
-        --failed: #ef6b6b;
-        --failed-soft: #3a1c1c;
-        --warning: #e3aa4f;
-        --warning-soft: #37290f;
-        --human: #b58cf0;
-        --human-soft: #2a2140;
-        --running: #6c9cf0;
-        --log-background: #0d0f13;
-        color-scheme: dark;
-    }
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
 }
 
-* {
-    box-sizing: border-box;
+::-webkit-scrollbar-thumb {
+    background-color: var(--app-scrollbar-thumb);
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--app-scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: var(--app-scrollbar-thumb-active);
 }
 
 body {
     margin: 0;
     overflow-x: hidden;
-    background: var(--background);
-    color: var(--text);
-    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background-color: var(--darker-background);
+    color: var(--color);
+    font-size: 0.85rem;
+    line-height: 1.45;
 }
 
-button {
-    font: inherit;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    border-radius: 6px;
-    padding: 3px 10px;
-    cursor: pointer;
-    white-space: nowrap;
-}
-
-button:hover {
-    border-color: var(--accent);
-}
-
-button.primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
-
-button.human {
-    background: var(--human);
-    border-color: var(--human);
-    color: white;
-}
-
-button:disabled {
-    opacity: 0.5;
-    cursor: default;
+a {
+    color: var(--theme-color);
 }
 
 .top {
@@ -94,27 +113,33 @@ button:disabled {
     z-index: 5;
     display: flex;
     flex-wrap: wrap;
-    gap: 12px 24px;
+    gap: 8px 20px;
     align-items: center;
-    padding: 12px 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    background-color: var(--background-color);
+    border-bottom: 1px solid var(--border-color-fields);
 }
 
 .top h1 {
     margin: 0;
-    font-size: 18px;
+    font-size: 1.1rem;
+}
+
+.top h1 #version {
+    color: var(--theme-color);
 }
 
 .subtitle {
-    color: var(--text-muted);
-    font-size: 12px;
+    color: var(--color-secondary);
+    font-size: 0.75rem;
     display: flex;
     gap: 8px;
     align-items: center;
+    overflow-wrap: anywhere;
 }
 
 .connection {
+    flex: none;
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -127,80 +152,57 @@ button:disabled {
 
 .counts {
     display: flex;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 6px;
     flex: 1;
-}
-
-.count {
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 12px;
-    background: var(--surface-sunken);
-}
-
-.count.passed {
-    background: var(--passed-soft);
-    color: var(--passed);
-}
-
-.count.failed {
-    background: var(--failed-soft);
-    color: var(--failed);
-}
-
-.count.waiting {
-    background: var(--human-soft);
-    color: var(--human);
-}
-
-.count.running {
-    color: var(--running);
 }
 
 .controls {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
     flex-wrap: wrap;
 }
 
-.controls input[type="number"] {
-    width: 48px;
+.field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.field-label .script-nui-text-input {
+    width: 4.5em;
+    padding: 0.35em 0.5em;
 }
 
 main {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 16px 20px 80px;
+    padding: 8px 16px 80px;
 }
 
 .phase h2 {
-    font-size: 13px;
+    font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--text-muted);
-    margin: 28px 0 8px;
+    color: var(--color-secondary);
+    margin: 24px 0 8px;
 }
 
 .lane h3 {
-    font-size: 13px;
+    font-size: 0.85rem;
     margin: 14px 0 6px;
+    color: var(--theme-color);
 }
 
 .handover {
-    margin: 22px 0 8px;
-    padding: 8px 12px;
-    border-left: 3px solid var(--human);
-    background: var(--human-soft);
-    color: var(--human);
-    border-radius: 0 6px 6px 0;
-    font-weight: 600;
+    margin: 0 0 8px;
 }
 
 .step {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color-fields);
+    border-radius: 6px;
     margin: 6px 0;
 }
 
@@ -220,27 +222,28 @@ main {
     display: none;
 }
 
-.step-head {
-    display: flex;
+.script-nui-collapsible.step > .script-nui-collapsible-summary {
     flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    cursor: pointer;
     min-height: 40px;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+.script-nui-collapsible.step > .script-nui-collapsible-summary:hover {
+    background-color: color-mix(in srgb, var(--color) 4%, transparent);
 }
 
 .status-icon {
     flex: none;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     display: grid;
     place-items: center;
-    font-size: 13px;
+    font-size: 0.75rem;
     font-weight: 700;
     color: white;
-    background: var(--border);
+    background: var(--border-color-fields);
 }
 
 .status-passed .status-icon {
@@ -249,6 +252,7 @@ main {
 
 .status-warning .status-icon {
     background: var(--warning);
+    color: #1a1a1a;
 }
 
 .status-failed .status-icon {
@@ -260,25 +264,16 @@ main {
 }
 
 .status-skipped .status-icon {
-    background: var(--text-muted);
+    background: var(--skipped);
 }
 
 .status-running .status-icon {
     background: transparent;
-    border: 3px solid var(--running);
-    border-top-color: transparent;
-    animation: spin 0.9s linear infinite;
+    --script-nui-components-spinner-color: var(--theme-color);
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.step-title {
-    font-weight: 600;
-    white-space: nowrap;
+.step .script-nui-collapsible-title.step-title {
+    flex: 0 1 auto;
 }
 
 .badges {
@@ -286,26 +281,14 @@ main {
     gap: 4px;
 }
 
-.badge {
-    font-size: 11px;
-    padding: 0 6px;
-    border-radius: 8px;
-    background: var(--surface-sunken);
-    color: var(--text-muted);
-}
-
-.badge.human {
-    background: var(--human-soft);
-    color: var(--human);
-}
-
 .summary {
     flex: 1 1 120px;
-    color: var(--text-muted);
+    min-width: 0;
+    color: var(--color-secondary);
+    font-weight: normal;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    min-width: 0;
 }
 
 .status-failed .summary {
@@ -313,29 +296,28 @@ main {
 }
 
 .duration {
-    color: var(--text-muted);
-    font-size: 12px;
+    color: var(--color-secondary);
+    font-size: 0.75rem;
+    font-weight: normal;
     font-variant-numeric: tabular-nums;
 }
 
-.actions {
-    display: flex;
+.step .script-nui-collapsible-header-end {
     flex-wrap: wrap;
-    gap: 6px;
     margin-left: auto;
+    gap: 6px;
 }
 
-.step-body {
-    display: none;
-    padding: 0 12px 12px 44px;
+.script-nui-button {
+    white-space: nowrap;
 }
 
-.step.open .step-body {
-    display: block;
+.script-nui-collapsible.step > .script-nui-collapsible-body {
+    padding: 0 12px 12px 40px;
 }
 
 .description {
-    color: var(--text-muted);
+    color: var(--color-secondary);
     margin: 0 0 8px;
 }
 
@@ -356,6 +338,7 @@ main {
 .checks .mark {
     font-weight: 700;
     width: 14px;
+    flex: none;
 }
 
 .checks .passed .mark {
@@ -371,50 +354,34 @@ main {
 }
 
 .checks .detail {
-    color: var(--text-muted);
+    color: var(--color-secondary);
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 0.75rem;
     overflow-wrap: anywhere;
 }
 
 .command-box {
     display: flex;
-    align-items: stretch;
+    align-items: center;
+    gap: 6px;
     margin: 0 0 10px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    background: var(--surface-sunken);
+    padding: 4px 4px 4px 0;
+    border: 1px solid var(--border-color-fields);
+    border-radius: 0.25rem;
+    background-color: var(--background-color-fields);
 }
 
 .command-box code {
     flex: 1;
-    padding: 8px 10px;
+    padding: 6px 10px;
     font-family: var(--mono);
-    font-size: 12.5px;
+    font-size: 0.8rem;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
 
-.command-box button {
-    border: 0;
-    border-left: 1px solid var(--border);
-    border-radius: 0;
-    background: transparent;
-    padding: 0 12px;
-}
-
-.command-box button.play {
-    color: var(--human);
-    font-size: 16px;
-}
-
 .link {
     margin: 0 0 10px;
-}
-
-.link a {
-    color: var(--accent);
 }
 
 pre.log,
@@ -423,11 +390,12 @@ pre.diff {
     max-height: 320px;
     overflow: auto;
     padding: 8px 10px;
-    border-radius: 6px;
-    background: var(--log-background);
-    color: var(--log-text);
+    border: 1px solid var(--border-color-fields);
+    border-radius: 0.25rem;
+    background-color: var(--background-color-fields);
+    color: var(--color);
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 0.75rem;
     line-height: 1.4;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
@@ -437,32 +405,23 @@ pre.diff {
     max-height: 480px;
 }
 
-.diff .added {
-    color: #7ed69a;
-}
-
-.diff .removed {
-    color: #f08d8d;
-}
-
-.diff .hunk {
-    color: #8fb3f0;
-}
-
-.log .fail {
-    color: #f08d8d;
-}
-
+.diff .added,
 .log .ok {
-    color: #7ed69a;
+    color: var(--passed);
+}
+
+.diff .removed,
+.log .fail {
+    color: var(--failed);
+}
+
+.diff .hunk,
+.log .marker {
+    color: color-mix(in srgb, var(--human) 60%, var(--color));
 }
 
 .log .warn {
-    color: #e8c071;
-}
-
-.log .marker {
-    color: #8fb3f0;
+    color: var(--warning);
 }
 
 .screenshots {
@@ -478,14 +437,15 @@ pre.diff {
 
 .screenshots img {
     width: 280px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
+    max-width: 100%;
+    border: 1px solid var(--border-color-fields);
+    border-radius: 0.25rem;
     display: block;
 }
 
 .screenshots figcaption {
-    font-size: 12px;
-    color: var(--text-muted);
+    font-size: 0.75rem;
+    color: var(--color-secondary);
 }
 
 @media (max-width: 720px) {
@@ -493,11 +453,11 @@ pre.diff {
         display: none;
     }
 
-    .step-body {
+    .script-nui-collapsible.step > .script-nui-collapsible-body {
         padding-left: 12px;
     }
 
     main {
-        padding: 12px 16px 60px;
+        padding: 8px 16px 60px;
     }
 }

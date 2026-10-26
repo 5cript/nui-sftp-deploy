@@ -67,6 +67,43 @@ const element = (tag, properties = {}, children = []) => {
     return node;
 };
 
+/**
+ * DOM of 5cript-nui-components, as the C++ components render it.
+ */
+const components = {
+    button: (label, { variant = "regular", title = "", onClick, icon = null } = {}) =>
+        element("button", { class: "script-nui-button", type: "button", title, onclick: onClick }, [icon, label]).withVariant(variant),
+    pill: (label, { selected = false } = {}) => {
+        const pill = element("span", { class: "script-nui-pill" }, [element("span", { class: "script-nui-pill-label", textContent: label })]);
+        pill.dataset.selected = String(selected);
+        return pill;
+    },
+    badge: (label, variant = "regular") => element("span", { class: "script-nui-badge", textContent: label }).withVariant(variant),
+    spinner: () => element("span", { class: "script-nui-spinner" }),
+    messageStrip: (text, variant = "regular") => {
+        const strip = element("div", { class: "script-nui-message-strip" }, [element("span", { textContent: text })]);
+        strip.dataset.styleVariant = variant;
+        return strip;
+    },
+    setChecked: (checkbox, checked) => checkbox.toggleAttribute("data-is-checked", checked),
+};
+
+HTMLElement.prototype.withVariant = function (variant) {
+    if (variant !== "regular") {
+        this.dataset.variant = variant;
+    }
+    return this;
+};
+
+const playIcon = () => {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M8 5v14l11-7z");
+    svg.append(path);
+    return svg;
+};
+
 const formatDuration = (state) => {
     if (!state.startedAt) {
         return "";
@@ -114,31 +151,30 @@ const renderDiff = (text) => {
 
 const stepActions = (step) => {
     const state = step.state;
-    const running = state.status === "running";
     const buttons = [];
     const action = (label, name, options = {}) =>
-        element("button", {
-            textContent: label,
-            class: options.class ?? "",
-            title: options.title ?? "",
-            onclick: (event) => {
+        components.button(label, {
+            variant: options.variant,
+            title: options.title,
+            onClick: (event) => {
+                event.preventDefault();
                 event.stopPropagation();
                 post(`/api/steps/${step.id}/${name}`);
             },
         });
-    if (running) {
-        buttons.push(action("Stop", "stop"));
+    if (state.status === "running") {
+        buttons.push(action("Stop", "stop", { variant: "danger" }));
         return buttons;
     }
     if (step.kind === "auto") {
         buttons.push(action(state.status === "pending" ? "Run" : "Rerun", "run"));
     } else if (step.kind === "review") {
         if (state.status === "waiting") {
-            buttons.push(action(step.actionLabel ?? "Approve", "approve", { class: "human" }));
+            buttons.push(action(step.actionLabel ?? "Approve", "approve", { variant: "primary" }));
         }
         buttons.push(action(state.status === "pending" ? "Show diff" : "Refresh", "run"));
     } else {
-        buttons.push(action(step.actionLabel ?? "Check", "run", { class: state.status === "waiting" ? "human" : "" }));
+        buttons.push(action(step.actionLabel ?? "Check", "run", { variant: state.status === "waiting" ? "primary" : "regular" }));
     }
     if (state.status === "pending" || state.status === "failed" || state.status === "waiting") {
         buttons.push(action("Skip", "skip", { title: "Mark as skipped so dependent steps can run" }));
@@ -156,18 +192,18 @@ const stepBody = (step) => {
         parts.push(
             element("div", { class: "command-box" }, [
                 element("code", { textContent: step.command }),
-                element("button", {
-                    class: "play",
-                    textContent: "▶",
+                components.button("Run", {
+                    variant: "primary",
+                    icon: playIcon(),
                     title: "Open in a terminal; the check runs when you close it",
-                    onclick: () => post(`/api/steps/${step.id}/terminal`),
+                    onClick: () => post(`/api/steps/${step.id}/terminal`),
                 }),
-                element("button", {
-                    textContent: "Copy",
-                    onclick: (event) => {
+                components.button("Copy", {
+                    onClick: (event) => {
                         navigator.clipboard?.writeText(step.command);
-                        event.target.textContent = "Copied";
-                        setTimeout(() => (event.target.textContent = "Copy"), 1200);
+                        event.currentTarget.textContent = "Copied";
+                        const target = event.currentTarget;
+                        setTimeout(() => (target.textContent = "Copy"), 1200);
                     },
                 }),
             ]),
@@ -236,12 +272,23 @@ const updateStep = (step) => {
     }
     const { root, head } = entry;
     const state = step.state;
-    root.className = `step status-${state.status}${humanKinds.has(step.kind) ? " human" : ""}${step.visible ? "" : " hidden"}${openSteps.has(step.id) ? " open" : ""}`;
-    head.querySelector(".status-icon").textContent = statusMarks[state.status] ?? "";
+    const isOpen = openSteps.has(step.id);
+    root.className = `script-nui-collapsible step status-${state.status}${humanKinds.has(step.kind) ? " human" : ""}${step.visible ? "" : " hidden"}`;
+    if (root.open !== isOpen) {
+        root.open = isOpen;
+    }
+    const icon = head.querySelector(".status-icon");
+    if (state.status === "running") {
+        if (!icon.querySelector(".script-nui-spinner")) {
+            icon.replaceChildren(components.spinner());
+        }
+    } else {
+        icon.textContent = statusMarks[state.status] ?? "";
+    }
     head.querySelector(".summary").textContent = state.summary || (state.status === "pending" ? "" : state.status);
     head.querySelector(".duration").textContent = formatDuration(state);
     head.querySelector(".actions").replaceChildren(...stepActions(step));
-    if (openSteps.has(step.id)) {
+    if (isOpen) {
         const body = root.querySelector(".step-body");
         const oldLog = body.querySelector("pre.log");
         const scroll = oldLog ? { top: oldLog.scrollTop, atBottom: oldLog.scrollHeight - oldLog.scrollTop - oldLog.clientHeight < 40 } : null;
@@ -253,28 +300,31 @@ const updateStep = (step) => {
     }
 };
 
-const toggleStep = (step) => {
-    if (openSteps.has(step.id)) {
-        openSteps.delete(step.id);
-    } else {
-        openSteps.add(step.id);
-    }
-    storage.set("open-steps", [...openSteps]);
-    updateStep(step);
-};
-
 const buildStep = (step) => {
     const root = document.getElementById("step-template").content.firstElementChild.cloneNode(true);
     const head = root.querySelector(".step-head");
     head.querySelector(".step-title").textContent = step.title;
     const badges = head.querySelector(".badges");
     if (humanKinds.has(step.kind)) {
-        badges.append(element("span", { class: "badge human", textContent: step.kind === "gate" ? "you merge" : step.kind === "review" ? "you review" : "you run" }));
+        badges.append(components.pill(step.kind === "gate" ? "you merge" : step.kind === "review" ? "you review" : "you run", { selected: true }));
     }
     if (step.heavy) {
-        badges.append(element("span", { class: "badge", textContent: "heavy" }));
+        badges.append(components.pill("heavy"));
     }
-    head.addEventListener("click", () => toggleStep(snapshot.steps.find((candidate) => candidate.id === step.id)));
+    // Like the component's header end: clicks on the actions do not toggle the section.
+    head.querySelector(".actions").addEventListener("click", (event) => event.preventDefault());
+    root.addEventListener("toggle", () => {
+        if (root.open === openSteps.has(step.id)) {
+            return;
+        }
+        if (root.open) {
+            openSteps.add(step.id);
+        } else {
+            openSteps.delete(step.id);
+        }
+        storage.set("open-steps", [...openSteps]);
+        updateStep(snapshot.steps.find((candidate) => candidate.id === step.id));
+    });
     elements.set(step.id, { root, head });
     updateStep(step);
     return root;
@@ -292,7 +342,7 @@ const renderAll = () => {
             const steps = snapshot.steps.filter((step) => step.phase === phase);
             const section = element("section", { class: "phase" }, [element("h2", { textContent: phase })]);
             if (phaseNotes[phase]) {
-                section.append(element("div", { class: "handover", textContent: phaseNotes[phase] }));
+                section.append(element("div", { class: "handover" }, [components.messageStrip(phaseNotes[phase], "primary")]));
             }
             if (phase === "Test") {
                 const lanes = [...new Set(steps.map((step) => step.lane.replace(/-lint$/, "")))];
@@ -318,17 +368,19 @@ const renderHeader = () => {
     for (const step of snapshot.steps.filter((candidate) => candidate.visible)) {
         counts[step.state.status] = (counts[step.state.status] ?? 0) + 1;
     }
-    const order = ["passed", "warning", "running", "waiting", "failed", "skipped", "pending"];
+    const variants = { passed: "success", warning: "warning", running: "regular", waiting: "primary", failed: "danger", skipped: "regular", pending: "regular" };
     document.getElementById("counts").replaceChildren(
-        ...order.filter((status) => counts[status]).map((status) => element("span", { class: `count ${status}`, textContent: `${counts[status]} ${status}` })),
+        ...Object.keys(variants)
+            .filter((status) => counts[status])
+            .map((status) => components.badge(`${counts[status]} ${status}`, variants[status])),
     );
     const runAll = document.getElementById("run-all");
     runAll.textContent = snapshot.autoAdvance ? "Running all…" : "Run all";
     runAll.disabled = snapshot.autoAdvance;
     document.getElementById("pause").disabled = !snapshot.autoAdvance;
     document.getElementById("setting-jobs").value = snapshot.settings.buildParallelLevel;
-    document.getElementById("setting-headless").checked = snapshot.settings.headless;
-    document.getElementById("setting-mac").checked = snapshot.settings.keepMacAwake;
+    components.setChecked(document.getElementById("setting-headless"), snapshot.settings.headless);
+    components.setChecked(document.getElementById("setting-mac"), snapshot.settings.keepMacAwake);
 };
 
 const loadSnapshot = async () => {
@@ -388,8 +440,20 @@ document.getElementById("run-all").addEventListener("click", () => post("/api/ru
 document.getElementById("pause").addEventListener("click", () => post("/api/pause"));
 document.getElementById("stop-all").addEventListener("click", () => post("/api/stop-all"));
 document.getElementById("setting-jobs").addEventListener("change", (event) => post("/api/settings", { buildParallelLevel: Number(event.target.value) }));
-document.getElementById("setting-headless").addEventListener("change", (event) => post("/api/settings", { headless: event.target.checked }));
-document.getElementById("setting-mac").addEventListener("change", (event) => post("/api/settings", { keepMacAwake: event.target.checked }));
+const bindCheckbox = (id, setting) =>
+    document.getElementById(id).addEventListener("click", (event) => {
+        const checked = !event.currentTarget.hasAttribute("data-is-checked");
+        components.setChecked(event.currentTarget, checked);
+        post("/api/settings", { [setting]: checked });
+    });
+bindCheckbox("setting-headless", "headless");
+bindCheckbox("setting-mac", "keepMacAwake");
+
+// The components' light theme hangs off data-theme, follow the system setting like the app's "system" theme.
+const lightScheme = window.matchMedia("(prefers-color-scheme: light)");
+const applyScheme = () => document.documentElement.setAttribute("data-theme", lightScheme.matches ? "light" : "dark");
+lightScheme.addEventListener("change", applyScheme);
+applyScheme();
 
 setInterval(() => {
     for (const step of snapshot?.steps ?? []) {

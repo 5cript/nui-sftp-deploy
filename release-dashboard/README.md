@@ -4,6 +4,11 @@ A local web page that runs the nui-sftp release: prepare the deploy branch, smok
 and merge steps that stay with a human, and the AUR/Flathub work after the merge. Every step shows a red or green check
 with its sub-checks, a live log and screenshots. Plain HTML/CSS/JS and a Node server without dependencies.
 
+The controls (buttons, pills, badges, checkboxes, collapsible sections, message strips, spinner) are the markup of
+[5cript-nui-components](https://github.com/5cript/5cript-nui-components) with its stylesheets, from the submodule
+`vendor/5cript-nui-components` at the commit nui-sftp pins, themed with nui-sftp's variables; the light theme follows the
+system setting. `run.sh` initialises the submodule when it is missing.
+
 ```bash
 release-dashboard/run.sh --version 1.11.0
 ```

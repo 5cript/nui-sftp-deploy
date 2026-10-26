@@ -4,3 +4,6 @@
 [submodule "flathub"]
 	path = flathub
 	url = git@github.com:flathub/org.nuicpp.nui_sftp.git
+[submodule "release-dashboard/vendor/5cript-nui-components"]
+	path = release-dashboard/vendor/5cript-nui-components
+	url = https://github.com/5cript/5cript-nui-components.git

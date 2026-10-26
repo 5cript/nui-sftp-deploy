@@ -13,6 +13,9 @@ const steps = buildPipeline();
 const store = new StateStore(config, steps.map((step) => step.id));
 const runner = new Runner(config, store, steps);
 
+// The CSS of 5cript-nui-components (submodule), so the page matches the app's controls.
+const componentStyles = join(config.dashboardRoot, "vendor", "5cript-nui-components", "styles");
+
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".png": "image/png", ".svg": "image/svg+xml" };
 
 const sendJson = (response, status, body) => {
@@ -147,6 +150,10 @@ const server = createServer(async (request, response) => {
             clearInterval(keepAlive);
             store.listeners.delete(listener);
         });
+    } else if (path.startsWith("/components/")) {
+        const file = normalize(path.slice("/components/".length));
+        const valid = file.endsWith(".css") && !file.includes("..") && !file.startsWith("/");
+        sendFile(response, valid ? join(componentStyles, file) : "");
     } else if (path.startsWith("/screenshots/")) {
         const file = normalize(path.slice("/screenshots/".length));
         sendFile(response, file.includes("/") || file.startsWith(".") ? "" : join(config.screenshotDirectory, file));
