@@ -2,7 +2,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeF
 import { join } from "node:path";
 
 const maximumLogLines = 3000;
-const defaultSettings = { buildParallelLevel: 4, headless: false, keepMacAwake: false };
+const defaultSettings = { buildParallelLevel: 4, headless: false, keepMacAwake: false, alarmEnabled: true, alarmVolume: 20 };
 
 const emptyStep = () => ({ status: "pending", startedAt: null, endedAt: null, summary: "", checks: [], screenshots: [], runs: 0 });
 
@@ -105,7 +105,7 @@ class StateStore {
     setSettings(changes) {
         for (const [key, value] of Object.entries(changes)) {
             if (key in defaultSettings && typeof value === typeof defaultSettings[key]) {
-                this.state.settings[key] = value;
+                this.state.settings[key] = key === "alarmVolume" ? Math.max(0, Math.min(100, value)) : key === "buildParallelLevel" ? Math.max(1, value) : value;
             }
         }
         this.save();

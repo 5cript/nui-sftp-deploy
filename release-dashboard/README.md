@@ -26,6 +26,11 @@ all of its steps back to pending to run the target again. While a step of a targ
 carousel (5cript-nui-components' carousel) with one target per page at full width; collapsing the last expanded step
 brings the columns back.
 
+With "alarm" on (default, volume 20%), the page chimes when the run arrives at "Push the release branch" and when
+"Merge the deploy PR" sees the merge; that gate checks itself every minute while it waits, so auto-merge is noticed. The
+chime is synthesized with Web Audio, no sound file. Browsers only play sound after a click or key press on the page, a
+pill in the header says so until then.
+
 Publish and After merge stay locked until every test step ran (any result) or was skipped. "Reset all" puts every
 step back to pending, except what already left the machine: completed pushes, PRs and the merge stay, with the steps
 they were based on (their dependencies, and the prepare and test phases); local steps after them reset and redetect

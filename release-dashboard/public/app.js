@@ -16,6 +16,76 @@ let snapshot = null;
 const elements = new Map();
 const groupHeaders = new Map();
 const lockNotes = [];
+
+/**
+ * A soft two-note bell made with Web Audio (no sound file): sine partials, short attack, long decay, played twice.
+ */
+const chime = {
+    context: null,
+    unlock() {
+        this.context ??= new AudioContext();
+        if (this.context.state === "suspended") {
+            this.context.resume().then(updateSoundHint, () => {});
+        }
+        updateSoundHint();
+    },
+    play(volumePercent) {
+        this.context ??= new AudioContext();
+        this.context.resume().catch(() => {});
+        const audio = this.context;
+        const master = audio.createGain();
+        master.gain.value = Math.max(0, Math.min(1, volumePercent / 100));
+        master.connect(audio.destination);
+        const notes = [
+            [659.25, 0],
+            [987.77, 0.22],
+            [659.25, 2.2],
+            [987.77, 2.42],
+        ];
+        for (const [frequency, offset] of notes) {
+            for (const [ratio, level] of [
+                [1, 0.6],
+                [2, 0.15],
+                [3, 0.05],
+            ]) {
+                const oscillator = audio.createOscillator();
+                oscillator.type = "sine";
+                oscillator.frequency.value = frequency * ratio;
+                const envelope = audio.createGain();
+                const start = audio.currentTime + offset;
+                envelope.gain.setValueAtTime(0.0001, start);
+                envelope.gain.exponentialRampToValueAtTime(level, start + 0.02);
+                envelope.gain.exponentialRampToValueAtTime(0.0001, start + 1.9);
+                oscillator.connect(envelope).connect(master);
+                oscillator.start(start);
+                oscillator.stop(start + 2);
+            }
+        }
+    },
+};
+
+const updateSoundHint = () => {
+    const hint = document.getElementById("sound-hint");
+    hint.hidden = !snapshot?.settings.alarmEnabled || chime.context?.state === "running";
+};
+
+// Statuses before the latest run of each step, so the alarm rings on arrival, not on every recheck.
+const settledStatus = new Map();
+
+const ringFor = (step, status) => {
+    const before = settledStatus.get(step.id);
+    if (status !== "running") {
+        settledStatus.set(step.id, status);
+    }
+    if (!snapshot.settings.alarmEnabled || before === undefined || before === status) {
+        return;
+    }
+    const arrivedAtPush = step.id === "push-branch" && status === "waiting";
+    const merged = step.id === "deploy-merge" && status === "passed";
+    if (arrivedAtPush || merged) {
+        chime.play(snapshot.settings.alarmVolume);
+    }
+};
 const logCache = new Map();
 
 const storage = {
@@ -522,10 +592,24 @@ const renderHeader = () => {
     document.getElementById("setting-jobs").value = snapshot.settings.buildParallelLevel;
     components.setChecked(document.getElementById("setting-headless"), snapshot.settings.headless);
     components.setChecked(document.getElementById("setting-mac"), snapshot.settings.keepMacAwake);
+    components.setChecked(document.getElementById("setting-alarm"), snapshot.settings.alarmEnabled);
+    const volume = document.getElementById("setting-volume");
+    if (document.activeElement !== volume) {
+        volume.value = snapshot.settings.alarmVolume;
+    }
+    volume.disabled = !snapshot.settings.alarmEnabled;
+    volume.style.setProperty("--fill", `${volume.value}%`);
+    document.getElementById("volume-label").textContent = `${volume.value}%`;
+    updateSoundHint();
 };
 
 const loadSnapshot = async () => {
     snapshot = await (await fetch("/api/state")).json();
+    for (const step of snapshot.steps) {
+        if (step.state.status !== "running") {
+            settledStatus.set(step.id, step.state.status);
+        }
+    }
     renderAll();
 };
 
@@ -546,6 +630,7 @@ const connectEvents = () => {
         if (event.type === "step") {
             const step = snapshot.steps.find((candidate) => candidate.id === event.id);
             step.state = event.step;
+            ringFor(step, event.step.status);
             updateStep(step);
             renderHeader();
         } else if (event.type === "log") {
@@ -608,6 +693,21 @@ const bindCheckbox = (id, setting) =>
     });
 bindCheckbox("setting-headless", "headless");
 bindCheckbox("setting-mac", "keepMacAwake");
+bindCheckbox("setting-alarm", "alarmEnabled");
+
+const volumeSlider = document.getElementById("setting-volume");
+volumeSlider.addEventListener("input", () => {
+    volumeSlider.style.setProperty("--fill", `${volumeSlider.value}%`);
+    document.getElementById("volume-label").textContent = `${volumeSlider.value}%`;
+});
+volumeSlider.addEventListener("change", () => {
+    const volume = Number(volumeSlider.value);
+    post("/api/settings", { alarmVolume: volume });
+    chime.play(volume);
+});
+for (const type of ["pointerdown", "keydown"]) {
+    document.addEventListener(type, () => chime.unlock(), { once: true, capture: true });
+}
 
 // The components' light theme hangs off data-theme, follow the system setting like the app's "system" theme.
 const lightScheme = window.matchMedia("(prefers-color-scheme: light)");
