@@ -52,6 +52,7 @@ const parseConfig = () => {
         logDirectory: join(workDirectory, "logs"),
         screenshotDirectory: join(workDirectory, "screenshots"),
         statePath: join(workDirectory, "state.json"),
+        settingsPath: join(deployRoot, "build", "release-dashboard", "settings.json"),
         tagCheckout: join(deployRoot, "checkout", "nui-sftp"),
         sourceOverride: values.source ? resolve(values.source) : null,
         workCheckout: resolve(process.env.RELEASE_DASHBOARD_NUI_SFTP ?? join(dashboardRoot, "..", "..", "nui-sftp")),
