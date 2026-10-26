@@ -13,6 +13,8 @@ const config = parseConfig();
 const steps = buildPipeline();
 const store = new StateStore(config, steps.map((step) => step.id));
 const runner = new Runner(config, store, steps);
+// A gate that waited when the dashboard stopped (the PR merge) is watched again right away.
+runner.schedulePolls();
 
 // The CSS of 5cript-nui-components (submodule), so the page matches the app's controls.
 const componentStyles = join(config.dashboardRoot, "vendor", "5cript-nui-components", "styles");
@@ -95,6 +97,10 @@ const stepAction = async (id, action, response) => {
         case "reset":
             runner.reset(id);
             break;
+        case "watch":
+        case "unwatch":
+            sendJson(response, 200, runner.setWatch(id, action === "watch"));
+            return;
         case "terminal":
             if (!step.command) {
                 sendJson(response, 400, { error: "no command" });
