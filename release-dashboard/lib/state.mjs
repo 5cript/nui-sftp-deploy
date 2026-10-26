@@ -86,7 +86,7 @@ class StateStore {
     }
 
     log(id, line) {
-        const stamped = `${new Date().toISOString().slice(11, 19)} ${line}`;
+        const stamped = `${new Date().toISOString().slice(11, 19)} ${line.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "")}`;
         const lines = this.logs.get(id);
         lines.push(stamped);
         if (lines.length > maximumLogLines) {

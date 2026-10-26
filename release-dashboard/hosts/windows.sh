@@ -29,29 +29,33 @@ ip)
     ;;
 esac
 
-require_vm_ip
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
-upload() { scp -q -r "${SSH_OPTS[@]}" "$1" "${VM_USER}@${VM_IP}:$2"; }
-vm_ssh "if not exist $guestDirectory mkdir $guestDirectory" >/dev/null
+# The script comes on stdin, read it before ssh gets the chance to.
+if [ "$command" = ps ] || [ "$command" = msys ]; then
+    cat > "$work/script"
+fi
+require_vm_ip
+upload() { scp -q -r "${SSH_OPTS[@]}" "$1" "${VM_USER}@${VM_IP}:$2" < /dev/null; }
+vm_ssh "if not exist $guestDirectory mkdir $guestDirectory" > /dev/null < /dev/null
 
 case "$command" in
 ps)
     name="command-$$.ps1"
-    cat > "$work/$name"
+    mv "$work/script" "$work/$name"
     upload "$work/$name" "$guestDirectorySlash/$name"
     status=0
-    vm_ssh "powershell -NoProfile -ExecutionPolicy Bypass -File $guestDirectory\\$name" || status=$?
-    vm_ssh "del $guestDirectory\\$name" >/dev/null 2>&1 || true
+    vm_ssh "powershell -NoProfile -ExecutionPolicy Bypass -File $guestDirectory\\$name" < /dev/null || status=$?
+    vm_ssh "del $guestDirectory\\$name" > /dev/null 2>&1 < /dev/null || true
     exit "$status"
     ;;
 msys)
     name="command-$$.sh"
-    cat > "$work/$name"
+    mv "$work/script" "$work/$name"
     upload "$work/$name" "$guestDirectorySlash/$name"
     status=0
-    vm_msys "$guestDirectorySlash/$name" "GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=core.fileMode GIT_CONFIG_VALUE_0=false GIT_CONFIG_KEY_1=safe.directory GIT_CONFIG_VALUE_1=* $*" || status=$?
-    vm_ssh "del $guestDirectory\\$name" >/dev/null 2>&1 || true
+    vm_msys "$guestDirectorySlash/$name" "GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=core.fileMode GIT_CONFIG_VALUE_0=false GIT_CONFIG_KEY_1=safe.directory GIT_CONFIG_VALUE_1=* $*" < /dev/null || status=$?
+    vm_ssh "del $guestDirectory\\$name" > /dev/null 2>&1 < /dev/null || true
     exit "$status"
     ;;
 upload)
@@ -77,10 +81,10 @@ Start-ScheduledTask -TaskName $name
 'started'
 SCRIPT
     upload "$work/$name.ps1" "$guestDirectorySlash/$name.ps1"
-    vm_ssh "powershell -NoProfile -ExecutionPolicy Bypass -File $guestDirectory\\$name.ps1"
+    vm_ssh "powershell -NoProfile -ExecutionPolicy Bypass -File $guestDirectory\\$name.ps1" < /dev/null
     ;;
 cleanup)
-    vm_ssh "schtasks /delete /tn $1 /f" >/dev/null 2>&1 || true
+    vm_ssh "schtasks /delete /tn $1 /f" > /dev/null 2>&1 < /dev/null || true
     ;;
 *)
     sed -n 2,13p "$0"
