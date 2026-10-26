@@ -36,6 +36,26 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.10.0" date="2026-10-26">
+            <description>
+                <p>What&apos;s Changed</p>
+                <p>Most important feature is the transfer performance optimization and benchmarking, now performing similar or faster to to OpenSSH. Only many small file downloads are still slightly behind.
+The end session button is now no longer pressable when there is no session open.
+The archive transfer dialog is visually more appealing now and no longer maps compression levels but shows different levels for different algorithms.</p>
+                <ul>
+                    <li>Archive Dialog Redesign by @5cript in #262</li>
+                    <li>Disable End Session while no session is open by @5cript in #263</li>
+                    <li>Improve Thransfer Throughput by @5cript in #265</li>
+                    <li>Unsafe Fast Queue Optimization by @5cript in #266</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : v1.9.0…v1.10.0
+                </p>
+            </description>
+            <url type="details">https://github.com/5cript/nui-sftp/releases/tag/v1.10.0</url>
+        </release>
         <release version="1.9.0" date="2026-10-25">
             <description>
                 <p>What&apos;s Changed</p>
