@@ -202,6 +202,9 @@ class Runner {
             const stopped = controller.signal.aborted;
             status = step.kind === "auto" || stopped ? "failed" : "waiting";
             summary = stopped ? "stopped" : error instanceof StepFailure ? error.message : error.message.split("\n")[0];
+            if (/gpg failed to sign|signing failed/.test(error.output ?? "")) {
+                summary = "signing failed (pinentry timed out?), run it again while you are at the machine";
+            }
             if (!(error instanceof StepFailure)) {
                 this.store.log(id, `ERROR ${error.stack ?? error.message}`);
                 if (error.output && !error.output.trim().endsWith(error.message)) {
