@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 
 /**
  * Error of a command that exited with a non-zero code or was stopped.
@@ -11,14 +11,44 @@ class CommandError extends Error {
     }
 }
 
+/**
+ * Every process in the session the child leads (detached spawns get their own) and all their descendants: sandboxes
+ * like flatpak-builder's bwrap re-parent to the user's systemd but stay in the session.
+ */
+const sessionProcesses = (sessionId) => {
+    let table;
+    try {
+        table = execFileSync("ps", ["-eo", "pid=,ppid=,sid="], { encoding: "utf8" })
+            .trim()
+            .split("\n")
+            .map((line) => line.trim().split(/\s+/).map(Number));
+    } catch {
+        return [];
+    }
+    const members = new Set(table.filter(([, , session]) => session === sessionId).map(([pid]) => pid));
+    members.add(sessionId);
+    for (let grown = true; grown; ) {
+        grown = false;
+        for (const [pid, parent] of table) {
+            if (members.has(parent) && !members.has(pid)) {
+                members.add(pid);
+                grown = true;
+            }
+        }
+    }
+    return [...members];
+};
+
 const killGroup = (child, signal = "SIGTERM") => {
     if (child.exitCode !== null || child.signalCode !== null) {
         return;
     }
-    try {
-        process.kill(-child.pid, signal);
-    } catch {
-        child.kill(signal);
+    for (const pid of sessionProcesses(child.pid)) {
+        try {
+            process.kill(pid, signal);
+        } catch {
+            // Already gone.
+        }
     }
 };
 
