@@ -92,18 +92,32 @@ const updateSoundHint = () => {
 
 // Statuses before the latest run of each step, so the alarm rings on arrival, not on every recheck.
 const settledStatus = new Map();
+const lastStatus = new Map();
+let lastRing = 0;
 
-const ringFor = (step, status) => {
+/**
+ * Rings when the run arrives at the push step, when the merge is seen, and when a test step fails or starts waiting
+ * for you (each time a run of it ends that way; steps you stopped yourself stay quiet).
+ */
+const ringFor = (step, state) => {
+    const status = state.status;
     const before = settledStatus.get(step.id);
+    const previous = lastStatus.get(step.id);
+    lastStatus.set(step.id, status);
     if (status !== "running") {
         settledStatus.set(step.id, status);
     }
-    if (!snapshot.settings.alarmEnabled || before === undefined || before === status) {
+    if (!snapshot.settings.alarmEnabled) {
         return;
     }
-    const arrivedAtPush = step.id === "push-branch" && status === "waiting";
-    const merged = step.id === "deploy-merge" && status === "passed";
-    if (arrivedAtPush || merged) {
+    const runEnded = previous === "running" && status !== "running";
+    const testFailed = step.phase === "Test" && runEnded && status === "failed" && state.summary !== "stopped";
+    const testNeedsYou = step.phase === "Test" && runEnded && status === "waiting" && before !== "waiting";
+    const changed = before !== undefined && before !== status;
+    const arrivedAtPush = changed && step.id === "push-branch" && status === "waiting";
+    const merged = changed && step.id === "deploy-merge" && status === "passed";
+    if ((testFailed || testNeedsYou || arrivedAtPush || merged) && Date.now() - lastRing > 5000) {
+        lastRing = Date.now();
         chime.play(snapshot.settings.alarmVolume, snapshot.settings.alarmSound);
     }
 };
@@ -719,7 +733,7 @@ const connectEvents = () => {
         if (event.type === "step") {
             const step = snapshot.steps.find((candidate) => candidate.id === event.id);
             step.state = event.step;
-            ringFor(step, event.step.status);
+            ringFor(step, event.step);
             updateStep(step);
             renderHeader();
         } else if (event.type === "log") {

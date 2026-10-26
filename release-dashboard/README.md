@@ -26,8 +26,8 @@ all of its steps back to pending to run the target again. While a step of a targ
 carousel (5cript-nui-components' carousel) with one target per page at full width; collapsing the last expanded step
 brings the columns back.
 
-With "alarm" on (default, volume 20%), the page chimes when the run arrives at "Push the release branch" and when
-"Merge the deploy PR" sees the merge; that gate checks itself every minute while it waits, so auto-merge is noticed. The sound
+With "alarm" on (default, volume 20%), the page chimes when a test step fails or starts waiting for you (not for steps
+you stopped yourself), when the run arrives at "Push the release branch" and when "Merge the deploy PR" sees the merge; that gate checks itself every minute while it waits, so auto-merge is noticed. The sound
 is picked next to the volume: the built-in chime (synthesized with Web Audio, no file) or one of the KDE Ocean and
 freedesktop theme sounds that are installed (`lib/sounds.mjs` lists them; played locally from `/usr/share/sounds`). Browsers only play sound after a click or key press on the page, a
 pill in the header says so until then.
