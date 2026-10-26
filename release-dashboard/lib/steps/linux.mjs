@@ -73,6 +73,10 @@ const archBuild = {
         const { config } = context;
         await checkHeavyJobResources(context);
         const directory = archDirectory(config);
+        // makepkg locks pkg/ (mode 0111) during build() and only unlocks it when packaging, a stopped run leaves it so.
+        if (existsSync(directory)) {
+            await context.run("chmod", ["-R", "u+rwX", directory], { quiet: true });
+        }
         rmSync(directory, { recursive: true, force: true });
         mkdirSync(directory, { recursive: true });
         copyFileSync(join(config.deployRoot, "PKGBUILD"), join(directory, "PKGBUILD"));
