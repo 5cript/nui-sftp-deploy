@@ -2,7 +2,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeF
 import { join } from "node:path";
 
 const maximumLogLines = 3000;
-const defaultSettings = { buildParallelLevel: 4, headless: false, keepMacAwake: false, alarmEnabled: true, alarmVolume: 20 };
+const defaultSettings = { buildParallelLevel: 4, headless: false, keepMacAwake: false, alarmEnabled: true, alarmVolume: 20, alarmSound: "chime" };
 
 const emptyStep = () => ({ status: "pending", startedAt: null, endedAt: null, summary: "", checks: [], screenshots: [], runs: 0 });
 
