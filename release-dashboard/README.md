@@ -37,7 +37,12 @@ step back to pending, except what already left the machine: completed pushes, PR
 they were based on (their dependencies, and the prepare and test phases); local steps after them reset and redetect
 their existing commits when they run again.
 
-The header settings (jobs, headless, keep Mac awake, alarm, volume, sound) are preferences shared by every release, in
+"swap Flathub copy" (off by default): instead of asking you to uninstall an installed nui-sftp flatpak before the
+flatpak test, the dashboard uninstalls it itself (system or user, data kept; wheel users need no password for that
+under flatpak's polkit rules) and reinstalls it from its remote right after the smoke test, whatever the result. A
+running copy is never touched. If the reinstall cannot happen, "Reinstall your Flathub copy" shows the command.
+
+The header settings (jobs, headless, keep Mac awake, swap Flathub copy, alarm, volume, sound) are preferences shared by every release, in
 `build/release-dashboard/settings.json`.
 
 State, logs and screenshots of a release live in `build/release-dashboard/X.Y.Z/` (gitignored), so a restart picks up

@@ -175,11 +175,33 @@ const flatpakLint = {
 };
 
 const installedFlatpaks = async (context) =>
-    (await context.capture("flatpak", ["list", "--app", "--columns=application,branch,installation"], { allowFailure: true }))
+    (await context.capture("flatpak", ["list", "--app", "--columns=application,branch,installation,origin"], { allowFailure: true }))
         .split("\n")
         .map((line) => line.trim().split(/\s+/))
         .filter(([application]) => application === flatpakApplication)
-        .map(([, branch, installation]) => ({ branch, installation }));
+        .map(([, branch, installation, origin]) => ({ branch, installation, origin: origin || "flathub" }));
+
+const describeInstalls = (installs) => installs.map(({ branch, installation }) => `${installation} ${branch}`).join(", ");
+
+/**
+ * Puts back the copies the swap removed (from their remote, data was kept), whatever the test's result.
+ */
+const reinstallSwappedCopies = async (context) => {
+    const removed = context.data.flatpakRemovedForTest ?? [];
+    for (const { branch, installation, origin } of removed) {
+        await context.run("flatpak", ["install", `--${installation}`, "-y", "--noninteractive", origin, `${flatpakApplication}//${branch}`], {
+            allowFailure: true,
+            timeoutMs: 20 * 60 * 1000,
+        });
+    }
+    if (removed.length === 0) {
+        return;
+    }
+    const installed = await installedFlatpaks(context);
+    const missing = removed.filter(({ branch, installation }) => !installed.some((entry) => entry.branch === branch && entry.installation === installation));
+    context.check("swapped Flathub copy reinstalled", missing.length === 0, missing.length ? `missing: ${describeInstalls(missing)}` : describeInstalls(removed));
+    context.setData({ flatpakRemovedForTest: missing });
+};
 
 const foreignFlatpaks = async (context) => (await installedFlatpaks(context)).filter(({ branch, installation }) => !(branch === "master" && installation === "user"));
 
@@ -189,7 +211,7 @@ const flatpakConflict = {
     lane: "flatpak",
     kind: "manual",
     title: "Flatpak: no other installed copy",
-    description: "The test bundle installs as branch master for the user. An installed Flathub copy (stable) shares the app id and its config; uninstall it first (data is kept), it can be reinstalled at the end.",
+    description: "The test bundle installs as branch master for the user. An installed Flathub copy (stable) shares the app id and its config; uninstall it first (data is kept), it can be reinstalled at the end. With \"swap Flathub copy\" on, this step uninstalls it itself and the smoke test reinstalls it afterwards.",
     needs: ["flatpak-build"],
     command: (context) => {
         const found = context.data.flatpakInstalls ?? [];
@@ -198,11 +220,33 @@ const flatpakConflict = {
             : found.map(({ branch, installation }) => `flatpak uninstall --${installation} -y ${flatpakApplication}//${branch}`).join(" && ");
     },
     check: async (context) => {
-        const found = await foreignFlatpaks(context);
+        let found = await foreignFlatpaks(context);
+        if (found.length > 0 && context.settings.swapFlathubCopy) {
+            const running = await context.capture("flatpak", ["ps", "--columns=application"], { allowFailure: true });
+            if (running.split("\n").some((line) => line.trim() === flatpakApplication)) {
+                context.check("installed copy not running", false, "close your nui-sftp flatpak, then check again");
+                return;
+            }
+            const removed = [...(context.data.flatpakRemovedForTest ?? [])];
+            for (const install of found) {
+                const { code } = await context.run(
+                    "flatpak",
+                    ["uninstall", `--${install.installation}`, "-y", "--noninteractive", `${flatpakApplication}//${install.branch}`],
+                    { allowFailure: true, timeoutMs: 5 * 60 * 1000 },
+                );
+                if (code === 0) {
+                    removed.push(install);
+                }
+            }
+            context.setData({ flatpakRemovedForTest: removed });
+            found = await foreignFlatpaks(context);
+            context.check("swapped out the installed copy (data kept)", found.length === 0, found.length ? `still installed: ${describeInstalls(found)}` : describeInstalls(removed));
+            return;
+        }
         if (found.length > 0) {
             context.setData({ flatpakInstalls: found });
         }
-        context.check("no other nui-sftp flatpak installed", found.length === 0, found.map(({ branch, installation }) => `${installation} ${branch}`).join(", "));
+        context.check("no other nui-sftp flatpak installed", found.length === 0, describeInstalls(found));
     },
 };
 
@@ -240,6 +284,7 @@ const flatpakSmoke = {
             await smokeLocalProcess(context, handle, port, true);
         } finally {
             await context.run("flatpak", ["uninstall", "--user", "-y", "--noninteractive", `${flatpakApplication}//master`], { allowFailure: true });
+            await reinstallSwappedCopies(context);
             if (existsSync(backup)) {
                 copyFileSync(backup, persistence);
                 rmSync(backup);
@@ -315,4 +360,4 @@ const appImageSmoke = {
     },
 };
 
-export { remoteBuildSource, archBuild, archSmoke, flatpakBuild, flatpakLint, flatpakConflict, flatpakSmoke, docker, appImageBuild, appImageSmoke, cmakeLoopWatcher, foreignFlatpaks };
+export { reinstallSwappedCopies, installedFlatpaks, remoteBuildSource, archBuild, archSmoke, flatpakBuild, flatpakLint, flatpakConflict, flatpakSmoke, docker, appImageBuild, appImageSmoke, cmakeLoopWatcher, foreignFlatpaks };

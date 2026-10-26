@@ -669,6 +669,7 @@ const renderHeader = () => {
     components.setChecked(document.getElementById("setting-headless"), snapshot.settings.headless);
     components.setChecked(document.getElementById("setting-mac"), snapshot.settings.keepMacAwake);
     components.setChecked(document.getElementById("setting-alarm"), snapshot.settings.alarmEnabled);
+    components.setChecked(document.getElementById("setting-swap"), snapshot.settings.swapFlathubCopy);
     const volume = document.getElementById("setting-volume");
     if (document.activeElement !== volume) {
         volume.value = snapshot.settings.alarmVolume;
@@ -782,6 +783,7 @@ const bindCheckbox = (id, setting) =>
 bindCheckbox("setting-headless", "headless");
 bindCheckbox("setting-mac", "keepMacAwake");
 bindCheckbox("setting-alarm", "alarmEnabled");
+bindCheckbox("setting-swap", "swapFlathubCopy");
 
 const volumeSlider = document.getElementById("setting-volume");
 volumeSlider.addEventListener("input", () => {
