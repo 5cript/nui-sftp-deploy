@@ -29,13 +29,34 @@ const chime = {
         }
         updateSoundHint();
     },
-    play(volumePercent) {
+    buffers: new Map(),
+    sounds: [],
+    /**
+     * Plays the chosen alarm: the synthesized chime, or a system sound file (decoded once, same volume control).
+     */
+    async play(volumePercent, soundId = "chime") {
         this.context ??= new AudioContext();
         this.context.resume().catch(() => {});
         const audio = this.context;
         const master = audio.createGain();
         master.gain.value = Math.max(0, Math.min(1, volumePercent / 100));
         master.connect(audio.destination);
+        const sound = this.sounds.find((entry) => entry.id === soundId);
+        if (sound?.url) {
+            try {
+                if (!this.buffers.has(sound.id)) {
+                    const data = await (await fetch(sound.url)).arrayBuffer();
+                    this.buffers.set(sound.id, await audio.decodeAudioData(data));
+                }
+                const source = audio.createBufferSource();
+                source.buffer = this.buffers.get(sound.id);
+                source.connect(master);
+                source.start();
+                return;
+            } catch {
+                // Fall back to the chime when the file cannot be played.
+            }
+        }
         const notes = [
             [659.25, 0],
             [987.77, 0.22],
@@ -83,7 +104,7 @@ const ringFor = (step, status) => {
     const arrivedAtPush = step.id === "push-branch" && status === "waiting";
     const merged = step.id === "deploy-merge" && status === "passed";
     if (arrivedAtPush || merged) {
-        chime.play(snapshot.settings.alarmVolume);
+        chime.play(snapshot.settings.alarmVolume, snapshot.settings.alarmSound);
     }
 };
 const logCache = new Map();
@@ -162,6 +183,61 @@ const components = {
         return strip;
     },
     setChecked: (checkbox, checked) => checkbox.toggleAttribute("data-is-checked", checked),
+    /**
+     * script-nui-select: a button showing the active option, the options in a native popover placed under it.
+     */
+    select: ({ label, options, value, onChange }) => {
+        const svgNamespace = "http://www.w3.org/2000/svg";
+        const chevron = document.createElementNS(svgNamespace, "svg");
+        chevron.setAttribute("viewBox", "0 0 24 24");
+        const chevronPath = document.createElementNS(svgNamespace, "path");
+        chevronPath.setAttribute("d", "m6 9 6 6 6-6");
+        chevron.append(chevronPath);
+        const active = element("span");
+        const popover = element("div", { class: "script-nui-select-popover" });
+        popover.setAttribute("popover", "auto");
+        const root = element("button", { class: "script-nui-select", type: "button" }, [
+            element("span", { class: "script-nui-select-prefix" }, [element("span", { class: "script-nui-select-label", textContent: label })]),
+            active,
+            chevron,
+            element("span", { class: "script-nui-select-spinner" }),
+            popover,
+        ]);
+        const setValue = (next) => {
+            root.dataset.value = next;
+            active.textContent = options.find((option) => option.value === next)?.label ?? next;
+        };
+        options.forEach((option, index) => {
+            const item = element("div", { textContent: option.label, tabIndex: 0 });
+            item.dataset.index = index;
+            const choose = (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+                popover.hidePopover();
+                setValue(option.value);
+                onChange(option.value);
+            };
+            item.addEventListener("click", choose);
+            item.addEventListener("keydown", (event) => event.key === "Enter" && choose(event));
+            popover.append(item);
+        });
+        root.addEventListener("click", (event) => {
+            if (event.target !== root && !root.contains(event.target)) {
+                return;
+            }
+            if (popover.matches(":popover-open")) {
+                popover.hidePopover();
+                return;
+            }
+            const rect = root.getBoundingClientRect();
+            const maxHeight = Math.min(320, window.innerHeight - rect.bottom - 8);
+            Object.assign(popover.style, { top: `${rect.bottom}px`, left: `${rect.left}px`, width: `${rect.width}px`, maxHeight: `${maxHeight}px` });
+            popover.showPopover();
+            popover.querySelector(`div[data-index="${options.findIndex((option) => option.value === root.dataset.value)}"]`)?.focus();
+        });
+        setValue(value);
+        return { root, setValue };
+    },
 };
 
 HTMLElement.prototype.withVariant = function (variant) {
@@ -598,6 +674,8 @@ const renderHeader = () => {
         volume.value = snapshot.settings.alarmVolume;
     }
     volume.disabled = !snapshot.settings.alarmEnabled;
+    soundSelect?.setValue(snapshot.settings.alarmSound);
+    soundSelect?.root.toggleAttribute("disabled", !snapshot.settings.alarmEnabled);
     volume.style.setProperty("--fill", `${volume.value}%`);
     document.getElementById("volume-label").textContent = `${volume.value}%`;
     updateSoundHint();
@@ -713,8 +791,28 @@ volumeSlider.addEventListener("input", () => {
 volumeSlider.addEventListener("change", () => {
     const volume = Number(volumeSlider.value);
     post("/api/settings", { alarmVolume: volume });
-    chime.play(volume);
+    chime.play(volume, snapshot?.settings.alarmSound);
 });
+
+let soundSelect = null;
+fetch("/api/sounds")
+    .then((response) => response.json())
+    .then((sounds) => {
+        chime.sounds = sounds;
+        soundSelect = components.select({
+            label: "sound",
+            options: sounds.map((sound) => ({ value: sound.id, label: sound.label })),
+            value: snapshot?.settings.alarmSound ?? "chime",
+            onChange: (soundId) => {
+                post("/api/settings", { alarmSound: soundId });
+                chime.play(snapshot?.settings.alarmVolume ?? 20, soundId);
+            },
+        });
+        document.getElementById("sound-select").replaceChildren(soundSelect.root);
+        if (snapshot) {
+            renderHeader();
+        }
+    });
 for (const type of ["pointerdown", "keydown"]) {
     document.addEventListener(type, () => chime.unlock(), { once: true, capture: true });
 }

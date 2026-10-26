@@ -10,6 +10,7 @@
 @import "/components/spinner.css";
 @import "/components/carousel.css";
 @import "/components/slider.css";
+@import "/components/select.css";
 
 *,
 *::before,
@@ -190,6 +191,10 @@ a {
     & .script-nui-slider:disabled {
         opacity: 0.4;
     }
+}
+
+.alarm-control .script-nui-select {
+    min-width: 13em;
 }
 
 .volume-label {

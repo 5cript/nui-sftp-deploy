@@ -7,6 +7,7 @@ import { StateStore } from "./lib/state.mjs";
 import { Runner } from "./lib/runner.mjs";
 import { buildPipeline } from "./lib/pipeline.mjs";
 import { shellQuote } from "./lib/process.mjs";
+import { availableSounds } from "./lib/sounds.mjs";
 
 const config = parseConfig();
 const steps = buildPipeline();
@@ -17,7 +18,9 @@ const runner = new Runner(config, store, steps);
 const componentStyles = join(config.dashboardRoot, "vendor", "5cript-nui-components", "styles");
 const componentStaticStyles = join(config.dashboardRoot, "vendor", "5cript-nui-components", "static", "styles");
 
-const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".png": "image/png", ".svg": "image/svg+xml" };
+const sounds = availableSounds();
+
+const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".png": "image/png", ".svg": "image/svg+xml", ".oga": "audio/ogg" };
 
 const sendJson = (response, status, body) => {
     response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
@@ -166,6 +169,11 @@ const server = createServer(async (request, response) => {
         // The slider stylesheet only ships in the component repo's static/styles.
         const directory = file === "slider.css" ? componentStaticStyles : componentStyles;
         sendFile(response, valid ? join(directory, file) : "");
+    } else if (path === "/api/sounds") {
+        sendJson(response, 200, sounds.map(({ id, label }) => ({ id, label, url: id === "chime" ? null : `/sounds/${id}` })));
+    } else if (path.startsWith("/sounds/")) {
+        const sound = sounds.find((entry) => entry.id === path.slice("/sounds/".length) && entry.path);
+        sendFile(response, sound ? sound.path : "");
     } else if (path.startsWith("/screenshots/")) {
         const file = normalize(path.slice("/screenshots/".length));
         sendFile(response, file.includes("/") || file.startsWith(".") ? "" : join(config.screenshotDirectory, file));
