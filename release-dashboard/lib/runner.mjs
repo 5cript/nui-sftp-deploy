@@ -4,6 +4,9 @@ import { runCommand, startProcess, shellQuote } from "./process.mjs";
 
 const satisfiedStatuses = new Set(["passed", "warning", "skipped"]);
 const finishedStatuses = new Set(["passed", "warning", "skipped", "failed"]);
+const completedStatuses = new Set(["passed", "warning"]);
+// Steps of these phases wait until every test ran (any result) or was skipped.
+const lockedPhases = new Set(["Publish", "After merge"]);
 
 /**
  * Thrown by ctx.require: ends the step as failed with a readable reason instead of a stack trace.
@@ -109,7 +112,65 @@ class Runner {
      * Whether a step's own button may start it now: dependencies met and nothing it has to wait for running.
      */
     isRunnable(step) {
-        return this.isVisible(step) && !this.running.has(step.id) && this.needsMet(step) && !this.isBlockedByResources(step);
+        return (
+            this.isVisible(step) &&
+            !this.running.has(step.id) &&
+            this.needsMet(step) &&
+            !this.isBlockedByResources(step) &&
+            !this.isLocked(step)
+        );
+    }
+
+    /**
+     * Every visible test step ran (passed, warning or failed) or was skipped.
+     */
+    testsDone() {
+        return this.steps.every((step) => step.phase !== "Test" || !this.isVisible(step) || finishedStatuses.has(this.status(step.id)));
+    }
+
+    isLocked(step) {
+        return lockedPhases.has(step.phase) && !this.testsDone();
+    }
+
+    /**
+     * What "reset all" keeps: completed irreversible steps (pushed, PR opened, merged) with everything they were based
+     * on, their dependencies and, once anything left the machine, the prepare and test phases.
+     */
+    resetAllKeeps() {
+        const keep = new Set();
+        const addWithNeeds = (id) => {
+            if (keep.has(id)) {
+                return;
+            }
+            keep.add(id);
+            for (const need of this.stepById.get(id).needs ?? []) {
+                addWithNeeds(need);
+            }
+        };
+        const completed = this.steps.filter((step) => step.irreversible && completedStatuses.has(this.status(step.id)));
+        completed.forEach((step) => addWithNeeds(step.id));
+        if (completed.length > 0) {
+            this.steps.filter((step) => step.phase === "Prepare" || step.phase === "Test").forEach((step) => keep.add(step.id));
+        }
+        return keep;
+    }
+
+    resetAll() {
+        if (this.running.size > 0) {
+            return { error: "stop the running steps first" };
+        }
+        this.autoAdvance = false;
+        this.parallelGroups.clear();
+        const keep = this.resetAllKeeps();
+        for (const step of this.steps) {
+            if (!keep.has(step.id) && this.status(step.id) !== "pending") {
+                this.store.resetStep(step.id);
+                this.store.log(step.id, "---- reset all ----");
+            }
+        }
+        this.store.broadcast({ type: "auto", autoAdvance: false });
+        this.broadcastRunnable();
+        return { ok: true, kept: [...keep] };
     }
 
     groupSteps(group) {
@@ -135,7 +196,14 @@ class Runner {
 
     broadcastRunnable() {
         const runnable = Object.fromEntries(this.steps.map((step) => [step.id, this.isRunnable(step)]));
-        this.store.broadcast({ type: "runnable", runnable, groups: this.groupInfo(), running: [...this.running.keys()] });
+        this.store.broadcast({
+            type: "runnable",
+            runnable,
+            groups: this.groupInfo(),
+            running: [...this.running.keys()],
+            testsDone: this.testsDone(),
+            resetAllKeeps: [...this.resetAllKeeps()],
+        });
     }
 
     snapshot() {
@@ -146,6 +214,8 @@ class Runner {
             autoAdvance: this.autoAdvance,
             running: [...this.running.keys()],
             groups: this.groupInfo(),
+            testsDone: this.testsDone(),
+            resetAllKeeps: [...this.resetAllKeeps()],
             settings: this.store.state.settings,
             data,
             steps: this.steps.map((step) => ({
@@ -371,7 +441,7 @@ class Runner {
                 continue;
             }
             const ready = parallel ? this.needsMet(step) : this.isReady(step);
-            if (ready && !this.isBlockedByResources(step)) {
+            if (ready && !this.isBlockedByResources(step) && !this.isLocked(step)) {
                 this.execute(step.id);
             }
         }

@@ -15,6 +15,7 @@ const humanKinds = new Set(["manual", "gate", "review"]);
 let snapshot = null;
 const elements = new Map();
 const groupHeaders = new Map();
+const lockNotes = [];
 const logCache = new Map();
 
 const storage = {
@@ -202,7 +203,8 @@ const stepBody = (step) => {
                 components.button("Run", {
                     variant: "primary",
                     icon: playIcon(),
-                    title: "Open in a terminal; the check runs when you close it",
+                    disabled: step.runnable === false,
+                    title: step.runnable === false ? "Locked until the tests ran, or its dependencies are not met" : "Open in a terminal; the check runs when you close it",
                     onClick: () => post(`/api/steps/${step.id}/terminal`),
                 }),
                 components.button("Copy", {
@@ -346,6 +348,7 @@ const renderAll = () => {
     document.getElementById("deploy-root").textContent = snapshot.deployRoot;
     const container = document.getElementById("phases");
     elements.clear();
+    lockNotes.length = 0;
     const phases = [...new Set(snapshot.steps.map((step) => step.phase))];
     container.replaceChildren(
         ...phases.map((phase) => {
@@ -353,6 +356,13 @@ const renderAll = () => {
             const section = element("section", { class: "phase" }, [element("h2", { textContent: phase })]);
             if (phaseNotes[phase]) {
                 section.append(element("div", { class: "handover" }, [components.messageStrip(phaseNotes[phase], "primary")]));
+            }
+            if (phase === "Publish" || phase === "After merge") {
+                const note = element("div", { class: "handover lock-note" }, [
+                    components.messageStrip("Locked until every test ran or was skipped (any result counts).", "warning"),
+                ]);
+                lockNotes.push(note);
+                section.append(note);
             }
             if (phase === "Test") {
                 groupHeaders.clear();
@@ -374,6 +384,7 @@ const renderAll = () => {
         }),
     );
     renderHeader();
+    updateLock();
 };
 
 /**
@@ -476,6 +487,23 @@ const updateGroups = () => {
     }
 };
 
+const updateLock = () => {
+    for (const note of lockNotes) {
+        note.hidden = snapshot.testsDone !== false;
+    }
+    document.getElementById("reset-all").disabled = (snapshot.running ?? []).length > 0;
+};
+
+const resetAll = () => {
+    const kept = (snapshot.resetAllKeeps ?? []).map((id) => snapshot.steps.find((step) => step.id === id)?.title ?? id);
+    const message = kept.length
+        ? `Reset every step to pending?\n\nKept, because they already left this machine or are what that was based on:\n${kept.join(", ")}`
+        : "Reset every step of this release to pending?";
+    if (confirm(message)) {
+        post("/api/reset-all");
+    }
+};
+
 const renderHeader = () => {
     const counts = {};
     for (const step of snapshot.steps.filter((candidate) => candidate.visible)) {
@@ -534,6 +562,8 @@ const connectEvents = () => {
             snapshot.data = fresh.data;
             snapshot.settings = fresh.settings;
             snapshot.groups = fresh.groups;
+            snapshot.testsDone = fresh.testsDone;
+            snapshot.resetAllKeeps = fresh.resetAllKeeps;
             for (const step of fresh.steps) {
                 const existing = snapshot.steps.find((candidate) => candidate.id === step.id);
                 existing.command = step.command;
@@ -542,6 +572,7 @@ const connectEvents = () => {
                 updateStep(existing);
             }
             updateGroups();
+            updateLock();
             renderHeader();
         } else if (event.type === "auto") {
             snapshot.autoAdvance = event.autoAdvance;
@@ -549,20 +580,24 @@ const connectEvents = () => {
         } else if (event.type === "runnable") {
             snapshot.running = event.running;
             snapshot.groups = event.groups;
+            snapshot.testsDone = event.testsDone;
+            snapshot.resetAllKeeps = event.resetAllKeeps;
             for (const step of snapshot.steps) {
                 const runnable = event.runnable[step.id];
                 if (step.runnable !== runnable) {
                     step.runnable = runnable;
-                    elements.get(step.id)?.head.querySelector(".actions").replaceChildren(...stepActions(step));
+                    updateStep(step);
                 }
             }
             updateGroups();
+            updateLock();
         }
     };
 };
 
 document.getElementById("run-all").addEventListener("click", () => post("/api/run-all"));
 document.getElementById("pause").addEventListener("click", () => post("/api/pause"));
+document.getElementById("reset-all").addEventListener("click", resetAll);
 document.getElementById("stop-all").addEventListener("click", () => post("/api/stop-all"));
 document.getElementById("setting-jobs").addEventListener("change", (event) => post("/api/settings", { buildParallelLevel: Number(event.target.value) }));
 const bindCheckbox = (id, setting) =>
