@@ -8,7 +8,8 @@ const emptyStep = () => ({ status: "pending", startedAt: null, endedAt: null, su
 
 /**
  * Release state persisted to state.json, step logs kept in memory and in one file per step. Every change is
- * broadcast to the listeners (the SSE clients).
+ * broadcast to the listeners (the SSE clients). The header settings are preferences, not release state: they live in
+ * one settings.json next to the release directories and apply to every release.
  */
 class StateStore {
     constructor(config, stepIds) {
@@ -20,7 +21,8 @@ class StateStore {
         const loaded = existsSync(config.statePath) ? JSON.parse(readFileSync(config.statePath, "utf8")) : {};
         this.state = {
             version: config.version,
-            settings: { ...defaultSettings, ...loaded.settings },
+            // A release state from before the shared file seeds it once.
+            settings: { ...defaultSettings, ...(this.readSettings() ?? loaded.settings) },
             data: loaded.data ?? {},
             steps: {},
         };
@@ -34,6 +36,7 @@ class StateStore {
             this.logs.set(id, this.readLogTail(id));
         }
         this.save();
+        this.saveSettings();
     }
 
     logPath(id) {
@@ -47,8 +50,22 @@ class StateStore {
 
     save() {
         const temporary = `${this.config.statePath}.tmp`;
-        writeFileSync(temporary, JSON.stringify(this.state, null, 2));
+        writeFileSync(temporary, JSON.stringify({ ...this.state, settings: undefined }, null, 2));
         renameSync(temporary, this.config.statePath);
+    }
+
+    readSettings() {
+        try {
+            return JSON.parse(readFileSync(this.config.settingsPath, "utf8"));
+        } catch {
+            return null;
+        }
+    }
+
+    saveSettings() {
+        const temporary = `${this.config.settingsPath}.tmp`;
+        writeFileSync(temporary, JSON.stringify(this.state.settings, null, 2));
+        renameSync(temporary, this.config.settingsPath);
     }
 
     broadcast(event) {
@@ -103,12 +120,14 @@ class StateStore {
     }
 
     setSettings(changes) {
+        // Another dashboard (another release) may have changed the file meanwhile.
+        Object.assign(this.state.settings, this.readSettings());
         for (const [key, value] of Object.entries(changes)) {
             if (key in defaultSettings && typeof value === typeof defaultSettings[key]) {
                 this.state.settings[key] = key === "alarmVolume" ? Math.max(0, Math.min(100, value)) : key === "buildParallelLevel" ? Math.max(1, value) : value;
             }
         }
-        this.save();
+        this.saveSettings();
         this.broadcast({ type: "settings", settings: this.state.settings });
     }
 }

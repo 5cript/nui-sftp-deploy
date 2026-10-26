@@ -37,8 +37,11 @@ step back to pending, except what already left the machine: completed pushes, PR
 they were based on (their dependencies, and the prepare and test phases); local steps after them reset and redetect
 their existing commits when they run again.
 
-State, logs and screenshots live in `build/release-dashboard/X.Y.Z/` (gitignored), so a restart picks up where it
-stopped; a step that ran during the restart shows as failed and can be run again.
+The header settings (jobs, headless, keep Mac awake, alarm, volume, sound) are preferences shared by every release, in
+`build/release-dashboard/settings.json`.
+
+State, logs and screenshots of a release live in `build/release-dashboard/X.Y.Z/` (gitignored), so a restart picks up
+where it stopped and a new version starts fresh; a step that ran during the restart shows as failed and can be run again.
 
 ## Requirements
 
