@@ -90,13 +90,25 @@ const updateMain = {
     lane: "publish",
     kind: "auto",
     title: "Update local main",
-    description: "main fast-forwards to the merge commit (the local \"Submodule Updates\" commit rode along in the PR).",
+    description: "main moves to the merge commit. A merge commit fast-forwards; a rebase or squash merge rewrote the local \"Submodule Updates\" commit that rode along, then main moves onto origin/main as long as every local commit is upstream as the same patch.",
     needs: ["deploy-merge"],
     run: async (context) => {
         const dirty = await context.capture("git", ["status", "--porcelain", "--untracked-files=no"]);
         context.require("clean tree", dirty === "", dirty);
         await context.run("git", ["checkout", "main"]);
-        await context.run("git", ["pull", "--ff-only", "origin", "main"]);
+        await context.run("git", ["fetch", "origin", "main"], { timeoutMs: 120000 });
+        const fastForward = (await context.run("git", ["merge-base", "--is-ancestor", "main", "origin/main"], { allowFailure: true, quiet: true })).code === 0;
+        if (fastForward) {
+            await context.run("git", ["merge", "--ff-only", "origin/main"]);
+        } else {
+            // "-" marks a local commit whose patch is upstream already, "+" one that would be lost.
+            const cherry = (await context.capture("git", ["cherry", "-v", "origin/main", "main"])).split("\n").filter(Boolean);
+            const unique = cherry.filter((line) => line.startsWith("+"));
+            context.require("local main commits are all upstream (rebase or squash merge)", unique.length === 0, unique.join(" | "));
+            context.log(`moving main onto origin/main, these local commits are upstream as the same patch: ${cherry.join(" | ")}`);
+            await context.run("git", ["reset", "--keep", "origin/main"]);
+        }
+        await context.run("git", ["submodule", "update", "--init", "release-dashboard/vendor/5cript-nui-components"], { allowFailure: true });
         const head = await context.capture("git", ["rev-parse", "HEAD"]);
         context.require("main is the merge commit", head === context.data.deployMergeCommit, `HEAD ${head.slice(0, 10)}, merge ${context.data.deployMergeCommit?.slice(0, 10)}`);
     },
