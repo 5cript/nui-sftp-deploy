@@ -9,7 +9,14 @@ const optionalReleaseFiles = ["appimage/Dockerfile"];
 
 const releaseCommitSubject = (config) => `Updated to ${config.version}`;
 
-const headSubject = (context) => context.capture("git", ["log", "-1", "--format=%s"]);
+/**
+ * The "Updated to X.Y.Z" commit on the release branch, anywhere after main (later commits may sit on top), or null.
+ */
+const findReleaseCommit = async (context) => {
+    const output = await context.capture("git", ["log", "--format=%H %s", "main..HEAD"], { allowFailure: true });
+    const line = output.split("\n").find((entry) => entry.slice(41) === releaseCommitSubject(context.config));
+    return line ? line.slice(0, 40) : null;
+};
 
 const currentBranch = (context) => context.capture("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
 
@@ -37,8 +44,7 @@ const preflight = {
         const releaseBranch = `release/${config.version}`;
         context.check("deploy repo on main or the release branch", branch === "main" || branch === releaseBranch, branch);
         const dirty = await context.capture("git", ["status", "--porcelain", "--untracked-files=no"]);
-        const subject = await headSubject(context);
-        const preparedButUncommitted = branch === releaseBranch && subject !== releaseCommitSubject(config);
+        const preparedButUncommitted = branch === releaseBranch && !(await findReleaseCommit(context));
         context.check("deploy repo clean", dirty === "" || preparedButUncommitted, dirty.replaceAll("\n", ", "), { warn: preparedButUncommitted });
         await context.run("git", ["fetch", "--quiet", "origin"], { allowFailure: true });
         const ahead = await context.capture("git", ["log", "--oneline", "origin/main..main"]);
@@ -150,8 +156,9 @@ const prepareRelease = {
     needs: ["assets", "branch"],
     run: async (context) => {
         const { config } = context;
-        if ((await headSubject(context)) === releaseCommitSubject(config)) {
-            context.check("already committed", true, releaseCommitSubject(config));
+        const releaseCommit = await findReleaseCommit(context);
+        if (releaseCommit) {
+            context.check("already committed", true, `${releaseCommit.slice(0, 7)} ${releaseCommitSubject(config)}`);
             await context.run("git", ["-C", config.tagCheckout, "checkout", "--quiet", config.tag]);
             return { summary: "release commit exists, only the tag checkout was updated" };
         }
@@ -164,8 +171,7 @@ const prepareRelease = {
     },
 };
 
-const fileAt = async (context, revision, path) =>
-    revision ? context.capture("git", ["show", `${revision}:${path}`]) : readFileSync(join(context.config.deployRoot, path), "utf8");
+const releaseFile = (context, path) => readFileSync(join(context.config.deployRoot, path), "utf8");
 
 const diffSanity = {
     id: "diff-sanity",
@@ -177,20 +183,25 @@ const diffSanity = {
     needs: ["prepare"],
     run: async (context) => {
         const { config } = context;
-        const committed = (await headSubject(context)) === releaseCommitSubject(config);
-        const revision = committed ? "HEAD" : null;
-        const changed = (await context.capture("git", committed ? ["diff", "--name-only", "HEAD~1", "HEAD"] : ["diff", "--name-only", "HEAD"]))
+        const releaseCommit = await findReleaseCommit(context);
+        const changed = (
+            await context.capture("git", releaseCommit ? ["diff", "--name-only", `${releaseCommit}~1`, releaseCommit] : ["diff", "--name-only", "HEAD"])
+        )
             .split("\n")
             .filter(Boolean);
+        if (releaseCommit) {
+            const since = await context.capture("git", ["diff", "--name-only", releaseCommit, "--", ...expectedReleaseFiles, ...optionalReleaseFiles]);
+            context.check("release files unchanged since the release commit", since === "", since.replaceAll("\n", ", ") || releaseCommit.slice(0, 7), { warn: true });
+        }
         const missing = expectedReleaseFiles.filter((file) => !changed.includes(file));
         const unexpected = changed.filter((file) => !expectedReleaseFiles.includes(file) && !optionalReleaseFiles.includes(file));
         context.check("all release files changed", missing.length === 0, missing.length ? `unchanged: ${missing.join(", ")}` : changed.join(", "));
         context.check("no unexpected files changed", unexpected.length === 0, unexpected.join(", "));
 
-        const pkgbuild = await fileAt(context, revision, "PKGBUILD");
-        const manifest = await fileAt(context, revision, "org.nuicpp.nui_sftp.yml");
-        const metainfo = await fileAt(context, revision, "org.nuicpp.nui_sftp.metainfo.xml");
-        const innoSetup = await fileAt(context, revision, "windows/nui-sftp.iss");
+        const pkgbuild = releaseFile(context, "PKGBUILD");
+        const manifest = releaseFile(context, "org.nuicpp.nui_sftp.yml");
+        const metainfo = releaseFile(context, "org.nuicpp.nui_sftp.metainfo.xml");
+        const innoSetup = releaseFile(context, "windows/nui-sftp.iss");
 
         context.check("PKGBUILD pkgver", pkgbuild.includes(`pkgver=${config.version}\n`), pkgbuild.match(/^pkgver=.*$/m)?.[0]);
         context.check("PKGBUILD pkgrel 1", /^pkgrel=1$/m.test(pkgbuild), pkgbuild.match(/^pkgrel=.*$/m)?.[0]);
@@ -237,9 +248,10 @@ const review = {
     needs: ["diff-sanity"],
     run: async (context) => {
         const { config } = context;
-        if ((await headSubject(context)) === releaseCommitSubject(config)) {
-            context.setData({ reviewDiff: await context.capture("git", ["show", "--stat", "--patch", "HEAD"]) });
-            context.check("committed", true, await context.capture("git", ["log", "-1", "--format=%h %s"]));
+        const releaseCommit = await findReleaseCommit(context);
+        if (releaseCommit) {
+            context.setData({ reviewDiff: await context.capture("git", ["show", "--stat", "--patch", releaseCommit]) });
+            context.check("committed", true, await context.capture("git", ["log", "-1", "--format=%h %s", releaseCommit]));
             return;
         }
         context.setData({ reviewDiff: await context.capture("git", ["diff", "--stat", "--patch", "HEAD"]) });
