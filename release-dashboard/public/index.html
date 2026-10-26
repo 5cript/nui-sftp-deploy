@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>nui-sftp release</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <header class="top">
+            <div class="title">
+                <h1>nui-sftp <span id="version">…</span></h1>
+                <div class="subtitle"><span id="connection" class="connection" title="live updates"></span><span id="deploy-root"></span></div>
+            </div>
+            <div class="counts" id="counts"></div>
+            <div class="controls">
+                <label title="CMAKE_BUILD_PARALLEL_LEVEL for makepkg and the flatpak build">jobs <input id="setting-jobs" type="number" min="1" max="64" /></label>
+                <label title="Local test runs without a window (Chromium headless ozone)"><input id="setting-headless" type="checkbox" /> headless</label>
+                <label title="Do not put the Mac to sleep afterwards"><input id="setting-mac" type="checkbox" /> keep Mac awake</label>
+                <button id="run-all" class="primary">Run all</button>
+                <button id="stop-all">Stop</button>
+            </div>
+        </header>
+        <main id="phases"></main>
+        <template id="step-template">
+            <section class="step">
+                <div class="step-head">
+                    <span class="status-icon"></span>
+                    <span class="step-title"></span>
+                    <span class="badges"></span>
+                    <span class="summary"></span>
+                    <span class="duration"></span>
+                    <span class="actions"></span>
+                </div>
+                <div class="step-body"></div>
+            </section>
+        </template>
+        <script src="app.js" type="module"></script>
+    </body>
+</html>
