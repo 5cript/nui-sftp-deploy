@@ -22,7 +22,9 @@ to pending.
 The five test targets are columns. "Run all" works through them in order, one heavy build at a time. Start on a column
 runs that target right away next to everything else: its steps still follow each other and advance by themselves, they
 ignore the heavy lock and the ordering behind the local builds, but never their dependencies. Reset on a column puts
-all of its steps back to pending to run the target again.
+all of its steps back to pending to run the target again. While a step of a target is expanded, the columns turn into a
+carousel (5cript-nui-components' carousel) with one target per page at full width; collapsing the last expanded step
+brings the columns back.
 
 State, logs and screenshots live in `build/release-dashboard/X.Y.Z/` (gitignored), so a restart picks up where it
 stopped; a step that ran during the restart shows as failed and can be run again.

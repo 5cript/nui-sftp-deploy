@@ -8,6 +8,7 @@
 @import "/components/collapsible_section.css";
 @import "/components/message_strip.css";
 @import "/components/spinner.css";
+@import "/components/carousel.css";
 
 *,
 *::before,
@@ -200,6 +201,51 @@ main {
     min-width: 0;
 }
 
+.lanes-carousel {
+    --script-nui-carousel-frame-bg: var(--darker-background);
+    --script-nui-carousel-frame-border: var(--border-color-fields);
+    --script-nui-carousel-frame-blur: 0px;
+    --script-nui-carousel-frame-radius: 6px;
+    --script-nui-carousel-frame-min-height: 0px;
+    --script-nui-carousel-border-color: var(--border-color-fields);
+    --script-nui-carousel-button-color: var(--color-secondary);
+    --script-nui-carousel-button-hover-color: var(--color);
+    --script-nui-carousel-button-bg: transparent;
+    --script-nui-carousel-button-hover-background: color-mix(in srgb, var(--color) 12%, transparent);
+    --script-nui-carousel-button-size: 32px;
+    --script-nui-carousel-indicator-color: var(--color-secondary);
+    --script-nui-carousel-counter-color: var(--color-secondary);
+    --script-nui-carousel-counter-font: inherit;
+    --script-nui-carousel-dot-color: var(--border-color-fields);
+    --script-nui-carousel-dot-active-bg: var(--theme-color);
+    --script-nui-carousel-controls-margin: 8px;
+    --script-nui-carousel-scroll-duration: 350ms;
+
+    & .script-nui-carousel__frame {
+        box-shadow: none;
+    }
+
+    & .script-nui-carousel__track {
+        cursor: default;
+        align-items: flex-start;
+    }
+
+    & .script-nui-carousel__card {
+        padding: 4px 10px 10px;
+    }
+
+    & .script-nui-carousel__card:not(.script-nui-carousel__card--active) {
+        height: 0;
+        overflow: hidden;
+    }
+
+    & .script-nui-carousel__counter {
+        font-size: 0.8rem;
+        min-width: 10em;
+        white-space: pre;
+    }
+}
+
 .lane-header {
     display: flex;
     flex-wrap: wrap;
@@ -225,7 +271,7 @@ main {
     padding-left: 12px;
 }
 
-.lane .summary {
+.lanes .lane .summary {
     flex-basis: 100%;
     order: 10;
 }
