@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { foreignFlatpaks } from "./linux.mjs";
+import { foreignFlatpaks, reinstallSwappedCopies } from "./linux.mjs";
 
 const releaseBranch = (config) => `release/${config.version}`;
 const flatpakTag = (config) => `flatpak/${config.version}`;
@@ -280,12 +280,20 @@ const flathubReinstall = {
     lane: "publish",
     kind: "manual",
     title: "Reinstall your Flathub copy",
-    description: "Only shown when the flatpak test asked you to uninstall an installed copy (its data was kept).",
+    description: "Only shown when the flatpak test asked you to uninstall an installed copy, or a swapped copy could not be put back (its data was kept).",
     needs: ["flatpak-smoke"],
-    visible: (data) => (data.flatpakInstalls ?? []).length > 0,
+    visible: (data) => (data.flatpakInstalls ?? []).length > 0 || (data.flatpakRemovedForTest ?? []).length > 0,
     command: ({ data }) =>
-        (data.flatpakInstalls ?? []).map(({ installation }) => `flatpak install --${installation} -y flathub org.nuicpp.nui_sftp`).join(" && "),
+        [...(data.flatpakInstalls ?? []), ...(data.flatpakRemovedForTest ?? [])]
+            .map(({ installation, branch, origin }) => `flatpak install --${installation} -y ${origin ?? "flathub"} org.nuicpp.nui_sftp//${branch ?? "stable"}`)
+            .join(" && "),
     check: async (context) => {
+        if ((context.data.flatpakRemovedForTest ?? []).length > 0) {
+            await reinstallSwappedCopies(context);
+            if ((context.data.flatpakInstalls ?? []).length === 0) {
+                return;
+            }
+        }
         const missing = (context.data.flatpakInstalls ?? []).filter(
             ({ branch, installation }) => !context.data.flatpakReinstalled?.some((entry) => entry.branch === branch && entry.installation === installation),
         );
