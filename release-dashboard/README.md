@@ -15,8 +15,14 @@ release-dashboard/run.sh --version 1.11.0
 
 It opens `http://127.0.0.1:8740/`. "Run all" advances through every step whose dependencies passed and stops at the
 human steps; it keeps going as soon as one of them passes (for example when "Check merge" finds the PR merged). Steps
-also run one at a time with their own buttons. Skip marks a step as done so dependent steps can run; Reset puts it
-back to pending.
+also run one at a time with their own buttons, which are disabled while a step cannot run (dependencies not met, its
+target busy, or another heavy job running). Skip marks a step as done so dependent steps can run; Reset puts it back
+to pending.
+
+The five test targets are columns. "Run all" works through them in order, one heavy build at a time. Start on a column
+runs that target right away next to everything else: its steps still follow each other and advance by themselves, they
+ignore the heavy lock and the ordering behind the local builds, but never their dependencies. Reset on a column puts
+all of its steps back to pending to run the target again.
 
 State, logs and screenshots live in `build/release-dashboard/X.Y.Z/` (gitignored), so a restart picks up where it
 stopped; a step that ran during the restart shows as failed and can be run again.
