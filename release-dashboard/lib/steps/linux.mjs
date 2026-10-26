@@ -13,6 +13,19 @@ const cmakeLoopWatcher = {
     message: "the build keeps re-running CMake (file mtimes in the future? check the clock)",
 };
 
+/**
+ * The checkout the Windows VM and Mac build: the tag clone, or --source when testing a branch. Returns the directory
+ * and the commit the remote copy must be at.
+ */
+const remoteBuildSource = async (context) => {
+    const { config } = context;
+    if (config.sourceOverride) {
+        context.check("building --source instead of the tag", false, config.sourceOverride, { warn: true });
+        return { directory: config.sourceOverride, commit: await context.capture("git", ["-C", config.sourceOverride, "rev-parse", "HEAD"]) };
+    }
+    return { directory: config.tagCheckout, commit: await context.capture("git", ["-C", config.tagCheckout, "rev-parse", `${config.tag}^{commit}`]) };
+};
+
 const appEnvironment = (context, port) => ({
     NUI_CEF_REMOTE_DEBUGGING_PORT: String(port),
     ...(context.settings.headless ? { NUI_CEF_ARGUMENTS: headlessArguments } : {}),
@@ -296,4 +309,4 @@ const appImageSmoke = {
     },
 };
 
-export { archBuild, archSmoke, flatpakBuild, flatpakLint, flatpakConflict, flatpakSmoke, docker, appImageBuild, appImageSmoke, cmakeLoopWatcher, foreignFlatpaks };
+export { remoteBuildSource, archBuild, archSmoke, flatpakBuild, flatpakLint, flatpakConflict, flatpakSmoke, docker, appImageBuild, appImageSmoke, cmakeLoopWatcher, foreignFlatpaks };

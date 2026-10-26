@@ -155,6 +155,9 @@ const prepareRelease = {
             await context.run("git", ["-C", config.tagCheckout, "checkout", "--quiet", config.tag]);
             return { summary: "release commit exists, only the tag checkout was updated" };
         }
+        if (!existsSync(join(config.deployRoot, "node_modules"))) {
+            await context.run("bun", ["install", "--frozen-lockfile"], { timeoutMs: 10 * 60 * 1000 });
+        }
         const { output } = await context.run("bun", ["scripts/prepare_release.mjs", "--version", config.version], { timeoutMs: 20 * 60 * 1000 });
         const warnings = output.split("\n").filter((line) => /warn|failed|error/i.test(line));
         context.check("no warnings from the network steps", warnings.length === 0, warnings.slice(0, 5).join(" | "), { warn: true });

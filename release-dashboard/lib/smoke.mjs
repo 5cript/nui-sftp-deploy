@@ -32,7 +32,8 @@ const fileRowCountExpression = `[...document.querySelectorAll(".nui-file-grid-si
 
 /**
  * Drives a started app over CDP: About shows the release version, the test session connects through
- * nuiAutomation.connect, the remote file grid lists files, then the app closes through Nui::terminate.
+ * nuiAutomation.connect, the remote file grid lists files, then the app closes through Nui::terminate. Failed checks
+ * do not stop it, the app always gets closed and its exit code checked.
  * target: { port, exitCode: async () => code }, exitCode waits for the app to end. Callers stop a still running app.
  */
 const smokeTest = async (context, target) => {
@@ -60,18 +61,21 @@ const smokeTest = async (context, target) => {
         }
 
         const hasHook = await page.evaluate(`typeof globalThis.nuiAutomation?.connect === "function"`);
-        context.require("nuiAutomation.connect available", hasHook, hasHook ? "" : "this build has no connect hook (needs nui-sftp with nuiAutomation)");
-        const connection = await page.evaluate(`nuiAutomation.connect(${JSON.stringify(config.testSession)})`, 90000);
-        context.require(`connects to ${config.testSession}`, connection?.success === true, connection?.info ?? JSON.stringify(connection));
-
-        const rows = await waitFor(() => page.evaluate(fileRowCountExpression), {
-            timeoutMs: 45000,
-            message: "the remote file grid listed nothing",
-            signal: context.signal,
-        }).catch(() => 0);
-        context.check("lists remote files", rows > 0, `${rows} entries in the remote grid`);
-        await sleep(1000, context.signal);
-        context.screenshot("connected", await page.screenshot());
+        context.check("nuiAutomation.connect available", hasHook, hasHook ? "" : "this build has no connect hook (needs nui-sftp with nuiAutomation)");
+        const connection = hasHook ? await page.evaluate(`nuiAutomation.connect(${JSON.stringify(config.testSession)})`, 90000) : null;
+        if (hasHook) {
+            context.check(`connects to ${config.testSession}`, connection?.success === true, connection?.info ?? JSON.stringify(connection));
+        }
+        if (connection?.success) {
+            const rows = await waitFor(() => page.evaluate(fileRowCountExpression), {
+                timeoutMs: 45000,
+                message: "the remote file grid listed nothing",
+                signal: context.signal,
+            }).catch(() => 0);
+            context.check("lists remote files", rows > 0, `${rows} entries in the remote grid`);
+            await sleep(1000, context.signal);
+        }
+        context.screenshot(connection?.success ? "connected" : "main", await page.screenshot());
 
         context.log("closing through Nui::terminate");
         terminated = true;

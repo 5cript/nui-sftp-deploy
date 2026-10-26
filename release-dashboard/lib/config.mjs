@@ -9,6 +9,8 @@ const usage = `Usage: run.sh --version X.Y.Z [options]
   --port <n>            dashboard port on 127.0.0.1 (default 8740)
   --deploy-root <dir>   nui-sftp-deploy checkout to release from (default: the one containing the dashboard)
   --test-vm <dir>       directory with windows/ and macos/ test host scripts (default: <deploy-root>/test-vm)
+  --source <dir>        build the Windows VM and Mac targets from this nui-sftp checkout instead of the tag (testing a
+                        branch; the Linux packages always build the tag)
   --no-open             do not open the browser`;
 
 const parseConfig = () => {
@@ -18,6 +20,7 @@ const parseConfig = () => {
             port: { type: "string", default: "8740" },
             "deploy-root": { type: "string" },
             "test-vm": { type: "string" },
+            source: { type: "string" },
             "no-open": { type: "boolean", default: false },
             help: { type: "boolean", short: "h", default: false },
         },
@@ -50,6 +53,7 @@ const parseConfig = () => {
         screenshotDirectory: join(workDirectory, "screenshots"),
         statePath: join(workDirectory, "state.json"),
         tagCheckout: join(deployRoot, "checkout", "nui-sftp"),
+        sourceOverride: values.source ? resolve(values.source) : null,
         workCheckout: resolve(process.env.RELEASE_DASHBOARD_NUI_SFTP ?? join(dashboardRoot, "..", "..", "nui-sftp")),
         userPersistence: join(homedir(), ".config", "nui-sftp", "persistence.json"),
         testSession: process.env.RELEASE_DASHBOARD_SESSION ?? "sftp-container",
