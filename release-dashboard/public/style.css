@@ -309,6 +309,15 @@ main {
     order: 10;
 }
 
+.offline {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    max-width: 1800px;
+    margin: 8px auto 0;
+    padding: 0 16px;
+}
+
 .handover {
     margin: 0 0 8px;
 }

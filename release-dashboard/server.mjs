@@ -179,8 +179,16 @@ server.listen(config.port, "127.0.0.1", () => {
     const address = `http://127.0.0.1:${config.port}/`;
     console.log(`nui-sftp ${config.version} release dashboard on ${address}`);
     console.log(`deploy repo ${config.deployRoot}, state ${config.statePath}`);
+    // Open pages reconnect within a few seconds after a restart; only open a new one when none did, so restarts do not
+    // pile up tabs (each holds a live connection and browsers allow only six per host).
     if (config.openBrowser) {
-        spawn("xdg-open", [address], { detached: true, stdio: "ignore" }).unref();
+        setTimeout(() => {
+            if (store.listeners.size === 0) {
+                spawn("xdg-open", [address], { detached: true, stdio: "ignore" }).unref();
+            } else {
+                console.log(`${store.listeners.size} open page(s) reconnected, not opening another`);
+            }
+        }, 4000);
     }
 });
 
