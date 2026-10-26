@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { smokeTest } from "../smoke.mjs";
 import { sleep, waitFor } from "../process.mjs";
-import { cmakeLoopWatcher } from "./linux.mjs";
+import { cmakeLoopWatcher, remoteBuildSource } from "./linux.mjs";
 
 const vmName = "nui-sftp-win11";
 const virshUri = "qemu:///system";
@@ -103,14 +103,14 @@ const windowsBuild = {
     run: async (context) => {
         const { config } = context;
         await checkClock(context);
+        const source = await remoteBuildSource(context);
         await context.run(join(config.windowsScripts, "sync-and-build.sh"), [], {
-            env: { NUI_SFTP_SRC: config.tagCheckout },
+            env: { NUI_SFTP_SRC: source.directory },
             timeoutMs: 4 * 60 * 60 * 1000,
             watchers: [cmakeLoopWatcher],
         });
-        const tagCommit = await context.capture("git", ["-C", config.tagCheckout, "rev-parse", `${config.tag}^{commit}`]);
         const guestHead = (await msys(context, "cd /c/src/nui-sftp && git rev-parse HEAD", [], { quiet: true })).output.trim().split("\n").at(-1);
-        context.check("guest source at the tag", guestHead === tagCommit, guestHead);
+        context.check("guest source at the expected commit", guestHead === source.commit, guestHead);
         const exists = await powerShellOutput(context, "Test-Path C:\\src\\nui-sftp\\build\\install\\bin\\nui-sftp.exe");
         context.check("nui-sftp.exe deployed", exists === "True");
     },
@@ -223,22 +223,23 @@ const windowsInstalled = {
         const installedFiles = await powerShellOutput(context, fileListScript);
         const assets = "C:\\Users\\tester\\Documents\\nui-sftp\\assets";
         await powerShell(context, `if (Test-Path '${assets}') { Rename-Item '${assets}' 'assets.release-test-hidden' }`);
+        let uninstall = "";
         try {
             await smokeWindows(context, `${programDirectory}\\bin`, "nui-sftp-release-installed");
+            const afterRun = await powerShellOutput(context, fileListScript);
+            const added = afterRun.split("\n").filter((file) => file && !installedFiles.split("\n").includes(file));
+            context.check("nothing written to Program Files", added.length === 0, added.slice(0, 5).join(", "));
         } finally {
             await powerShell(context, `if (Test-Path '${assets}.release-test-hidden') { Rename-Item '${assets}.release-test-hidden' 'assets' }`, { allowFailure: true });
-        }
-        const afterRun = await powerShellOutput(context, fileListScript);
-        const added = afterRun.split("\n").filter((file) => file && !installedFiles.split("\n").includes(file));
-        context.check("nothing written to Program Files", added.length === 0, added.slice(0, 5).join(", "));
-        const uninstall = await powerShellOutput(
-            context,
-            `$uninstaller = Get-ChildItem '${programDirectory}\\unins*.exe' | Sort-Object LastWriteTime | Select-Object -Last 1
+            uninstall = await powerShellOutput(
+                context,
+                `$uninstaller = Get-ChildItem '${programDirectory}\\unins*.exe' | Sort-Object LastWriteTime | Select-Object -Last 1
 Start-Process -Wait -FilePath $uninstaller.FullName -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART'
 for ($attempt = 0; $attempt -lt 60 -and (Test-Path '${programDirectory}'); ++$attempt) { Start-Sleep 1 }
 if (Test-Path '${programDirectory}') { 'left: ' + ((Get-ChildItem -Recurse '${programDirectory}').FullName -join ', ') } else { 'removed' }`,
-            { allowFailure: true },
-        );
+                { allowFailure: true },
+            );
+        }
         context.check("uninstall removes everything", uninstall.endsWith("removed"), uninstall);
     },
 };

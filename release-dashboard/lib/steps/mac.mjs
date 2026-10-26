@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { smokeTest } from "../smoke.mjs";
 import { sleep } from "../process.mjs";
-import { cmakeLoopWatcher } from "./linux.mjs";
+import { cmakeLoopWatcher, remoteBuildSource } from "./linux.mjs";
 
 const testState = "$HOME/nui-release-test-state";
 const testLog = "/tmp/nui-sftp-release-test.log";
@@ -118,14 +118,14 @@ const macBuild = {
     needs: ["mac-residue", "tag-checkout"],
     run: async (context) => {
         const { config } = context;
+        const source = await remoteBuildSource(context);
         await context.run(join(config.macScripts, "sync-and-build.sh"), [], {
-            env: { NUI_SFTP_SRC: config.tagCheckout },
+            env: { NUI_SFTP_SRC: source.directory },
             timeoutMs: 4 * 60 * 60 * 1000,
             watchers: [cmakeLoopWatcher],
         });
-        const tagCommit = await context.capture("git", ["-C", config.tagCheckout, "rev-parse", `${config.tag}^{commit}`]);
         const head = await macOutput(context, "git -C ~/src/nui-sftp rev-parse HEAD");
-        context.check("Mac source at the tag", head === tagCommit, head);
+        context.check("Mac source at the expected commit", head === source.commit, head);
         const bundle = await macOutput(context, "test -x ~/src/nui-sftp/build/install/nui-sftp.app/Contents/MacOS/nui-sftp && echo yes || echo no");
         context.check("bundle deployed", bundle === "yes");
     },
