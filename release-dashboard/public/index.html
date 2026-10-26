@@ -42,6 +42,11 @@
                 <button id="reset-all" class="script-nui-button" type="button" title="Put every step back to pending, except what already left this machine">Reset all</button>
             </div>
         </header>
+        <div id="offline" class="offline" hidden>
+            <div class="script-nui-message-strip" data-style-variant="warning">
+                <span>Live updates lost, reconnecting. What you see may be out of date.</span>
+            </div>
+        </div>
         <main id="phases"></main>
         <template id="step-template">
             <details class="script-nui-collapsible step">

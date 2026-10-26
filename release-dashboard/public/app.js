@@ -613,15 +613,25 @@ const loadSnapshot = async () => {
     renderAll();
 };
 
+const setLive = (live) => {
+    document.getElementById("connection").classList.toggle("live", live);
+    document.getElementById("offline").hidden = live;
+};
+
 const connectEvents = () => {
     const events = new EventSource("/api/events");
-    const indicator = document.getElementById("connection");
     events.onopen = async () => {
-        indicator.classList.add("live");
+        setLive(true);
         logCache.clear();
         await loadSnapshot();
     };
-    events.onerror = () => indicator.classList.remove("live");
+    events.onerror = () => {
+        setLive(false);
+        // The browser retries by itself unless it gave up (CLOSED), then start over.
+        if (events.readyState === EventSource.CLOSED) {
+            setTimeout(connectEvents, 3000);
+        }
+    };
     events.onmessage = async (message) => {
         const event = JSON.parse(message.data);
         if (!snapshot) {
@@ -714,6 +724,29 @@ const lightScheme = window.matchMedia("(prefers-color-scheme: light)");
 const applyScheme = () => document.documentElement.setAttribute("data-theme", lightScheme.matches ? "light" : "dark");
 lightScheme.addEventListener("change", applyScheme);
 applyScheme();
+
+// Safety net for missed events: pull the whole state now and then and redraw what changed.
+setInterval(async () => {
+    if (!snapshot || document.getElementById("offline").hidden === false) {
+        return;
+    }
+    try {
+        const fresh = await (await fetch("/api/state")).json();
+        for (const step of fresh.steps) {
+            const existing = snapshot.steps.find((candidate) => candidate.id === step.id);
+            if (existing && JSON.stringify(existing.state) !== JSON.stringify(step.state)) {
+                Object.assign(existing, { state: step.state, runnable: step.runnable, visible: step.visible, command: step.command });
+                updateStep(existing);
+            }
+        }
+        Object.assign(snapshot, { data: fresh.data, settings: fresh.settings, groups: fresh.groups, testsDone: fresh.testsDone, resetAllKeeps: fresh.resetAllKeeps, running: fresh.running, autoAdvance: fresh.autoAdvance });
+        updateGroups();
+        updateLock();
+        renderHeader();
+    } catch {
+        setLive(false);
+    }
+}, 30000);
 
 setInterval(() => {
     for (const step of snapshot?.steps ?? []) {
