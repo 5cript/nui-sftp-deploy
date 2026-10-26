@@ -204,6 +204,7 @@ class Runner {
             running: [...this.running.keys()],
             testsDone: this.testsDone(),
             resetAllKeeps: [...this.resetAllKeeps()],
+            watch: this.watchState(),
         });
     }
 
@@ -217,6 +218,7 @@ class Runner {
             groups: this.groupInfo(),
             testsDone: this.testsDone(),
             resetAllKeeps: [...this.resetAllKeeps()],
+            watch: this.watchState(),
             settings: this.store.state.settings,
             data,
             steps: this.steps.map((step) => ({
@@ -456,16 +458,44 @@ class Runner {
     }
 
     /**
+     * A waiting gate with pollIntervalMs whose watch is on (default; switched off per release in data.unwatched).
+     */
+    isWatching(step) {
+        return Boolean(step.pollIntervalMs) && this.status(step.id) === "waiting" && this.store.state.data.unwatched?.[step.id] !== true;
+    }
+
+    setWatch(id, on) {
+        const step = this.stepById.get(id);
+        if (!step?.pollIntervalMs) {
+            return { error: "this step has no watch" };
+        }
+        this.store.setData({ unwatched: { ...this.store.state.data.unwatched, [id]: !on } });
+        if (!on) {
+            clearTimeout(this.pollTimers.get(id));
+            this.pollTimers.delete(id);
+        }
+        this.schedulePolls();
+        this.broadcastRunnable();
+        return { ok: true };
+    }
+
+    watchState() {
+        return Object.fromEntries(
+            this.steps.filter((step) => step.pollIntervalMs).map((step) => [step.id, { on: this.store.state.data.unwatched?.[step.id] !== true, active: this.isWatching(step), intervalMs: step.pollIntervalMs }]),
+        );
+    }
+
+    /**
      * Gates with pollIntervalMs (the PR merge) check themselves again while they wait, so auto-merge is noticed.
      */
     schedulePolls() {
         for (const step of this.steps) {
-            if (!step.pollIntervalMs || this.pollTimers.has(step.id) || this.status(step.id) !== "waiting") {
+            if (!this.isWatching(step) || this.pollTimers.has(step.id)) {
                 continue;
             }
             const timer = setTimeout(() => {
                 this.pollTimers.delete(step.id);
-                if (this.status(step.id) === "waiting" && this.isRunnable(step)) {
+                if (this.isWatching(step) && this.isRunnable(step)) {
                     this.execute(step.id);
                 } else {
                     this.schedulePolls();

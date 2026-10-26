@@ -261,6 +261,15 @@ HTMLElement.prototype.withVariant = function (variant) {
     return this;
 };
 
+const checkIcon = () => {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "m5 13 4 4 10-10");
+    svg.append(path);
+    return svg;
+};
+
 const playIcon = () => {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", "0 0 24 24");
@@ -334,6 +343,20 @@ const stepActions = (step) => {
         return buttons;
     }
     const blocked = step.runnable === false;
+    const watch = snapshot.watch?.[step.id];
+    if (watch) {
+        const toggle = element("button", { class: "script-nui-checkbox", type: "button", title: "Check again every minute while it waits" }, [
+            element("span", { class: "script-nui-checkbox-box" }, [checkIcon()]),
+            element("span", { class: "script-nui-checkbox-label", textContent: "watch" }),
+        ]);
+        components.setChecked(toggle, watch.on);
+        toggle.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            post(`/api/steps/${step.id}/${watch.on ? "unwatch" : "watch"}`);
+        });
+        buttons.push(toggle);
+    }
     if (step.kind === "auto") {
         buttons.push(action(state.status === "pending" ? "Run" : "Rerun", "run", { disabled: blocked }));
     } else if (step.kind === "review") {
@@ -447,14 +470,18 @@ const updateStep = (step) => {
         root.open = isOpen;
     }
     const icon = head.querySelector(".status-icon");
-    if (state.status === "running") {
+    const watching = snapshot.watch?.[step.id]?.active === true;
+    root.classList.toggle("watching", watching);
+    if (state.status === "running" || watching) {
         if (!icon.querySelector(".script-nui-spinner")) {
             icon.replaceChildren(components.spinner());
         }
     } else {
         icon.textContent = statusMarks[state.status] ?? "";
     }
-    head.querySelector(".summary").textContent = state.summary || (state.status === "pending" ? "" : state.status);
+    head.querySelector(".summary").textContent = watching
+        ? `watching, checks every ${Math.round(snapshot.watch[step.id].intervalMs / 1000)} s${state.summary ? ` (${state.summary})` : ""}`
+        : state.summary || (state.status === "pending" ? "" : state.status);
     head.querySelector(".duration").textContent = formatDuration(state);
     head.querySelector(".actions").replaceChildren(...stepActions(step));
     if (isOpen) {
@@ -752,6 +779,7 @@ const connectEvents = () => {
             snapshot.groups = fresh.groups;
             snapshot.testsDone = fresh.testsDone;
             snapshot.resetAllKeeps = fresh.resetAllKeeps;
+            snapshot.watch = fresh.watch;
             for (const step of fresh.steps) {
                 const existing = snapshot.steps.find((candidate) => candidate.id === step.id);
                 existing.command = step.command;
@@ -770,9 +798,11 @@ const connectEvents = () => {
             snapshot.groups = event.groups;
             snapshot.testsDone = event.testsDone;
             snapshot.resetAllKeeps = event.resetAllKeeps;
+            const watchChanged = JSON.stringify(snapshot.watch) !== JSON.stringify(event.watch);
+            snapshot.watch = event.watch;
             for (const step of snapshot.steps) {
                 const runnable = event.runnable[step.id];
-                if (step.runnable !== runnable) {
+                if (step.runnable !== runnable || (watchChanged && event.watch?.[step.id])) {
                     step.runnable = runnable;
                     updateStep(step);
                 }
@@ -853,7 +883,7 @@ setInterval(async () => {
                 updateStep(existing);
             }
         }
-        Object.assign(snapshot, { data: fresh.data, settings: fresh.settings, groups: fresh.groups, testsDone: fresh.testsDone, resetAllKeeps: fresh.resetAllKeeps, running: fresh.running, autoAdvance: fresh.autoAdvance });
+        Object.assign(snapshot, { data: fresh.data, settings: fresh.settings, groups: fresh.groups, testsDone: fresh.testsDone, resetAllKeeps: fresh.resetAllKeeps, running: fresh.running, autoAdvance: fresh.autoAdvance, watch: fresh.watch });
         updateGroups();
         updateLock();
         renderHeader();
