@@ -64,8 +64,9 @@ const deployMerge = {
     lane: "publish",
     kind: "gate",
     title: "Merge the deploy PR",
-    description: "Merge it on GitHub (or let auto-merge do it), then check. The release assets and S3 uploads run after the merge.",
+    description: "Merge it on GitHub (or let auto-merge do it). Checked again every minute while it waits. The release assets and S3 uploads run after the merge.",
     actionLabel: "Check merge",
+    pollIntervalMs: 60000,
     needs: ["deploy-pr"],
     check: async (context) => {
         const { config, data } = context;

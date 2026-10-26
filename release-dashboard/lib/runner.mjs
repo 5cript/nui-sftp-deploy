@@ -28,6 +28,7 @@ class Runner {
         this.running = new Map();
         this.autoAdvance = false;
         this.parallelGroups = new Set();
+        this.pollTimers = new Map();
         this.groups = [...new Set(steps.map((step) => this.groupOf(step)).filter(Boolean))];
     }
 
@@ -450,7 +451,29 @@ class Runner {
                 this.parallelGroups.delete(group);
             }
         }
+        this.schedulePolls();
         this.broadcastRunnable();
+    }
+
+    /**
+     * Gates with pollIntervalMs (the PR merge) check themselves again while they wait, so auto-merge is noticed.
+     */
+    schedulePolls() {
+        for (const step of this.steps) {
+            if (!step.pollIntervalMs || this.pollTimers.has(step.id) || this.status(step.id) !== "waiting") {
+                continue;
+            }
+            const timer = setTimeout(() => {
+                this.pollTimers.delete(step.id);
+                if (this.status(step.id) === "waiting" && this.isRunnable(step)) {
+                    this.execute(step.id);
+                } else {
+                    this.schedulePolls();
+                }
+            }, step.pollIntervalMs);
+            timer.unref();
+            this.pollTimers.set(step.id, timer);
+        }
     }
 }
 

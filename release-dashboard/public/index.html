@@ -25,6 +25,17 @@
                     <span class="script-nui-checkbox-box"><svg viewBox="0 0 24 24"><path d="m5 13 4 4 10-10"></path></svg></span>
                     <span class="script-nui-checkbox-label">keep Mac awake</span>
                 </button>
+                <span class="alarm-control">
+                    <button id="setting-alarm" class="script-nui-checkbox" type="button" title="Chime when the run reaches the push step and when the PR is merged">
+                        <span class="script-nui-checkbox-box"><svg viewBox="0 0 24 24"><path d="m5 13 4 4 10-10"></path></svg></span>
+                        <span class="script-nui-checkbox-label">alarm</span>
+                    </button>
+                    <input id="setting-volume" class="script-nui-slider" type="range" min="0" max="100" step="5" title="Alarm volume (plays a preview)" />
+                    <span id="volume-label" class="volume-label"></span>
+                    <span id="sound-hint" class="script-nui-pill" data-selected="false" hidden title="Browsers only play sound after you interacted with the page"
+                        ><span class="script-nui-pill-label">click to enable sound</span></span
+                    >
+                </span>
                 <button id="run-all" class="script-nui-button" data-variant="primary" type="button">Run all</button>
                 <button id="pause" class="script-nui-button" data-variant="warning" type="button" title="Start no further steps, let running ones finish">Pause</button>
                 <button id="stop-all" class="script-nui-button" data-variant="danger" type="button" title="Stop every running step">Stop</button>

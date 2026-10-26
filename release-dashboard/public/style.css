@@ -9,11 +9,17 @@
 @import "/components/message_strip.css";
 @import "/components/spinner.css";
 @import "/components/carousel.css";
+@import "/components/slider.css";
 
 *,
 *::before,
 *::after {
     box-sizing: border-box;
+}
+
+/* Component classes set display, which would override the hidden attribute. */
+[hidden] {
+    display: none !important;
 }
 
 :root {
@@ -163,6 +169,33 @@ a {
     gap: 8px;
     align-items: center;
     flex-wrap: wrap;
+}
+
+.alarm-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    --script-nui-components-slider-track-color: var(--background-color-fields);
+    --script-nui-components-slider-track-fill-color: var(--theme-color);
+    --script-nui-components-slider-thumb-color: var(--color-fields);
+
+    & .script-nui-slider {
+        width: 90px;
+    }
+
+    & .script-nui-slider::-webkit-slider-runnable-track {
+        background: linear-gradient(to right, var(--track-fill-color) var(--fill, 0%), var(--track-color) var(--fill, 0%));
+    }
+
+    & .script-nui-slider:disabled {
+        opacity: 0.4;
+    }
+}
+
+.volume-label {
+    min-width: 2.5em;
+    color: var(--color-secondary);
+    font-variant-numeric: tabular-nums;
 }
 
 .field-label {
