@@ -12,7 +12,9 @@ class StepFailure extends Error {}
 
 /**
  * Executes steps, alone or as "run all", which keeps advancing whenever a step finishes or a human gate passes.
- * Steps on the same lane never overlap, heavy steps (local builds, the VM build) never overlap each other.
+ * Steps on the same lane never overlap, heavy steps (local builds, the VM build) never overlap each other. A test
+ * target (group) started on its own runs in parallel: its steps advance by themselves and ignore the heavy lock and
+ * the "after" ordering, but still follow each other and still need their dependencies.
  */
 class Runner {
     constructor(config, store, steps) {
@@ -22,6 +24,20 @@ class Runner {
         this.stepById = new Map(steps.map((step) => [step.id, step]));
         this.running = new Map();
         this.autoAdvance = false;
+        this.parallelGroups = new Set();
+        this.groups = [...new Set(steps.map((step) => this.groupOf(step)).filter(Boolean))];
+    }
+
+    /**
+     * The test target a step belongs to (its lane, flatpak lint counts to the flatpak target), null outside the tests.
+     */
+    groupOf(step) {
+        return step.phase === "Test" ? step.lane.replace(/-lint$/, "") : null;
+    }
+
+    isParallel(step) {
+        const group = this.groupOf(step);
+        return group !== null && this.parallelGroups.has(group);
     }
 
     status(id) {
@@ -79,11 +95,47 @@ class Runner {
     isBlockedByResources(step) {
         for (const [id] of this.running) {
             const other = this.stepById.get(id);
-            if (other.lane === step.lane || (other.heavy && step.heavy)) {
+            if (other.lane === step.lane) {
+                return true;
+            }
+            if (step.heavy && other.heavy && !this.isParallel(step) && !this.isParallel(other)) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Whether a step's own button may start it now: dependencies met and nothing it has to wait for running.
+     */
+    isRunnable(step) {
+        return this.isVisible(step) && !this.running.has(step.id) && this.needsMet(step) && !this.isBlockedByResources(step);
+    }
+
+    groupSteps(group) {
+        return this.steps.filter((step) => this.groupOf(step) === group && this.isVisible(step));
+    }
+
+    groupInfo() {
+        return this.groups.map((group) => {
+            const steps = this.groupSteps(group);
+            const running = steps.some((step) => this.running.has(step.id));
+            return {
+                id: group,
+                parallel: this.parallelGroups.has(group),
+                running,
+                startable:
+                    !this.parallelGroups.has(group) &&
+                    !running &&
+                    steps.some((step) => this.status(step.id) === "pending" && this.needsMet(step)),
+                resettable: !running && steps.some((step) => this.status(step.id) !== "pending"),
+            };
+        });
+    }
+
+    broadcastRunnable() {
+        const runnable = Object.fromEntries(this.steps.map((step) => [step.id, this.isRunnable(step)]));
+        this.store.broadcast({ type: "runnable", runnable, groups: this.groupInfo(), running: [...this.running.keys()] });
     }
 
     snapshot() {
@@ -93,6 +145,7 @@ class Runner {
             deployRoot: this.config.deployRoot,
             autoAdvance: this.autoAdvance,
             running: [...this.running.keys()],
+            groups: this.groupInfo(),
             settings: this.store.state.settings,
             data,
             steps: this.steps.map((step) => ({
@@ -107,6 +160,8 @@ class Runner {
                 visible: this.isVisible(step),
                 command: step.command ? step.command(this.makeContext(step, null)) : null,
                 actionLabel: step.actionLabel ?? null,
+                group: this.groupOf(step),
+                runnable: this.isRunnable(step),
                 state: this.store.step(step.id),
             })),
         };
@@ -215,7 +270,6 @@ class Runner {
         this.running.delete(id);
         this.store.updateStep(id, { status, summary, endedAt: new Date().toISOString() });
         this.store.log(id, `---- ${status}${summary ? `: ${summary}` : ""} ----`);
-        this.store.broadcast({ type: "running", running: [...this.running.keys()] });
         this.tick();
     }
 
@@ -224,11 +278,38 @@ class Runner {
         if (!step || this.running.has(id)) {
             return { error: "unknown or already running" };
         }
-        if (this.isBlockedByResources(step)) {
-            return { error: `waits for ${[...this.running.keys()].join(", ")} (same lane or both heavy)` };
+        if (mode === "approve" ? this.status(id) !== "waiting" : !this.isRunnable(step)) {
+            return { error: "this step cannot run now (dependencies not met, or it waits for a running step)" };
         }
         this.execute(id, mode);
-        this.store.broadcast({ type: "running", running: [...this.running.keys()] });
+        this.broadcastRunnable();
+        return { ok: true };
+    }
+
+    /**
+     * Runs a test target next to everything else, its steps one after another.
+     */
+    startGroup(group) {
+        const info = this.groupInfo().find((entry) => entry.id === group);
+        if (!info?.startable) {
+            return { error: `${group} cannot start now` };
+        }
+        this.parallelGroups.add(group);
+        this.tick();
+        return { ok: true };
+    }
+
+    resetGroup(group) {
+        const info = this.groupInfo().find((entry) => entry.id === group);
+        if (!info?.resettable) {
+            return { error: `${group} has a running step or nothing to reset` };
+        }
+        this.parallelGroups.delete(group);
+        for (const step of this.steps.filter((candidate) => this.groupOf(candidate) === group)) {
+            this.store.resetStep(step.id);
+            this.store.log(step.id, "---- reset with its target ----");
+        }
+        this.tick();
         return { ok: true };
     }
 
@@ -236,12 +317,22 @@ class Runner {
         this.running.get(id)?.abort();
     }
 
+    stopGroup(group) {
+        this.parallelGroups.delete(group);
+        for (const step of this.groupSteps(group)) {
+            this.running.get(step.id)?.abort();
+        }
+        this.broadcastRunnable();
+    }
+
     stopAll() {
         this.autoAdvance = false;
+        this.parallelGroups.clear();
         for (const controller of this.running.values()) {
             controller.abort();
         }
         this.store.broadcast({ type: "auto", autoAdvance: false });
+        this.broadcastRunnable();
     }
 
     pause() {
@@ -260,6 +351,7 @@ class Runner {
         if (!this.running.has(id)) {
             this.store.resetStep(id);
             this.store.log(id, "---- reset ----");
+            this.broadcastRunnable();
         }
     }
 
@@ -270,18 +362,25 @@ class Runner {
     }
 
     tick() {
-        if (!this.autoAdvance) {
-            return;
-        }
         for (const step of this.steps) {
             if (!this.isVisible(step) || this.status(step.id) !== "pending" || this.running.has(step.id)) {
                 continue;
             }
-            if (this.isReady(step) && !this.isBlockedByResources(step)) {
+            const parallel = this.isParallel(step);
+            if (!this.autoAdvance && !parallel) {
+                continue;
+            }
+            const ready = parallel ? this.needsMet(step) : this.isReady(step);
+            if (ready && !this.isBlockedByResources(step)) {
                 this.execute(step.id);
             }
         }
-        this.store.broadcast({ type: "running", running: [...this.running.keys()] });
+        for (const group of this.parallelGroups) {
+            if (this.groupSteps(group).every((step) => this.isSettled(step.id))) {
+                this.parallelGroups.delete(group);
+            }
+        }
+        this.broadcastRunnable();
     }
 }
 

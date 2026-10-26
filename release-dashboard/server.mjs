@@ -118,6 +118,9 @@ const server = createServer(async (request, response) => {
         const stepMatch = path.match(/^\/api\/steps\/([\w-]+)\/(\w+)$/);
         if (stepMatch) {
             await stepAction(stepMatch[1], stepMatch[2], response);
+        } else if (path.match(/^\/api\/groups\/[\w-]+\/(start|reset|stop)$/)) {
+            const [, , , group, action] = path.split("/");
+            sendJson(response, 200, action === "start" ? runner.startGroup(group) : action === "reset" ? runner.resetGroup(group) : (runner.stopGroup(group), { ok: true }));
         } else if (path === "/api/run-all") {
             runner.runAll();
             sendJson(response, 200, { ok: true });

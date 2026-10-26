@@ -14,6 +14,7 @@ const humanKinds = new Set(["manual", "gate", "review"]);
 
 let snapshot = null;
 const elements = new Map();
+const groupHeaders = new Map();
 const logCache = new Map();
 
 const storage = {
@@ -71,8 +72,8 @@ const element = (tag, properties = {}, children = []) => {
  * DOM of 5cript-nui-components, as the C++ components render it.
  */
 const components = {
-    button: (label, { variant = "regular", title = "", onClick, icon = null } = {}) =>
-        element("button", { class: "script-nui-button", type: "button", title, onclick: onClick }, [icon, label]).withVariant(variant),
+    button: (label, { variant = "regular", title = "", onClick, icon = null, disabled = false } = {}) =>
+        element("button", { class: "script-nui-button", type: "button", title, disabled, onclick: onClick }, [icon, label]).withVariant(variant),
     pill: (label, { selected = false } = {}) => {
         const pill = element("span", { class: "script-nui-pill" }, [element("span", { class: "script-nui-pill-label", textContent: label })]);
         pill.dataset.selected = String(selected);
@@ -155,7 +156,8 @@ const stepActions = (step) => {
     const action = (label, name, options = {}) =>
         components.button(label, {
             variant: options.variant,
-            title: options.title,
+            title: options.disabled ? "Waits for its dependencies or a running step" : options.title,
+            disabled: options.disabled ?? false,
             onClick: (event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -166,15 +168,16 @@ const stepActions = (step) => {
         buttons.push(action("Stop", "stop", { variant: "danger" }));
         return buttons;
     }
+    const blocked = step.runnable === false;
     if (step.kind === "auto") {
-        buttons.push(action(state.status === "pending" ? "Run" : "Rerun", "run"));
+        buttons.push(action(state.status === "pending" ? "Run" : "Rerun", "run", { disabled: blocked }));
     } else if (step.kind === "review") {
         if (state.status === "waiting") {
             buttons.push(action(step.actionLabel ?? "Approve", "approve", { variant: "primary" }));
         }
-        buttons.push(action(state.status === "pending" ? "Show diff" : "Refresh", "run"));
+        buttons.push(action(state.status === "pending" ? "Show diff" : "Refresh", "run", { disabled: blocked }));
     } else {
-        buttons.push(action(step.actionLabel ?? "Check", "run", { variant: state.status === "waiting" ? "primary" : "regular" }));
+        buttons.push(action(step.actionLabel ?? "Check", "run", { variant: state.status === "waiting" ? "primary" : "regular", disabled: blocked }));
     }
     if (state.status === "pending" || state.status === "failed" || state.status === "waiting") {
         buttons.push(action("Skip", "skip", { title: "Mark as skipped so dependent steps can run" }));
@@ -345,15 +348,20 @@ const renderAll = () => {
                 section.append(element("div", { class: "handover" }, [components.messageStrip(phaseNotes[phase], "primary")]));
             }
             if (phase === "Test") {
-                const lanes = [...new Set(steps.map((step) => step.lane.replace(/-lint$/, "")))];
-                for (const lane of lanes) {
-                    section.append(
-                        element("div", { class: "lane" }, [
-                            element("h3", { textContent: laneNames[lane] ?? lane }),
-                            ...steps.filter((step) => step.lane.replace(/-lint$/, "") === lane).map(buildStep),
-                        ]),
-                    );
-                }
+                groupHeaders.clear();
+                const groups = [...new Set(steps.map((step) => step.group))];
+                section.append(
+                    element(
+                        "div",
+                        { class: "lanes" },
+                        groups.map((group) => {
+                            const header = element("div", { class: "lane-header" });
+                            groupHeaders.set(group, header);
+                            return element("div", { class: "lane" }, [header, ...steps.filter((step) => step.group === group).map(buildStep)]);
+                        }),
+                    ),
+                );
+                updateGroups();
             } else {
                 section.append(...steps.map(buildStep));
             }
@@ -361,6 +369,36 @@ const renderAll = () => {
         }),
     );
     renderHeader();
+};
+
+/**
+ * Column headers of the test targets: Start runs the target next to everything else, Reset puts it back to pending.
+ */
+const updateGroups = () => {
+    for (const info of snapshot.groups ?? []) {
+        const header = groupHeaders.get(info.id);
+        if (!header) {
+            continue;
+        }
+        const groupAction = (label, action, options) =>
+            components.button(label, { ...options, onClick: () => post(`/api/groups/${info.id}/${action}`) });
+        header.replaceChildren(
+            element("h3", { textContent: laneNames[info.id] ?? info.id }),
+            info.parallel ? components.pill("parallel", { selected: true }) : null,
+            element("span", { class: "lane-actions" }, [
+                groupAction("Start", "start", {
+                    variant: "primary",
+                    disabled: !info.startable,
+                    title: info.startable ? "Run this target now, next to the others; its steps still run one after another" : "Running, done, or waiting for its dependencies",
+                }),
+                info.running && info.parallel ? groupAction("Stop", "stop", { variant: "danger", title: "Stop this target's running step" }) : null,
+                groupAction("Reset", "reset", {
+                    disabled: !info.resettable,
+                    title: info.resettable ? "Put every step of this target back to pending to run it again" : "Running, or nothing to reset",
+                }),
+            ]),
+        );
+    }
 };
 
 const renderHeader = () => {
@@ -420,18 +458,30 @@ const connectEvents = () => {
             const fresh = await (await fetch("/api/state")).json();
             snapshot.data = fresh.data;
             snapshot.settings = fresh.settings;
+            snapshot.groups = fresh.groups;
             for (const step of fresh.steps) {
                 const existing = snapshot.steps.find((candidate) => candidate.id === step.id);
                 existing.command = step.command;
                 existing.visible = step.visible;
+                existing.runnable = step.runnable;
                 updateStep(existing);
             }
+            updateGroups();
             renderHeader();
         } else if (event.type === "auto") {
             snapshot.autoAdvance = event.autoAdvance;
             renderHeader();
-        } else if (event.type === "running") {
+        } else if (event.type === "runnable") {
             snapshot.running = event.running;
+            snapshot.groups = event.groups;
+            for (const step of snapshot.steps) {
+                const runnable = event.runnable[step.id];
+                if (step.runnable !== runnable) {
+                    step.runnable = runnable;
+                    elements.get(step.id)?.head.querySelector(".actions").replaceChildren(...stepActions(step));
+                }
+            }
+            updateGroups();
         }
     };
 };

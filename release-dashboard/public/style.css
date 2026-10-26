@@ -176,7 +176,7 @@ a {
 }
 
 main {
-    max-width: 1200px;
+    max-width: 1800px;
     margin: 0 auto;
     padding: 8px 16px 80px;
 }
@@ -189,10 +189,45 @@ main {
     margin: 24px 0 8px;
 }
 
-.lane h3 {
+.lanes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+.lane {
+    min-width: 0;
+}
+
+.lane-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    margin: 4px 0 6px;
+}
+
+.lane-header h3 {
+    margin: 0;
     font-size: 0.85rem;
-    margin: 14px 0 6px;
     color: var(--theme-color);
+}
+
+.lane-actions {
+    display: inline-flex;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.lane .script-nui-collapsible.step > .script-nui-collapsible-body {
+    padding-left: 12px;
+}
+
+.lane .summary {
+    flex-basis: 100%;
+    order: 10;
 }
 
 .handover {
