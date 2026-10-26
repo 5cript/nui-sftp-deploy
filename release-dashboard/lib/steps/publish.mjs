@@ -187,14 +187,22 @@ const aurPush = {
     lane: "publish",
     kind: "manual",
     title: "Push to the AUR",
-    description: "Pushes arch/ master to aur.archlinux.org; the check asks the AUR RPC for the new version.",
+    description: "Pushes arch/ master to aur.archlinux.org. The check compares the AUR's master with the local commit; the AUR RPC's version updates later, a stale one is only a warning.",
     needs: ["aur-commit"],
     command: () => "git -C arch push origin master",
     check: async (context) => {
         const { config } = context;
-        const response = await fetch("https://aur.archlinux.org/rpc/v5/info?arg[]=nui-sftp", { signal: AbortSignal.timeout(20000) });
-        const version = (await response.json()).results?.[0]?.Version;
-        context.check("AUR has the new version", version === `${config.version}-1`, version);
+        const arch = join(config.deployRoot, "arch");
+        const local = await context.capture("git", ["-C", arch, "rev-parse", "master"]);
+        const remote = await remoteRef(context, "refs/heads/master", arch);
+        context.check("AUR master has the upgpkg commit", remote === local, remote ? `AUR ${remote.slice(0, 10)}, local ${local.slice(0, 10)}` : "AUR not reachable");
+        try {
+            const response = await fetch("https://aur.archlinux.org/rpc/v5/info?arg[]=nui-sftp", { signal: AbortSignal.timeout(20000) });
+            const version = (await response.json()).results?.[0]?.Version;
+            context.check("AUR RPC reports the new version", version === `${config.version}-1`, version === `${config.version}-1` ? version : `${version} (the RPC lags behind the push)`, { warn: true });
+        } catch (error) {
+            context.check("AUR RPC reachable", false, error.message, { warn: true });
+        }
     },
 };
 
