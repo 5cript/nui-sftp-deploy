@@ -18,6 +18,7 @@ const findPullRequest = async (context, repository, head) => {
 
 const pushBranch = (testStepIds) => ({
     id: "push-branch",
+    irreversible: true,
     phase: "Publish",
     lane: "publish",
     kind: "manual",
@@ -38,6 +39,7 @@ const pushBranch = (testStepIds) => ({
 
 const deployPullRequest = {
     id: "deploy-pr",
+    irreversible: true,
     phase: "Publish",
     lane: "publish",
     kind: "manual",
@@ -57,6 +59,7 @@ const deployPullRequest = {
 
 const deployMerge = {
     id: "deploy-merge",
+    irreversible: true,
     phase: "Publish",
     lane: "publish",
     kind: "gate",
@@ -120,6 +123,7 @@ const createFlatpakTag = {
 
 const pushFlatpakTag = {
     id: "push-tag",
+    irreversible: true,
     phase: "After merge",
     lane: "publish",
     kind: "manual",
@@ -165,6 +169,7 @@ const aurCommit = {
 
 const aurPush = {
     id: "aur-push",
+    irreversible: true,
     phase: "After merge",
     lane: "publish",
     kind: "manual",
@@ -210,6 +215,7 @@ const flathubBranch = {
 
 const flathubPush = {
     id: "flathub-push",
+    irreversible: true,
     phase: "After merge",
     lane: "publish",
     kind: "manual",
@@ -228,6 +234,7 @@ const flathubPush = {
 
 const flathubPullRequest = {
     id: "flathub-pr",
+    irreversible: true,
     phase: "After merge",
     lane: "publish",
     kind: "manual",

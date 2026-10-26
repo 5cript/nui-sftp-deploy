@@ -26,6 +26,11 @@ all of its steps back to pending to run the target again. While a step of a targ
 carousel (5cript-nui-components' carousel) with one target per page at full width; collapsing the last expanded step
 brings the columns back.
 
+Publish and After merge stay locked until every test step ran (any result) or was skipped. "Reset all" puts every
+step back to pending, except what already left the machine: completed pushes, PRs and the merge stay, with the steps
+they were based on (their dependencies, and the prepare and test phases); local steps after them reset and redetect
+their existing commits when they run again.
+
 State, logs and screenshots live in `build/release-dashboard/X.Y.Z/` (gitignored), so a restart picks up where it
 stopped; a step that ran during the restart shows as failed and can be run again.
 
