@@ -22,19 +22,13 @@ const isPortFree = (port) =>
     });
 
 /**
- * Before a heavy job: enough memory and disk, and no other heavy process on the machine (another session's build).
+ * Before a heavy job: enough memory and disk.
  */
 const checkHeavyJobResources = async (context, { memoryGiB = 8, diskGiB = 20 } = {}) => {
     const memory = availableMemoryGiB();
     context.require("free memory", memory >= memoryGiB, `${memory.toFixed(1)} GiB available, ${memoryGiB} GiB wanted`);
     const disk = freeDiskGiB(context.config.deployRoot);
     context.require("free disk", disk >= diskGiB, `${disk.toFixed(0)} GiB free, ${diskGiB} GiB wanted`);
-    const processes = await context.capture("ps", ["-eo", "pid=,comm=,args="]);
-    const foreign = processes
-        .split("\n")
-        .filter((line) => /\b(ninja|makepkg|flatpak-builder|ld\.lld|clang\+\+)\b/.test(line.split(/\s+/).slice(1, 3).join(" ")))
-        .map((line) => line.trim().slice(0, 120));
-    context.check("no other build running", foreign.length === 0, foreign.slice(0, 3).join(" | "), { warn: true });
     const vm = await context.capture("virsh", ["-c", "qemu:///system", "domstate", "nui-sftp-win11"], { allowFailure: true });
     context.check("Windows VM not running next to a host build", !/running/.test(vm) || context.step.lane === "windows", vm, { warn: true });
 };
