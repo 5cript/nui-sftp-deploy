@@ -33,9 +33,31 @@ class Runner {
     }
 
     isReady(step) {
-        const needsMet = (step.needs ?? []).every((id) => satisfiedStatuses.has(this.status(id)) || !this.isVisible(this.stepById.get(id)));
+        const needsMet = this.needsMet(step);
         const afterMet = (step.after ?? []).every((id) => this.isSettled(id));
         return needsMet && afterMet;
+    }
+
+    /**
+     * Every need passed with its own needs met, so a step run out of order by hand does not unlock its dependents.
+     * Skipped steps count as met without looking further, that is what skipping is for.
+     */
+    needsMet(step, seen = new Set()) {
+        return (step.needs ?? []).every((id) => {
+            const need = this.stepById.get(id);
+            const status = this.status(id);
+            if (!this.isVisible(need) || status === "skipped") {
+                return true;
+            }
+            if (!satisfiedStatuses.has(status)) {
+                return false;
+            }
+            if (seen.has(id)) {
+                return true;
+            }
+            seen.add(id);
+            return this.needsMet(need, seen);
+        });
     }
 
     /**
