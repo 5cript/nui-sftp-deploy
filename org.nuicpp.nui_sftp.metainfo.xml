@@ -36,6 +36,27 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.11.0" date="2026-10-27">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Run the CI tests after the release uploads, with retries and a manual skip by @5cript in #269</li>
+                    <li>Local File Interaction by @5cript in #270</li>
+                    <li>Fix Archive Transfers Cancel Crashing by @5cript in #273</li>
+                    <li>Fix renderer crash in the bulk transfer card by @5cript in #274</li>
+                    <li>Logged WASM traps and quit in debug builds instead of a silent renderer crash by @5cript in #275</li>
+                    <li>Cancel Without Cleanup by @5cript in #276</li>
+                    <li>Added a reduced motion Setting by @5cript in #277</li>
+                    <li>Overlaid items with a queued delete with a trash icon by @5cript in #278</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : v1.10.0…v1.11.0
+                </p>
+            </description>
+            <url type="details">https://github.com/5cript/nui-sftp/releases/tag/v1.11.0</url>
+        </release>
         <release version="1.10.0" date="2026-10-26">
             <description>
                 <p>What&apos;s Changed</p>
