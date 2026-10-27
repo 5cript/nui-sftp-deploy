@@ -5,7 +5,12 @@ on:
     branches:
       - 'main'
       - 'release/**'
-      - 'fix/release-dashboard-rebase-merge'
+      - 'fix/**'
+      - 'feat/**'
+      - 'chore/**'
+      - 'docs/**'
+      - 'perf/**'
+      - 'ci/**'
   workflow_dispatch:
     inputs:
       version:
