@@ -78,20 +78,13 @@ jobs:
             "${{ env.IMAGE_TAG }}" \
             bash /workspace/appimage/build_inner.sh
 
-      - name: Rename to release filename
-        run: |
-          mv "build/nui-sftp-${{ env.VERSION }}-x86_64.AppImage" \
-             "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage"
-          mv "build/nui-sftp-${{ env.VERSION }}-x86_64.AppImage.zsync" \
-             "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage.zsync"
-
       - name: Produce Artifact
         uses: actions/upload-artifact@v6
         with:
           name: nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage
           path: |
-            nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage
-            nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage.zsync
+            build/nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage
+            build/nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage.zsync
 
       - name: Upload Artifact to Release
         if: github.ref == 'refs/heads/main'
@@ -99,8 +92,8 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASEUPLOADPAT }}
         run: |
           gh release upload "v${{ env.VERSION }}" \
-            "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage" \
-            "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage.zsync" \
+            "build/nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage" \
+            "build/nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage.zsync" \
             --repo 5cript/nui-sftp
 
       - name: Upload artifact to MEGA S4
@@ -120,5 +113,5 @@ jobs:
           done
 
           for filename in "${{ env.FILENAME }}" "${{ env.FILENAME }}.zsync"; do
-            aws s3 cp "${filename}" "${{ env.S3_PATH }}" --endpoint-url ${{ env.ENDPOINT }}
+            aws s3 cp "build/${filename}" "${{ env.S3_PATH }}" --endpoint-url ${{ env.ENDPOINT }}
           done

@@ -26,4 +26,4 @@ mkdir -p build/appimage
     "${IMAGE_TAG}" \
     bash /workspace/appimage/build_inner.sh
 
-echo "AppImage written to: ${SOURCE_DIR}/build/nui-sftp-${VERSION}-x86_64.AppImage"
+echo "AppImage written to: ${SOURCE_DIR}/build/nui-sftp-appimage-x86_64_${VERSION}.AppImage"
