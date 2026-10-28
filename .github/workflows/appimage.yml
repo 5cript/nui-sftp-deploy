@@ -82,19 +82,26 @@ jobs:
         run: |
           mv "build/nui-sftp-${{ env.VERSION }}-x86_64.AppImage" \
              "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage"
+          mv "build/nui-sftp-${{ env.VERSION }}-x86_64.AppImage.zsync" \
+             "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage.zsync"
 
       - name: Produce Artifact
         uses: actions/upload-artifact@v6
         with:
           name: nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage
-          path: nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage
+          path: |
+            nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage
+            nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage.zsync
 
       - name: Upload Artifact to Release
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.RELEASEUPLOADPAT }}
         run: |
-          gh release upload "v${{ env.VERSION }}" "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage" --repo 5cript/nui-sftp
+          gh release upload "v${{ env.VERSION }}" \
+            "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage" \
+            "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage.zsync" \
+            --repo 5cript/nui-sftp
 
       - name: Upload artifact to MEGA S4
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
