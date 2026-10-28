@@ -376,9 +376,11 @@ const appImageUpdate = {
         const appImage = appImagePath(config);
         const releaseName = appImageReleaseName(config);
         // With APPIMAGE_EXTRACT_AND_RUN the runtime hands its own options to the app.
-        const reported = await context.capture("env", ["-u", "APPIMAGE_EXTRACT_AND_RUN", appImage, "--appimage-updateinformation"], { allowFailure: true });
+        const result = await context.run("env", ["-u", "APPIMAGE_EXTRACT_AND_RUN", appImage, "--appimage-updateinformation"], { allowFailure: true, quiet: true });
+        const output = result.output.trim();
+        const reported = result.code === 0 ? output : "";
         const [transport, owner, repository, tag, pattern = ""] = reported.split("|");
-        if (context.check("update information embedded", reported !== "", reported || "none")) {
+        if (context.check("update information embedded", reported !== "", result.code === 0 ? output || "none" : `exit code ${result.code}: ${output}`)) {
             context.check(
                 "points at the latest release",
                 transport === "gh-releases-zsync" && `${owner}/${repository}` === config.sourceRepository && tag === "latest",
