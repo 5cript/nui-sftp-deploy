@@ -1,5 +1,5 @@
 import { preflight, assets, branch, prepareRelease, diffSanity, review, tagCheckout } from "./steps/prepare.mjs";
-import { archBuild, archSmoke, flatpakBuild, flatpakLint, flatpakConflict, flatpakSmoke, docker, appImageBuild, appImageSmoke } from "./steps/linux.mjs";
+import { archBuild, archSmoke, flatpakBuild, flatpakLint, flatpakConflict, flatpakSmoke, docker, appImageBuild, appImageUpdate, appImageSmoke } from "./steps/linux.mjs";
 import { windowsStart, windowsBuild, windowsSmoke, windowsInstaller, windowsInstalled, windowsStop } from "./steps/windows.mjs";
 import { macWake, macResidue, macBuild, macSmoke, macSleep } from "./steps/mac.mjs";
 import {
@@ -32,6 +32,7 @@ const testSteps = [
     flatpakSmoke,
     docker,
     appImageBuild,
+    appImageUpdate,
     appImageSmoke,
     windowsStart,
     windowsBuild,
