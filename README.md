@@ -129,7 +129,10 @@ Releasing version 1.2.0 to Flathub, after the release branch here is merged:
   the actual build runs in CI. The AppImage embeds the update information
   `gh-releases-zsync|5cript|nui-sftp|latest|nui-sftp-appimage-x86_64_*.AppImage.zsync`
   and CI uploads its `.zsync` next to it to the release (and to S4, like every
-  other release file), so AppImageUpdate can update installed copies.
+  other release file), so AppImageUpdate can update installed copies. Publish
+  the GitHub release with "Set as the latest release" unticked
+  (`gh release create --latest=false`): CI marks it latest after uploading
+  both, so AppImageUpdate never finds a latest release without the `.zsync`.
 
 ## Windows (Inno Setup)
 
