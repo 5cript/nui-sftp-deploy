@@ -1,4 +1,5 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { copyFileSync, createReadStream, existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { checkCoredumps, checkHeavyJobResources, prepareTestHome, processesMatching } from "../checks.mjs";
@@ -299,6 +300,32 @@ const flatpakSmoke = {
 
 const appImagePath = (config) => join(config.deployRoot, "build", `nui-sftp-${config.version}-x86_64.AppImage`);
 
+/**
+ * The name .github/workflows/appimage.yml uploads the AppImage under, its .zsync gets the same plus ".zsync".
+ */
+const appImageReleaseName = (config) => `nui-sftp-appimage-x86_64_${config.version}.AppImage`;
+
+/**
+ * The header fields of a .zsync file, an empty line separates them from the block checksums.
+ */
+const readZsyncHeader = (path) => {
+    const data = readFileSync(path);
+    const end = data.indexOf("\n\n");
+    const lines = data.subarray(0, end === -1 ? 0 : end).toString("utf8").split("\n");
+    return Object.fromEntries(lines.map((line) => [line.slice(0, line.indexOf(":")), line.slice(line.indexOf(":") + 1).trim()]));
+};
+
+const globMatches = (pattern, name) =>
+    new RegExp(`^${pattern.split("*").map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join(".*")}$`).test(name);
+
+const sha1OfFile = async (path) => {
+    const hash = createHash("sha1");
+    for await (const chunk of createReadStream(path)) {
+        hash.update(chunk);
+    }
+    return hash.digest("hex");
+};
+
 const docker = {
     id: "docker",
     phase: "Test",
@@ -333,7 +360,40 @@ const appImageBuild = {
         const started = new Date().toISOString();
         await context.run("./scripts/build_appimage.sh", [], { timeoutMs: 3 * 60 * 60 * 1000, watchers: [cmakeLoopWatcher] });
         context.check("AppImage written", newerThan(appImagePath(config), started), appImagePath(config));
-        context.check("zsync written", newerThan(`${appImagePath(config)}.zsync`, started), `${appImagePath(config)}.zsync`);
+    },
+};
+
+const appImageUpdate = {
+    id: "appimage-update",
+    phase: "Test",
+    lane: "appimage",
+    kind: "auto",
+    title: "AppImage: update information",
+    description: "The runtime reports gh-releases-zsync update information that finds the release's .zsync, which matches the AppImage.",
+    needs: ["appimage-build"],
+    run: async (context) => {
+        const { config } = context;
+        const appImage = appImagePath(config);
+        const releaseName = appImageReleaseName(config);
+        // With APPIMAGE_EXTRACT_AND_RUN the runtime hands its own options to the app.
+        const reported = await context.capture("env", ["-u", "APPIMAGE_EXTRACT_AND_RUN", appImage, "--appimage-updateinformation"], { allowFailure: true });
+        const [transport, owner, repository, tag, pattern = ""] = reported.split("|");
+        if (context.check("update information embedded", reported !== "", reported || "none")) {
+            context.check(
+                "points at the latest release",
+                transport === "gh-releases-zsync" && `${owner}/${repository}` === config.sourceRepository && tag === "latest",
+                `${transport} ${owner}/${repository} ${tag}`,
+            );
+            context.check("pattern finds the release .zsync", globMatches(pattern, `${releaseName}.zsync`), `${pattern} for ${releaseName}.zsync`);
+        }
+
+        const zsync = `${appImage}.zsync`;
+        context.require(".zsync written after the AppImage", existsSync(zsync) && statSync(zsync).mtimeMs >= statSync(appImage).mtimeMs, zsync);
+        const header = readZsyncHeader(zsync);
+        context.check(".zsync file name is the release name", header.Filename === releaseName, header.Filename ?? "none");
+        context.check(".zsync URL is the release name", header.URL === releaseName, header.URL ?? "none");
+        context.check(".zsync length is the AppImage's", Number(header.Length) === statSync(appImage).size, header.Length ?? "none");
+        context.check(".zsync SHA-1 is the AppImage's", header["SHA-1"] === (await sha1OfFile(appImage)), header["SHA-1"] ?? "none");
     },
 };
 
@@ -361,4 +421,4 @@ const appImageSmoke = {
     },
 };
 
-export { reinstallSwappedCopies, installedFlatpaks, remoteBuildSource, archBuild, archSmoke, flatpakBuild, flatpakLint, flatpakConflict, flatpakSmoke, docker, appImageBuild, appImageSmoke, cmakeLoopWatcher, foreignFlatpaks };
+export { reinstallSwappedCopies, installedFlatpaks, remoteBuildSource, archBuild, archSmoke, flatpakBuild, flatpakLint, flatpakConflict, flatpakSmoke, docker, appImageBuild, appImageUpdate, appImageSmoke, cmakeLoopWatcher, foreignFlatpaks };
