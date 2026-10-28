@@ -333,6 +333,7 @@ const appImageBuild = {
         const started = new Date().toISOString();
         await context.run("./scripts/build_appimage.sh", [], { timeoutMs: 3 * 60 * 60 * 1000, watchers: [cmakeLoopWatcher] });
         context.check("AppImage written", newerThan(appImagePath(config), started), appImagePath(config));
+        context.check("zsync written", newerThan(`${appImagePath(config)}.zsync`, started), `${appImagePath(config)}.zsync`);
     },
 };
 
