@@ -143,7 +143,13 @@ fi
 # level. zstd at -22 (max) is the tightest the upstream AppImage runtime can
 # decode — it dropped xz support, so xz squashfs would build but not mount.
 APPIMAGE_OUT="${WORKSPACE}/build/${PKGNAME}-${VERSION}-x86_64.AppImage"
+ZSYNC_OUT="${APPIMAGE_OUT}.zsync"
 SQUASHFS_OUT="${BUILD_DIR}/${PKGNAME}.squashfs"
+RUNTIME="${BUILD_DIR}/runtime-x86_64"
+
+# The names .github/workflows/appimage.yml publishes both files under on the GitHub release.
+RELEASE_FILENAME="${PKGNAME}-appimage-x86_64_${VERSION}.AppImage"
+UPDATE_INFORMATION="gh-releases-zsync|5cript|nui-sftp|latest|${PKGNAME}-appimage-x86_64_*.AppImage.zsync"
 
 # Top-level icon symlink expected by the AppImage runtime / file managers.
 ln -sfn "usr/share/icons/hicolor/scalable/apps/${APP_ID}.svg" "${APPDIR}/.DirIcon"
@@ -154,8 +160,40 @@ mksquashfs "${APPDIR}" "${SQUASHFS_OUT}" \
     -b 1M \
     -no-xattrs -all-root -noappend
 
-cat /opt/appimage-tools/runtime-x86_64 "${SQUASHFS_OUT}" > "${APPIMAGE_OUT}"
-chmod +x "${APPIMAGE_OUT}"
-rm -f "${SQUASHFS_OUT}"
+# Update information goes into the runtime's .upd_info section, where appimagetool -u would put it.
+cp /opt/appimage-tools/runtime-x86_64 "${RUNTIME}"
+UPDATE_SECTION=$(objdump -h "${RUNTIME}" | awk '$2 == ".upd_info" { print $3, $6 }')
+if [ -z "${UPDATE_SECTION}" ]; then
+    echo "ERROR: the AppImage runtime has no .upd_info section" >&2
+    exit 1
+fi
+read -r UPDATE_SECTION_SIZE UPDATE_SECTION_OFFSET <<< "${UPDATE_SECTION}"
+UPDATE_SECTION_SIZE=$((16#${UPDATE_SECTION_SIZE}))
+if [ "${#UPDATE_INFORMATION}" -ge "${UPDATE_SECTION_SIZE}" ]; then
+    echo "ERROR: the update information does not fit the .upd_info section" >&2
+    exit 1
+fi
+{
+    printf '%s' "${UPDATE_INFORMATION}"
+    head -c "$((UPDATE_SECTION_SIZE - ${#UPDATE_INFORMATION}))" /dev/zero
+} | dd of="${RUNTIME}" bs=1 seek="$((16#${UPDATE_SECTION_OFFSET}))" conv=notrunc status=none
 
-echo "Built: build/${PKGNAME}-${VERSION}-x86_64.AppImage ($(du -h "${APPIMAGE_OUT}" | cut -f1))"
+cat "${RUNTIME}" "${SQUASHFS_OUT}" > "${APPIMAGE_OUT}"
+chmod +x "${APPIMAGE_OUT}"
+rm -f "${SQUASHFS_OUT}" "${RUNTIME}"
+
+# With APPIMAGE_EXTRACT_AND_RUN the runtime hands its own options to the app.
+if [ "$(env -u APPIMAGE_EXTRACT_AND_RUN "${APPIMAGE_OUT}" --appimage-updateinformation)" != "${UPDATE_INFORMATION}" ]; then
+    echo "ERROR: the AppImage does not report the embedded update information" >&2
+    exit 1
+fi
+
+# AppImageUpdate fetches the AppImage relative to the .zsync on the release and names the new file after -f.
+rm -f "${ZSYNC_OUT}"
+/opt/appimage-tools/appimagetool.AppDir/usr/bin/zsyncmake \
+    -u "${RELEASE_FILENAME}" \
+    -f "${RELEASE_FILENAME}" \
+    -o "${ZSYNC_OUT}" \
+    "${APPIMAGE_OUT}"
+
+echo "Built: build/${PKGNAME}-${VERSION}-x86_64.AppImage ($(du -h "${APPIMAGE_OUT}" | cut -f1)) and its .zsync"
