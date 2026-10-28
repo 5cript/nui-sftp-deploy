@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { copyFileSync, createReadStream, existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { checkCoredumps, checkHeavyJobResources, prepareTestHome, processesMatching } from "../checks.mjs";
 import { smokeTest } from "../smoke.mjs";
 import { sleep } from "../process.mjs";
@@ -298,12 +298,10 @@ const flatpakSmoke = {
     },
 };
 
-const appImagePath = (config) => join(config.deployRoot, "build", `nui-sftp-${config.version}-x86_64.AppImage`);
-
 /**
- * The name .github/workflows/appimage.yml uploads the AppImage under, its .zsync gets the same plus ".zsync".
+ * The build writes the AppImage under its release asset name, which CI uploads unchanged.
  */
-const appImageReleaseName = (config) => `nui-sftp-appimage-x86_64_${config.version}.AppImage`;
+const appImagePath = (config) => join(config.deployRoot, "build", `nui-sftp-appimage-x86_64_${config.version}.AppImage`);
 
 /**
  * The header fields of a .zsync file, an empty line separates them from the block checksums.
@@ -374,7 +372,7 @@ const appImageUpdate = {
     run: async (context) => {
         const { config } = context;
         const appImage = appImagePath(config);
-        const releaseName = appImageReleaseName(config);
+        const releaseName = basename(appImage);
         // With APPIMAGE_EXTRACT_AND_RUN the runtime hands its own options to the app.
         const result = await context.run("env", ["-u", "APPIMAGE_EXTRACT_AND_RUN", appImage, "--appimage-updateinformation"], { allowFailure: true, quiet: true });
         const output = result.output.trim();
