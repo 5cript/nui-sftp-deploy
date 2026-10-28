@@ -105,12 +105,11 @@ jobs:
           FILENAME: "nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage"
           S3_PATH: "s3://nui-sftp-releases/appimage/${{ (github.event_name == 'workflow_dispatch' && 'x86_64/user_trigger') || 'x86_64' }}/"
         run: |
-          for filename in "${{ env.FILENAME }}" "${{ env.FILENAME }}.zsync"; do
-            if aws s3 ls "${{ env.S3_PATH }}${filename}" --endpoint-url ${{ env.ENDPOINT }} > /dev/null 2>&1; then
-              echo "::error::Deployment failed: ${filename} already exists in S4. Aborting to prevent overwrite."
-              exit 1
-            fi
-          done
+          # s3 ls lists by prefix, so this finds the .zsync too.
+          if aws s3 ls "${{ env.S3_PATH }}${{ env.FILENAME }}" --endpoint-url ${{ env.ENDPOINT }} > /dev/null 2>&1; then
+            echo "::error::Deployment failed: ${{ env.FILENAME }} or its .zsync already exists in S4. Aborting to prevent overwrite."
+            exit 1
+          fi
 
           for filename in "${{ env.FILENAME }}" "${{ env.FILENAME }}.zsync"; do
             aws s3 cp "build/${filename}" "${{ env.S3_PATH }}" --endpoint-url ${{ env.ENDPOINT }}
