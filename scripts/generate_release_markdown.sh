@@ -20,6 +20,7 @@ classify() {
         *.deb)                   echo "linux|Debian package" ;;
         *.rpm)                   echo "linux|RPM package" ;;
         *.appimage)              echo "linux|AppImage" ;;
+        *.appimage.zsync)        echo "skip|AppImage update file" ;;
         *.flatpak)               echo "linux|Flatpak bundle" ;;
         *linux-frontend*.tar.gz) echo "other|Linux frontend tarball" ;;
         *arm64*.dmg)             echo "macos|Apple Silicon DMG" ;;
@@ -48,6 +49,7 @@ while IFS=$'\t' read -r name url; do
     [ -z "$name" ] && continue
     info=$(classify "$name")
     category="${info%%|*}"
+    [ "$category" = skip ] && continue
     label="${info#*|}"
     sections[$category]+="- [${label}](${url})"$'\n'
 done < <(printf '%s' "$assets_json" | jq -r '.[] | [.name, .url] | @tsv')
