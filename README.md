@@ -128,8 +128,8 @@ Releasing version 1.2.0 to Flathub, after the release branch here is merged:
 - **AppImage** — `appimage/Dockerfile` is updated by `prepare_release.mjs`;
   the actual build runs in CI. The AppImage embeds the update information
   `gh-releases-zsync|5cript|nui-sftp|latest|nui-sftp-appimage-x86_64_*.AppImage.zsync`
-  and CI uploads its `.zsync` to the release next to it, so AppImageUpdate can
-  update installed copies.
+  and CI uploads its `.zsync` next to it to the release (and to S4, like every
+  other release file), so AppImageUpdate can update installed copies.
 
 ## Windows (Inno Setup)
 
