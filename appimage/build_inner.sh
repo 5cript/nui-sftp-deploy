@@ -148,7 +148,7 @@ ln -sfn "usr/share/icons/hicolor/scalable/apps/${APP_ID}.svg" "${APPDIR}/.DirIco
 # zstd at -22 (max) is the tightest the upstream AppImage runtime can decode, it dropped xz support.
 # appimagetool writes the .zsync into the working directory.
 rm -f "${APPIMAGE_OUT}" "${APPIMAGE_OUT}.zsync"
-cd "${WORKSPACE}/build"
+cd "$(dirname "${APPIMAGE_OUT}")"
 appimagetool \
     --runtime-file /opt/appimage-tools/runtime-x86_64 \
     --updateinformation "${UPDATE_INFORMATION}" \
