@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git ninja-build python3 nodejs npm pkg-config file xz-utils \
         dpkg-dev patchelf squashfs-tools \
         libstdc++-15-dev \
-        desktop-file-utils appstream \
+        desktop-file-utils appstream librsvg2-bin \
         libglib2.0-dev \
         libsqlite3-dev \
         libcurl4-openssl-dev \
