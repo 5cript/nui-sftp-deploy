@@ -50,6 +50,7 @@ mkdir -p "${APPDIR}/usr/bin"
 mkdir -p "${APPDIR}/usr/share/applications"
 mkdir -p "${APPDIR}/usr/share/metainfo"
 mkdir -p "${APPDIR}/usr/share/icons/hicolor/scalable/apps"
+mkdir -p "${APPDIR}/usr/share/icons/hicolor/256x256/apps"
 DESTDIR="${APPDIR}" cmake --install "${SRC_DIR}/build" --prefix "/opt/${PKGNAME}"
 mkdir -p "${APPDIR}/opt/${PKGNAME}/frontend"
 
@@ -67,6 +68,9 @@ install -Dm644 "${BUILD_DIR}/NUI-SFTP_Logo-01_nopad.svg" \
 # Top-level + usr/share icon (AppImage spec requires top-level <id>.svg/.png).
 install -Dm644 "${BUILD_DIR}/NUI-SFTP_Logo-01_nopad.svg" \
     "${APPDIR}/usr/share/icons/hicolor/scalable/apps/${APP_ID}.svg"
+# .DirIcon has to be a PNG, file managers use it as the thumbnail.
+rsvg-convert -w 256 -h 256 -o "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${APP_ID}.png" \
+    "${BUILD_DIR}/NUI-SFTP_Logo-01_nopad.svg"
 
 # Desktop file: rename Icon= to the org.* id so the icon resolves both inside
 # the AppImage (top-level) and on host integration (hicolor scalable).
@@ -143,7 +147,7 @@ APPIMAGE_OUT="${WORKSPACE}/build/${APPIMAGE_NAME}"
 UPDATE_INFORMATION="gh-releases-zsync|5cript|nui-sftp|latest|${PKGNAME}-appimage-x86_64_*.AppImage.zsync"
 
 # Top-level icon symlink expected by the AppImage runtime / file managers.
-ln -sfn "usr/share/icons/hicolor/scalable/apps/${APP_ID}.svg" "${APPDIR}/.DirIcon"
+ln -sfn "usr/share/icons/hicolor/256x256/apps/${APP_ID}.png" "${APPDIR}/.DirIcon"
 
 # zstd at -22 (max) is the tightest the upstream AppImage runtime can decode, it dropped xz support.
 # appimagetool writes the .zsync into the working directory.
