@@ -36,6 +36,23 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.11.1" date="2026-10-29">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Fix the JSON conversion of operation errors by @5cript in #284</li>
+                    <li>Refuse processing thread pushes after stop() and after a task threw by @5cript in #285</li>
+                    <li>Keep sessions of types this version cannot read by @5cript in #283</li>
+                    <li>Fix Light Onboarding Dim by @5cript in #286</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : v1.11.0…v1.11.1
+                </p>
+            </description>
+            <url type="details">https://github.com/5cript/nui-sftp/releases/tag/v1.11.1</url>
+        </release>
         <release version="1.11.0" date="2026-10-27">
             <description>
                 <p>What&apos;s Changed</p>
