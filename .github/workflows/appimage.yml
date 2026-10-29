@@ -95,8 +95,6 @@ jobs:
             "build/nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage" \
             "build/nui-sftp-appimage-x86_64_${{ env.VERSION }}.AppImage.zsync" \
             --repo 5cript/nui-sftp
-          # Published without the latest flag, AppImageUpdate finds the .zsync from here on.
-          gh release edit "v${{ env.VERSION }}" --latest --repo 5cript/nui-sftp
 
       - name: Upload artifact to MEGA S4
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'

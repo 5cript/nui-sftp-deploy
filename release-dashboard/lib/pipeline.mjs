@@ -16,6 +16,8 @@ import {
     flathubPullRequest,
     submoduleCommit,
     flathubReinstall,
+    appImageReleaseAssets,
+    markLatest,
 } from "./steps/publish.mjs";
 
 const testSteps = [
@@ -42,6 +44,19 @@ const testSteps = [
     windowsStop,
 ];
 
+const afterMergeSteps = [
+    updateMain,
+    createFlatpakTag,
+    pushFlatpakTag,
+    aurCommit,
+    aurPush,
+    flathubBranch,
+    flathubPush,
+    flathubPullRequest,
+    submoduleCommit,
+    flathubReinstall,
+];
+
 /**
  * Every step in display order; "run all" also starts them in this order when they are ready.
  */
@@ -57,16 +72,9 @@ const buildPipeline = () => [
     pushBranch(testSteps.map((step) => step.id)),
     deployPullRequest,
     deployMerge,
-    updateMain,
-    createFlatpakTag,
-    pushFlatpakTag,
-    aurCommit,
-    aurPush,
-    flathubBranch,
-    flathubPush,
-    flathubPullRequest,
-    submoduleCommit,
-    flathubReinstall,
+    ...afterMergeSteps,
+    appImageReleaseAssets,
+    markLatest(afterMergeSteps.map((step) => step.id)),
 ];
 
 export { buildPipeline };

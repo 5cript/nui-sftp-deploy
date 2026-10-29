@@ -68,7 +68,7 @@ where it stopped and a new version starts fresh; a step that ran during the rest
 | Prepare | preflight, release assets, branch `release/X.Y.Z`, `prepare_release.mjs`, diff sanity checks, review and commit (you approve), tag checkout with submodules |
 | Test | Mac (wake, local changes, build, smoke, sleep), Arch package (makepkg, smoke), Flatpak (build, lint, installed copies, smoke), AppImage (docker, build, update information, smoke), Windows VM (start, build, smoke, installer, install/smoke/uninstall, shut down) |
 | Publish | push the branch, open the PR "Release X.Y.Z", merge it (you) |
-| After merge | update main, `flatpak/X.Y.Z` tag and push, AUR commit and push, Flathub branch, push and PR "Release X.Y.Z", local "Submodule Updates" commit, reinstall your Flathub copy if the test asked to remove it |
+| After merge | update main, `flatpak/X.Y.Z` tag and push, AUR commit and push, Flathub branch, push and PR "Release X.Y.Z", local "Submodule Updates" commit, reinstall your Flathub copy if the test asked to remove it, wait for CI to put the AppImage and its .zsync on the GitHub release, mark that release latest (last) |
 
 Human steps show their command with a play button: it opens a terminal running the command, and closing the window
 runs the step's check (the remote branch exists, the PR exists, the AUR reports the version, ...). The dashboard never
