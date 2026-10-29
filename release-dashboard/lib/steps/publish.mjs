@@ -392,10 +392,11 @@ const markLatest = (afterStepIds) => ({
     lane: "publish",
     kind: "manual",
     title: "Mark the release latest",
-    description: "The last step. AppImageUpdate follows the latest GitHub release, so it moves only once the release has the AppImage and its .zsync.",
+    description:
+        "The last step. The release stays a pre-release until the AppImage and its .zsync are on it, AppImageUpdate follows the latest release and GitHub never makes a pre-release latest.",
     needs: ["appimage-release-assets"],
     after: afterStepIds,
-    command: ({ config }) => `gh release edit ${config.tag} --latest -R ${config.sourceRepository}`,
+    command: ({ config }) => `gh release edit ${config.tag} --prerelease=false --latest -R ${config.sourceRepository}`,
     check: async (context) => {
         const { config } = context;
         const latest = await context.capture("gh", ["api", `repos/${config.sourceRepository}/releases/latest`, "--jq", ".tag_name"]);

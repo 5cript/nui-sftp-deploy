@@ -80,17 +80,20 @@ const assets = {
         const deadline = Date.now() + 90 * 60 * 1000;
         let lastReport = "";
         for (;;) {
-            const release = await context.run("gh", ["release", "view", config.tag, "-R", config.sourceRepository, "--json", "assets,isDraft"], {
+            const release = await context.run("gh", ["release", "view", config.tag, "-R", config.sourceRepository, "--json", "assets,isDraft,isPrerelease"], {
                 allowFailure: true,
                 quiet: true,
             });
             if (release.code !== 0) {
                 context.require(`release ${config.tag} exists`, false, release.output.trim().split("\n")[0]);
             }
-            const names = JSON.parse(release.output).assets.map((asset) => asset.name);
+            const view = JSON.parse(release.output);
+            const names = view.assets.map((asset) => asset.name);
             const missing = wanted.filter((name) => !names.includes(name));
             if (missing.length === 0) {
                 wanted.forEach((name) => context.check(name, true));
+                // AppImageUpdate follows the latest release, the last step makes it latest once it has the .zsync.
+                context.check("release is a pre-release", view.isPrerelease, view.isPrerelease ? "" : "set the label to Pre-release, AppImageUpdate may find it before its .zsync", { warn: true });
                 return { summary: "both assets are on the release" };
             }
             const runs = JSON.parse(

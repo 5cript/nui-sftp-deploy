@@ -130,10 +130,11 @@ Releasing version 1.2.0 to Flathub, after the release branch here is merged:
   `gh-releases-zsync|5cript|nui-sftp|latest|nui-sftp-appimage-x86_64_*.AppImage.zsync`
   and CI uploads its `.zsync` next to it to the release (and to S4, like every
   other release file), so AppImageUpdate can update installed copies. Publish
-  the GitHub release with "Set as the latest release" unticked
-  (`gh release create --latest=false`): the release dashboard's last step marks
-  it latest once CI uploaded both, so AppImageUpdate never finds a latest
-  release without the `.zsync`.
+  the GitHub release as a pre-release (release label "Pre-release",
+  `gh release create --prerelease`): AppImageUpdate asks GitHub for the latest
+  release, which is never a pre-release. The release dashboard's last step
+  turns it into the latest release once CI uploaded both, so AppImageUpdate
+  never finds a latest release without the `.zsync`.
 
 ## Windows (Inno Setup)
 
