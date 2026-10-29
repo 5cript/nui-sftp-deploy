@@ -5,7 +5,7 @@ REPO="${REPO:-5cript/nui-sftp}"
 TAG="${1:-}"
 
 if [ -z "$TAG" ]; then
-    # The newest release, the latest flag only moves once the AppImage CI uploaded the .zsync.
+    # The newest release, the latest flag only moves in the release dashboard's last step.
     TAG=$(gh release list -R "$REPO" --exclude-drafts --limit 1 --json tagName --jq '.[0].tagName')
 fi
 

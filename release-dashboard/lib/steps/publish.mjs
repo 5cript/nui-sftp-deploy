@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { foreignFlatpaks, reinstallSwappedCopies } from "./linux.mjs";
+import { basename, join } from "node:path";
+import { sleep } from "../process.mjs";
+import { appImagePath, foreignFlatpaks, reinstallSwappedCopies } from "./linux.mjs";
 
 const releaseBranch = (config) => `release/${config.version}`;
 const flatpakTag = (config) => `flatpak/${config.version}`;
@@ -324,6 +325,84 @@ const flathubReinstall = {
     },
 };
 
+const appImageReleaseAssets = {
+    id: "appimage-release-assets",
+    phase: "After merge",
+    lane: "appimage-release",
+    kind: "auto",
+    title: "AppImage on the release",
+    description: "Waits for the AppImage and its .zsync on the GitHub release (the deploy CI of the merge commit builds and uploads them, 30-60 min).",
+    needs: ["deploy-merge"],
+    run: async (context) => {
+        const { config, data } = context;
+        const appImage = basename(appImagePath(config));
+        const wanted = [appImage, `${appImage}.zsync`];
+        const deadline = Date.now() + 2 * 60 * 60 * 1000;
+        let lastReport = "";
+        let ciSucceededAt = null;
+        for (;;) {
+            const release = JSON.parse(await context.capture("gh", ["release", "view", config.tag, "-R", config.sourceRepository, "--json", "assets"]));
+            const missing = wanted.filter((name) => !release.assets.some((asset) => asset.name === name && asset.state === "uploaded"));
+            if (missing.length === 0) {
+                wanted.forEach((name) => context.check(name, true));
+                return { summary: "both are on the release" };
+            }
+            const runs = JSON.parse(
+                await context.capture("gh", [
+                    "run",
+                    "list",
+                    "-R",
+                    config.deployRepository,
+                    "--workflow",
+                    "appimage.yml",
+                    "--commit",
+                    data.deployMergeCommit,
+                    "--json",
+                    "status,conclusion,databaseId",
+                ]),
+            );
+            const run = runs[0];
+            const report = run ? `AppImage CI ${run.status}${run.conclusion ? `/${run.conclusion}` : ""}` : "no AppImage CI run yet";
+            if (report !== lastReport) {
+                context.log(`waiting for ${missing.join(", ")}; ${report}`);
+                lastReport = report;
+            }
+            if (run?.status === "completed" && run.conclusion !== "success") {
+                context.require("AppImage CI of the merge commit", false, `${run.conclusion}, run ${run.databaseId}`);
+            }
+            if (run?.status === "completed") {
+                ciSucceededAt ??= Date.now();
+                // The run uploads both itself, a minute is enough for the release to list them.
+                if (Date.now() - ciSucceededAt >= 60000) {
+                    context.require("on the release after a successful AppImage CI", false, `still missing ${missing.join(", ")}`);
+                }
+            }
+            if (Date.now() > deadline) {
+                context.require("on the release within 2 hours", false, `still missing ${missing.join(", ")}`);
+            }
+            await sleep(run?.status === "completed" ? 20000 : 60000, context.signal);
+        }
+    },
+};
+
+const markLatest = (afterStepIds) => ({
+    id: "mark-latest",
+    irreversible: true,
+    phase: "After merge",
+    lane: "publish",
+    kind: "manual",
+    title: "Mark the release latest",
+    description: "The last step. AppImageUpdate follows the latest GitHub release, so it moves only once the release has the AppImage and its .zsync.",
+    needs: ["appimage-release-assets"],
+    after: afterStepIds,
+    command: ({ config }) => `gh release edit ${config.tag} --latest -R ${config.sourceRepository}`,
+    check: async (context) => {
+        const { config } = context;
+        const latest = await context.capture("gh", ["api", `repos/${config.sourceRepository}/releases/latest`, "--jq", ".tag_name"]);
+        context.check("latest release", latest === config.tag, latest);
+    },
+});
+
 export {
     pushBranch,
     deployPullRequest,
@@ -338,4 +417,6 @@ export {
     flathubPullRequest,
     submoduleCommit,
     flathubReinstall,
+    appImageReleaseAssets,
+    markLatest,
 };

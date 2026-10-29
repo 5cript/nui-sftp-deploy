@@ -421,4 +421,4 @@ const appImageSmoke = {
     },
 };
 
-export { reinstallSwappedCopies, installedFlatpaks, remoteBuildSource, archBuild, archSmoke, flatpakBuild, flatpakLint, flatpakConflict, flatpakSmoke, docker, appImageBuild, appImageUpdate, appImageSmoke, cmakeLoopWatcher, foreignFlatpaks };
+export { appImagePath, reinstallSwappedCopies, installedFlatpaks, remoteBuildSource, archBuild, archSmoke, flatpakBuild, flatpakLint, flatpakConflict, flatpakSmoke, docker, appImageBuild, appImageUpdate, appImageSmoke, cmakeLoopWatcher, foreignFlatpaks };
