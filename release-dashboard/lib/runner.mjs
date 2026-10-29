@@ -300,15 +300,16 @@ class Runner {
         const controller = new AbortController();
         this.running.set(id, controller);
         const previous = this.store.step(id);
+        const runs = previous.runs + 1;
         this.store.updateStep(id, {
             status: "running",
             startedAt: new Date().toISOString(),
             endedAt: null,
             summary: "",
             checks: mode === "approve" ? previous.checks : [],
-            runs: previous.runs + 1,
+            runs,
         });
-        this.store.log(id, `---- ${mode === "approve" ? "approve" : step.kind === "auto" ? "run" : "check"} #${previous.runs + 1} ----`);
+        this.store.log(id, `---- ${mode === "approve" ? "approve" : step.kind === "auto" ? "run" : "check"} #${runs} ----`);
         const context = this.makeContext(step, controller);
         let status;
         let summary = "";
