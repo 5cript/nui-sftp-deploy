@@ -137,7 +137,7 @@ modules:
         disable-submodules: true
         dest: deploy-meta
       - type: file
-        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg
+        url: https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-sftp-releases/images/NUI-SFTP_Logo-01_nopad.svg
         sha256: cf0fc442069dfd28bd8b7769da6dfdca92111044ea9817197716ed9bfada3869
       # The CEF distribution Nui pins (cmake/dependencies/cef_version.cmake in Nui), one per architecture, extracted
       # through the NUI_CEF_ARCHIVE of that architecture.
