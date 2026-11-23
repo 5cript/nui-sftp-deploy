@@ -36,6 +36,27 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.12.0" date="2026-11-23">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Fix use-after-scope in two ProcessingThread tests by @5cript in #290</li>
+                    <li>Report a lost SFTP connection instead of the server&apos;s last answer by @5cript in #291</li>
+                    <li>Free SFTP sessions and their open files at teardown by @5cript in #292</li>
+                    <li>Give real server tests their own temp directory by @5cript in #293</li>
+                    <li>FTP(S) Support by @5cript in #296</li>
+                    <li>Fix rename dialog arrow keys by @5cript in #297</li>
+                    <li>Readme Update by @5cript in #298</li>
+                    <li>Improve cancel behavior by @5cript in #299</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : v1.11.1…v1.12.0
+                </p>
+            </description>
+            <url type="details">https://github.com/5cript/nui-sftp/releases/tag/v1.12.0</url>
+        </release>
         <release version="1.11.1" date="2026-10-29">
             <description>
                 <p>What&apos;s Changed</p>
