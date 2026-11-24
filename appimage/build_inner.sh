@@ -24,7 +24,7 @@ git clone --depth 1 --branch "v${VERSION}" --recurse-submodules \
 # Same external inputs the PKGBUILD uses.
 cd "${BUILD_DIR}"
 wget -q "https://github.com/5cript/nui-sftp/releases/download/v${VERSION}/${PKGNAME}-linux-frontend_${VERSION}.tar.gz"
-wget -q "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-scp/images/NUI-SFTP_Logo-01_nopad.svg"
+wget -q "https://s3.g.s4.mega.io/jgemkib4a5fte35rktt5wxrwkw4ejk4ybemkf/nui-sftp-releases/images/NUI-SFTP_Logo-01_nopad.svg"
 
 # Build (mirrors the PKGBUILD build() flags). Nui downloads the CEF distribution it pins, SHA256 checked, into a
 # directory under build/ that survives the next run.
