@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { sleep } from "../process.mjs";
 import { appImagePath, foreignFlatpaks, reinstallSwappedCopies } from "./linux.mjs";
+import { releaseDownloadState } from "../../../scripts/update_scripts/release_downloads.mjs";
 
 const releaseBranch = (config) => `release/${config.version}`;
 const flatpakTag = (config) => `flatpak/${config.version}`;
@@ -385,6 +386,31 @@ const appImageReleaseAssets = {
     },
 };
 
+const releaseDownloads = {
+    id: "release-downloads",
+    irreversible: true,
+    phase: "After merge",
+    lane: "publish",
+    kind: "manual",
+    title: "Download section on the release",
+    description:
+        "Appends the Download section (installers by platform) to the release notes and labels the assets that are not downloads (frontend tarball, CEF JSON, .zsync, licenses) \"Not an installer: ...\". Needs every installer on the release.",
+    needs: ["appimage-release-assets"],
+    command: ({ config }) => `node scripts/release_downloads.mjs --apply -R ${config.sourceRepository} ${config.tag}`,
+    check: async (context) => {
+        const { config } = context;
+        const release = JSON.parse(await context.capture("gh", ["api", `repos/${config.sourceRepository}/releases/tags/${config.tag}`]));
+        const state = releaseDownloadState(release);
+        context.check("installers on the release", state.missing.length === 0, state.missing.length ? `missing: ${state.missing.join(", ")}` : "");
+        context.check("Download section in the release notes", state.bodyUpToDate, state.bodyUpToDate ? "" : "missing or outdated");
+        context.check(
+            "labels on the assets that are not downloads",
+            state.staleLabels.length === 0,
+            state.staleLabels.length ? `not labelled: ${state.staleLabels.map(({ name }) => name).join(", ")}` : `${state.labels.length} labelled`,
+        );
+    },
+};
+
 const markLatest = (afterStepIds) => ({
     id: "mark-latest",
     irreversible: true,
@@ -394,7 +420,7 @@ const markLatest = (afterStepIds) => ({
     title: "Mark the release latest",
     description:
         "The last step. The release stays a pre-release until the AppImage and its .zsync are on it, AppImageUpdate follows the latest release and GitHub never makes a pre-release latest.",
-    needs: ["appimage-release-assets"],
+    needs: ["appimage-release-assets", "release-downloads"],
     after: afterStepIds,
     command: ({ config }) => `gh release edit ${config.tag} --prerelease=false --latest -R ${config.sourceRepository}`,
     check: async (context) => {
@@ -419,5 +445,6 @@ export {
     submoduleCommit,
     flathubReinstall,
     appImageReleaseAssets,
+    releaseDownloads,
     markLatest,
 };
