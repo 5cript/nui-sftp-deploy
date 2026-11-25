@@ -48,9 +48,10 @@ export function classifyAsset(name) {
 }
 
 /**
- * Strips the "## Download" section (everything until the next h1/h2 or the end) from release notes.
+ * Release notes without the lines of their "## Download" section (everything until the next h1/h2 or the end), every
+ * other line as it was.
  */
-export function stripDownloadSection(markdown) {
+function cutDownloadSection(markdown) {
     const lines = markdown.replace(/\r\n/g, '\n').split('\n');
     const out = [];
     let skipping = false;
@@ -68,7 +69,15 @@ export function stripDownloadSection(markdown) {
         }
         out.push(line);
     }
-    return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    return out.join('\n');
+}
+
+/**
+ * Strips the "## Download" section from release notes and tidies what is left (blank line runs, surrounding space),
+ * for the changelog conversion.
+ */
+export function stripDownloadSection(markdown) {
+    return cutDownloadSection(markdown).replace(/\n{3,}/g, '\n\n').trim();
 }
 
 /**
@@ -89,10 +98,13 @@ export function downloadSection(assets) {
 }
 
 /**
- * Release notes with their Download section replaced by the current one, at the end.
+ * Release notes with their Download section replaced by the current one, at the end. The notes themselves stay as
+ * written, only the space at their end goes.
  */
 export function withDownloadSection(body, assets) {
-    return `${stripDownloadSection(body ?? '')}\n\n${downloadSection(assets)}`.trim();
+    const notes = cutDownloadSection(body ?? '').trimEnd();
+    const section = downloadSection(assets);
+    return notes === '' ? section : `${notes}\n\n${section}`;
 }
 
 /**
@@ -101,7 +113,7 @@ export function withDownloadSection(body, assets) {
 export function releaseDownloadState(release) {
     const names = release.assets.map((asset) => asset.name.toLowerCase());
     const missing = assetKinds.filter(({ required, pattern }) => required && !names.some((name) => pattern.test(name))).map(({ title }) => title);
-    const body = (release.body ?? '').replace(/\r\n/g, '\n').trim();
+    const body = (release.body ?? '').replace(/\r\n/g, '\n').trimEnd();
     const wantedBody = withDownloadSection(body, release.assets);
     const labels = release.assets
         .map((asset) => ({ id: asset.id, name: asset.name, current: asset.label ?? '', wanted: classifyAsset(asset.name).label }))
