@@ -62,6 +62,21 @@ test('adding the section twice changes nothing, and stripping gives the notes ba
 test('a section in the middle is stripped up to the next heading', () => {
     const middle = `${downloadSection(assets)}\n\n${notes}`;
     assert.equal(stripDownloadSection(middle), notes);
+    assert.equal(withDownloadSection(middle, assets), `${notes}\n\n${downloadSection(assets)}`);
+});
+
+test('writing the section leaves the notes as they were written', () => {
+    const written = '  indented first line\n\n\n\n```\nmake\n\n\n\nmake install\n```\nhard  \nbreak';
+    const section = downloadSection(assets);
+    assert.equal(withDownloadSection(written, assets), `${written}\n\n${section}`);
+    assert.equal(withDownloadSection(`${written}\n\n\n`, assets), `${written}\n\n${section}`);
+    assert.equal(withDownloadSection(`${written}\n\n## Download\n- an old entry\n`, assets), `${written}\n\n${section}`);
+    assert.equal(releaseDownloadState({ body: `${written}\n\n${section}\r\n`, assets }).bodyUpToDate, true);
+});
+
+test('notes that are empty get the section alone', () => {
+    assert.equal(withDownloadSection(null, assets), downloadSection(assets));
+    assert.equal(withDownloadSection('\n\n', assets), downloadSection(assets));
 });
 
 test('the state reports what is left to do', () => {
