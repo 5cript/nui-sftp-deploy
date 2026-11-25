@@ -51,7 +51,10 @@ if (values.check) {
 if (state.bodyUpToDate) {
     console.log('release notes: Download section is current');
 } else {
-    gh(['release', 'edit', tag, '-R', repository, '--notes-file', '-'], state.wantedBody);
+    // An edit of an older release must not make it the latest one.
+    const latest = gh(['api', `repos/${repository}/releases/latest`, '--jq', '.tag_name']);
+    const keepLatest = latest === tag ? [] : ['--latest=false'];
+    gh(['release', 'edit', tag, '-R', repository, ...keepLatest, '--notes-file', '-'], state.wantedBody);
     console.log('release notes: Download section written');
 }
 for (const { id, name, wanted } of state.staleLabels) {
