@@ -22,13 +22,19 @@ const notes = "## What's Changed\n* Something by @someone in https://github.com/
 
 test('the section lists installers only, grouped by platform', () => {
     const section = downloadSection(assets);
-    assert.match(section, /^## Download\n### Linux\n> \*\*Arch Linux users:\*\*/);
-    const linked = [...section.matchAll(/^- \[([^\]]+)\]\(([^)]+)\)$/gm)].map((match) => match[1]);
-    assert.deepEqual(linked, ['Arch package', 'AppImage', 'Flatpak bundle', 'Apple Silicon DMG', 'Windows installer', 'Windows zip']);
+    assert.match(section, /^## Download\n### Linux\n- \[AppImage\]/);
+    const linked = [...section.matchAll(/^- \[([^\]]+)\]\(([^)]+)\)/gm)].map((match) => match[1]);
+    assert.deepEqual(linked, ['AppImage', 'Flatpak bundle', 'Arch package', 'Apple Silicon DMG', 'Windows installer', 'Windows zip']);
     assert.ok(section.indexOf('### Linux') < section.indexOf('### macOS') && section.indexOf('### macOS') < section.indexOf('### Windows'));
     for (const hidden of ['frontend', 'zsync', 'licenses', 'cef-distribution']) {
         assert.ok(!section.includes(hidden), hidden);
     }
+});
+
+test('the Flatpak entry carries the Flathub install line and the Arch entry its AUR note', () => {
+    const section = downloadSection(assets);
+    assert.match(section, /^- \[Flatpak bundle\]\([^)]+\), or from Flathub:\n  ```\n  flatpak install flathub org\.nuicpp\.nui_sftp\n  ```$/m);
+    assert.match(section, /^- \[Arch package\]\([^)]+\)\n  > \*\*Arch Linux users:\*\* prefer installing/m);
 });
 
 test('the assets that are not downloads say so in their label', () => {

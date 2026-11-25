@@ -2,15 +2,21 @@
 
 const notAnInstaller = 'Not an installer';
 
-// First match wins. An asset with a section is listed there; one with a label is not a download and shows that label
-// instead of its file name in the asset list. required: a release without it is not ready for its Download section.
+const archNote =
+    '> **Arch Linux users:** prefer installing the [`nui-sftp`](https://aur.archlinux.org/packages/nui-sftp) package from the AUR instead of the `.pkg.tar.zst` directly, so you get automatic updates and dependency resolution.';
+
+const flathubInstall = ', or from Flathub:\n  ```\n  flatpak install flathub org.nuicpp.nui_sftp\n  ```';
+
+// First match wins, and a section lists its assets in this order. An asset with a section is listed there, followed by
+// its detail; one with a label is not a download and shows that label instead of its file name in the asset list.
+// required: a release without it is not ready for its Download section.
 const assetKinds = [
-    { pattern: /\.pkg\.tar\.zst$/, section: 'linux', title: 'Arch package', required: true },
-    { pattern: /\.deb$/, section: 'linux', title: 'Debian package' },
-    { pattern: /\.rpm$/, section: 'linux', title: 'RPM package' },
     { pattern: /\.appimage$/, section: 'linux', title: 'AppImage', required: true },
     { pattern: /\.appimage\.zsync$/, label: `${notAnInstaller}: AppImage update data (zsync)` },
-    { pattern: /\.flatpak$/, section: 'linux', title: 'Flatpak bundle', required: true },
+    { pattern: /\.flatpak$/, section: 'linux', title: 'Flatpak bundle', detail: flathubInstall, required: true },
+    { pattern: /\.deb$/, section: 'linux', title: 'Debian package' },
+    { pattern: /\.rpm$/, section: 'linux', title: 'RPM package' },
+    { pattern: /\.pkg\.tar\.zst$/, section: 'linux', title: 'Arch package', detail: `\n  ${archNote}`, required: true },
     { pattern: /linux-frontend.*\.tar\.gz$/, label: `${notAnInstaller}: frontend build input for packagers` },
     { pattern: /cef-distribution.*\.json$/, label: `${notAnInstaller}: CEF version info for packagers` },
     { pattern: /licenses.*\.tar\.gz$/, label: `${notAnInstaller}: third-party license texts` },
@@ -28,9 +34,6 @@ const sections = [
     { key: 'macos', title: 'macOS' },
     { key: 'windows', title: 'Windows' },
 ];
-
-const archNote =
-    '> **Arch Linux users:** prefer installing the [`nui-sftp`](https://aur.archlinux.org/packages/nui-sftp) package from the AUR instead of the `.pkg.tar.zst` directly, so you get automatic updates and dependency resolution.';
 
 /**
  * The kind of a release asset. An unknown name throws, so a new asset is classified on purpose.
@@ -72,7 +75,7 @@ export function stripDownloadSection(markdown) {
  * The Download section for assets of the GitHub API's shape (name, browser_download_url): installers only.
  */
 export function downloadSection(assets) {
-    const classified = assets.map((asset) => ({ asset, kind: classifyAsset(asset.name) }));
+    const classified = assets.map((asset) => ({ asset, kind: classifyAsset(asset.name) })).sort((left, right) => assetKinds.indexOf(left.kind) - assetKinds.indexOf(right.kind));
     const parts = ['## Download'];
     for (const { key, title } of sections) {
         const entries = classified.filter(({ kind }) => kind.section === key);
@@ -80,10 +83,7 @@ export function downloadSection(assets) {
             continue;
         }
         parts.push(`### ${title}`);
-        if (key === 'linux' && entries.some(({ asset }) => asset.name.endsWith('.pkg.tar.zst'))) {
-            parts.push(`${archNote}\n`);
-        }
-        parts.push(`${entries.map(({ asset, kind }) => `- [${kind.title}](${asset.browser_download_url})`).join('\n')}\n`);
+        parts.push(`${entries.map(({ asset, kind }) => `- [${kind.title}](${asset.browser_download_url})${kind.detail ?? ''}`).join('\n')}\n`);
     }
     return parts.join('\n').trim();
 }
