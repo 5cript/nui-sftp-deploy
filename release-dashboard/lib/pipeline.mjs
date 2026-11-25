@@ -17,6 +17,7 @@ import {
     submoduleCommit,
     flathubReinstall,
     appImageReleaseAssets,
+    releaseDownloads,
     markLatest,
 } from "./steps/publish.mjs";
 
@@ -74,6 +75,7 @@ const buildPipeline = () => [
     deployMerge,
     ...afterMergeSteps,
     appImageReleaseAssets,
+    releaseDownloads,
     markLatest(afterMergeSteps.map((step) => step.id)),
 ];
 
