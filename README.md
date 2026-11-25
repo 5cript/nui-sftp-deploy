@@ -19,6 +19,7 @@ the scripts that update them in lockstep when a new upstream release is cut.
 | `scripts/build_dmg.sh` | Wraps the macOS app bundle into a disk image. |
 | `scripts/prepare_release.mjs` | Top-level release-prep entrypoint (run with `bun`). |
 | `scripts/update_scripts/*.mjs` | Per-target updaters invoked by `prepare_release.mjs`. |
+| `scripts/release_downloads.mjs` | Prints the Download section of a release's notes; `--apply` writes it and labels the assets that are not downloads (run with `node`, needs `gh`). Tests: `node --test scripts/update_scripts/`. |
 
 ## Preparing a release
 
