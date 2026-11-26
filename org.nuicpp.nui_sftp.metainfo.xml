@@ -36,6 +36,20 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.12.1" date="2026-11-26">
+            <description>
+                <p>What&apos;s Changed</p>
+                <ul>
+                    <li>Verify SSH host keys against the known hosts files by @5cript in #304</li>
+                </ul>
+                <p>
+                    
+                    <em>Full Changelog</em>
+                    : v1.12.0…v1.12.1
+                </p>
+            </description>
+            <url type="details">https://github.com/5cript/nui-sftp/releases/tag/v1.12.1</url>
+        </release>
         <release version="1.12.0" date="2026-11-23">
             <description>
                 <p>What&apos;s Changed</p>
